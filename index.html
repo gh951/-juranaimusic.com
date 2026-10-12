@@ -617,9 +617,15 @@
   <div class="wrap">
     <button class="back" onclick="showView('home')">← 홈</button>
     <div class="vhead"><h2>🎹 음악 만들기 <span class="live" style="color:var(--mint-deep)">· 무한 무료</span></h2><p>펼쳐서 고르고, 추첨통을 돌리고, 생성하세요. 완성곡은 악보로 편곡·저장돼요.</p></div>
-    <div class="acc" id="acc"></div>
-    <div class="genbar"><button class="genbtn" onclick="generate()">🎲 작곡 생성 — 무한 무료</button></div>
-    <div id="result"></div>
+
+    <!-- 엔진이 들어앉는 자리 (JM 이 채운다) -->
+    <div id="jm-note" class="hint" style="padding:14px 0"></div>
+    <div id="cgo-music-mount" style="border-radius:16px;overflow:hidden"></div>
+
+    <!-- 아래 셋은 엔진 오기 전 스케치. 지우면 아래쪽 옛 글이 탈을 내므로 숨겨만 둔다. -->
+    <div class="acc" id="acc" style="display:none"></div>
+    <div class="genbar" style="display:none"><button class="genbtn" onclick="generate()">🎲 작곡 생성</button></div>
+    <div id="result" style="display:none"></div>
   </div>
 </section>
 
@@ -1444,6 +1450,7 @@
     menu(false);window.scrollTo({top:0,behavior:'auto'});
     if(name==='chart')render(true);
     if(name==='up'&&window.JK)JK.깨우기();
+    if(name==='make'&&window.JM)JM.열기();
   };
   window.menu=function(open){document.getElementById('menu').hidden=!open;};
   document.getElementById('menu').addEventListener('click',function(e){if(e.target===this)menu(false);});
@@ -2014,6 +2021,106 @@ var JK = {
   }
 };
 window.JK=JK;
+})();
+</script>
+
+
+<script>
+/* ════════════════════════════════════════════════════════════════════════
+   JM — CGO 주파수 뮤직 엔진을 JURAN 안으로 불러오는 자리   (2026-10-12)
+   ------------------------------------------------------------------------
+   왜 이렇게 하나 —
+     엔진에 딸린 악기 소리가 12.5MB 다. 홈을 열 때마다 받으면 홈이 무거워진다.
+     그래서 「나도 작곡가」를 **처음 누를 때 한 번만** 받는다. 두 번째부터는 안 받는다.
+   어디서 받나 —
+     cgo-music.js · Tone.js   → JURAN 제 집 (이 파일 옆)
+     cgo-sound.js · 2.js      → CGO 집 (이미 거기 올라가 있다. 한 벌이면 족하다)
+   ⚠️ 소리통 주소를 옮기려면 아래 `소리집` 한 줄만 바꾸면 된다.
+   ⚠️ 차례가 있다 — Tone → 소리통 → 엔진. 엔진이 먼저 오면 소리가 안 난다.
+   ⚠️ 탭 다섯 중 「주파수」와 「목소리 나이」는 JURAN 에서 안 쓴다. 숨긴다.
+   ════════════════════════════════════════════════════════════════════════ */
+(function(){
+  var 소리집 = 'https://www.c-go-fuli.com/';
+  var 내집   = 'js/';          /* 우리 글은 js 칸에 모아 둔다. 나중에 번역·다른 글도 여기로. */
+  var 줄     = [내집+'Tone.js', 소리집+'cgo-sound.js', 소리집+'cgo-sound2.js', 내집+'cgo-music.js'];
+  var 받는중=false, 선것=false;
+
+  function 쪽지(글){ var e=document.getElementById('jm-note'); if(e) e.textContent=글||''; }
+
+  function 글하나(주소){
+    return new Promise(function(ok,no){
+      var s=document.createElement('script');
+      s.src=주소; s.async=false;
+      s.onload=function(){ ok(); };
+      s.onerror=function(){ no(new Error(주소)); };
+      document.head.appendChild(s);
+    });
+  }
+
+  /* 모듈이 CGO 쪽을 부를 때 쓰는 것들 — JURAN 에는 없으니 작게 받쳐 둔다 */
+  function 받침(){
+    if(!window.cgoGoPage) window.cgoGoPage=function(p){
+      try{ if(p==='dashboard'||p==='home') showView('home'); }catch(e){}
+    };
+    if(!window._spd2Mark) window._spd2Mark=function(){};
+    /* 소개 팝업은 CGO 것이라 JURAN 에서는 안 띄운다 */
+    try{ localStorage.setItem('cgo_music_intro_v2','1'); }catch(e){}
+  }
+
+  function 다듬기(){
+    var r=document.getElementById('cgo-music-root'); if(!r) return;
+    /* ⚠️ cgo-music.js 는 두 앱이 같이 쓰는 한 벌이다. 거기 글을 고치면 CGO 도 바뀐다.
+       그래서 JURAN 쪽 손질은 **여기서 화면만** 바꾼다. 파일은 안 건드린다. */
+    ['freq','voice'].forEach(function(t){
+      var e=r.querySelector('.cgo-mtab[data-tab="'+t+'"]'); if(e) e.style.display='none';
+    });
+    var h=r.querySelector('.cgo-mhdr'); if(h) h.style.display='none';
+    /* CGO 간판 — 위성·생체·역학·치료음악. JURAN 은 전문 음악 앱이라 안 맞는다.
+       소리틀(player)은 쓰는 것이니 그대로 둔다. */
+    ['.cgo-mhero-tag','.cgo-mhero-h1','.cgo-mhero-desc'].forEach(function(q){
+      var e=r.querySelector(q); if(e) e.style.display='none';
+    });
+    /* CGO 말씨를 JURAN 말씨로 */
+    var 바꿀=[['치유 주파수 선택','바탕 주파수 고르기'],['치유 주파수','바탕 주파수']];
+    var it=document.createNodeIterator(r, NodeFilter.SHOW_TEXT);
+    var nd; while((nd=it.nextNode())){
+      for(var i=0;i<바꿀.length;i++){
+        if(nd.nodeValue.indexOf(바꿀[i][0])>=0){
+          nd.nodeValue=nd.nodeValue.split(바꿀[i][0]).join(바꿀[i][1]); break;
+        }
+      }
+    }
+    r.querySelectorAll('input[placeholder],textarea[placeholder]').forEach(function(e){
+      if(/잠이 안와요|두통|스트레스 해소/.test(e.placeholder))
+        e.placeholder='예: 잔잔한 재즈 단조 · 신나는 K팝 · 비 오는 밤의 발라드';
+    });
+    try{ window._cgoMusicMod._switchTab('make'); }catch(e){}
+  }
+
+  window.JM={
+    선것:function(){ return 선것; },
+    열기:async function(){
+      if(선것||받는중) return;
+      var 자리=document.getElementById('cgo-music-mount'); if(!자리) return;
+      받는중=true; 받침();
+      쪽지('🎹 작곡 엔진을 가져오는 중입니다 — 처음 한 번만 받습니다 (약 14MB)');
+      try{
+        for(var i=0;i<줄.length;i++){ await 글하나(줄[i]); }
+      }catch(e){
+        받는중=false;
+        쪽지('엔진을 못 가져왔습니다. 잠시 뒤 다시 눌러 주세요.');
+        return;
+      }
+      if(!window.CGOMusicModule){ 받는중=false; 쪽지('엔진이 안 실렸습니다.'); return; }
+      try{
+        window._cgoMusicMod = new window.CGOMusicModule(자리);
+        if(window._cgoMusicMod.init) window._cgoMusicMod.init();
+      }catch(e){ 받는중=false; 쪽지('엔진을 여는 데 걸렸습니다.'); return; }
+      setTimeout(다듬기, 400);
+      setTimeout(다듬기, 1800);
+      쪽지(''); 선것=true; 받는중=false;
+    }
+  };
 })();
 </script>
 
