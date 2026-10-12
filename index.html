@@ -183,6 +183,31 @@
 .rise .vt small{font-weight:600;font-size:10.5px;color:var(--faint);margin-left:3px}
 .rise .d{min-width:78px;text-align:right}
 @media(max-width:560px){ .rise .vt{display:none} .rise .d{min-width:62px} }
+
+/* 저작권 1차 예측 — 두 막대. 짧을수록 좋다 */
+#rise-home>.rise, #rise-glob>.rise{padding:9px 0;align-items:center}
+#rise-home>.rise+.rise, #rise-glob>.rise+.rise{border-top:1px solid var(--line-2)}
+.sim{display:flex;gap:13px;flex-wrap:wrap;margin-top:5px}
+.sim .one{display:flex;align-items:center;gap:6px;min-width:0;flex:0 1 155px}
+/* ⚠️ 세로로 쌓으면 flex-basis 가 '높이'가 된다 — 190px 가 줄 높이를 436px 로 터뜨렸다.
+      그리고 이 덩이는 기본 규칙 **뒤에** 와야 한다. 앞에 두면 덮인다. */
+@media(max-width:700px){
+  .sim{gap:4px 10px}
+  .sim .one{flex:0 1 128px}
+}
+.sim .lb{flex:none;width:30px;font-size:10.5px;color:var(--faint);font-weight:600}
+.sim .bar{flex:1;height:5px;border-radius:99px;background:var(--line-2);overflow:hidden;min-width:48px}
+.sim .bar i{display:block;height:100%;border-radius:99px;transition:width .3s}
+.sim .pc{flex:none;width:34px;text-align:right;font-family:var(--display);font-weight:700;
+  font-size:10.5px;font-variant-numeric:tabular-nums}
+.sim .g i{background:var(--up)}        .sim .g .pc{color:var(--up)}
+.sim .y i{background:var(--gold)}      .sim .y .pc{color:var(--gold)}
+.sim .r i{background:var(--down)}      .sim .r .pc{color:var(--down)}
+.sim .n i{background:var(--faint);opacity:.35} .sim .n .pc{color:var(--faint)}
+.side .foot2{margin-top:10px;padding-top:10px;border-top:1px solid var(--line-2);
+  font-size:11.5px;color:var(--faint);line-height:1.6;display:flex;gap:8px;align-items:flex-start}
+.side .foot2 button{flex:none;border:1px solid var(--line);background:transparent;color:var(--mint-deep);
+  border-radius:99px;min-height:26px;padding:0 10px;font:700 11px var(--display);cursor:pointer}
 .side .hcap{margin-left:auto;font:700 11px var(--display);color:var(--faint);letter-spacing:.06em}
 .bcol .tiles{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
 
@@ -509,12 +534,14 @@
           <div class="h"><b id="rh-home">국내</b><span class="live"><i></i>LIVE</span><span class="hcap">급상승</span></div>
           <div id="rise-home"></div>
           <button class="more" onclick="showView('chart');JN.차트('home')">국내 차트 50위까지 →</button>
+          <div class="foot2"><span id="say-home">저작권 1차 예측 — 낮을수록 덜 닮았다는 뜻입니다.</span><button onclick="JN.알림(true)">ⓘ 기준</button></div>
         </div>
 
         <div class="side">
           <div class="h"><b>🌍 글로벌</b><span class="live"><i></i>LIVE</span><span class="hcap">급상승</span></div>
           <div id="rise-glob"></div>
           <button class="more" onclick="showView('chart');JN.차트('global')">글로벌 차트 50위까지 →</button>
+          <div class="foot2"><span id="say-glob">저작권 1차 예측 — 낮을수록 덜 닮았다는 뜻입니다.</span><button onclick="JN.알림(true)">ⓘ 기준</button></div>
         </div>
 
       </div>
@@ -761,6 +788,23 @@
   </div>
 </section>
 
+<div class="pick" id="basis" hidden onclick="if(event.target===this)JN.알림(false)">
+  <div class="pick-card">
+    <h3>저작권 1차 예측 — 무엇을 어떻게 쟀나</h3>
+    <p id="basis-txt"></p>
+    <div class="auto" style="line-height:1.8">
+      <b>곡 닮음</b> — 멜로디의 음 높낮이와 길이를 견줍니다.<br>
+      <b>가사 닮음</b> — 글자와 낱말의 이어짐을 견줍니다.<br>
+      <b>색</b> — 0~19% 초록 · 20~39% 노랑 · 40% 위 빨강. <b>짧을수록 좋습니다.</b>
+    </div>
+    <div class="auto" style="margin-top:12px;color:var(--gold)">
+      ⚠️ 이 숫자는 <b>예측</b>입니다. 틀릴 수 있습니다. 저작권 판단이 아닙니다.
+      법으로 따질 일에는 쓰지 마세요.
+    </div>
+    <button class="ok" onclick="JN.알림(false)">알겠습니다</button>
+  </div>
+</div>
+
 <div class="pick" id="pick" hidden onclick="if(event.target===this)JN.고르기(false)">
   <div class="pick-card">
     <h3>말과 나라</h3>
@@ -860,7 +904,7 @@
   var _나라표={"Europe/Andorra":"AD","Asia/Dubai":"AE","Asia/Kabul":"AF","America/Antigua":"AG","America/Anguilla":"AI","Europe/Tirane":"AL","Asia/Yerevan":"AM","Africa/Luanda":"AO","Antarctica/McMurdo":"AQ","Antarctica/Casey":"AQ","Antarctica/Davis":"AQ","Antarctica/DumontDUrville":"AQ","Antarctica/Mawson":"AQ","Antarctica/Palmer":"AQ","Antarctica/Rothera":"AQ","Antarctica/Syowa":"AQ","Antarctica/Troll":"AQ","Antarctica/Vostok":"AQ","America/Argentina/Buenos_Aires":"AR","America/Argentina/Cordoba":"AR","America/Argentina/Salta":"AR","America/Argentina/Jujuy":"AR","America/Argentina/Tucuman":"AR","America/Argentina/Catamarca":"AR","America/Argentina/La_Rioja":"AR","America/Argentina/San_Juan":"AR","America/Argentina/Mendoza":"AR","America/Argentina/San_Luis":"AR","America/Argentina/Rio_Gallegos":"AR","America/Argentina/Ushuaia":"AR","Pacific/Pago_Pago":"AS","Europe/Vienna":"AT","Australia/Lord_Howe":"AU","Antarctica/Macquarie":"AU","Australia/Hobart":"AU","Australia/Melbourne":"AU","Australia/Sydney":"AU","Australia/Broken_Hill":"AU","Australia/Brisbane":"AU","Australia/Lindeman":"AU","Australia/Adelaide":"AU","Australia/Darwin":"AU","Australia/Perth":"AU","Australia/Eucla":"AU","America/Aruba":"AW","Europe/Mariehamn":"AX","Asia/Baku":"AZ","Europe/Sarajevo":"BA","America/Barbados":"BB","Asia/Dhaka":"BD","Europe/Brussels":"BE","Africa/Ouagadougou":"BF","Europe/Sofia":"BG","Asia/Bahrain":"BH","Africa/Bujumbura":"BI","Africa/Porto-Novo":"BJ","America/St_Barthelemy":"BL","Atlantic/Bermuda":"BM","Asia/Brunei":"BN","America/La_Paz":"BO","America/Kralendijk":"BQ","America/Noronha":"BR","America/Belem":"BR","America/Fortaleza":"BR","America/Recife":"BR","America/Araguaina":"BR","America/Maceio":"BR","America/Bahia":"BR","America/Sao_Paulo":"BR","America/Campo_Grande":"BR","America/Cuiaba":"BR","America/Santarem":"BR","America/Porto_Velho":"BR","America/Boa_Vista":"BR","America/Manaus":"BR","America/Eirunepe":"BR","America/Rio_Branco":"BR","America/Nassau":"BS","Asia/Thimphu":"BT","Africa/Gaborone":"BW","Europe/Minsk":"BY","America/Belize":"BZ","America/St_Johns":"CA","America/Halifax":"CA","America/Glace_Bay":"CA","America/Moncton":"CA","America/Goose_Bay":"CA","America/Blanc-Sablon":"CA","America/Toronto":"CA","America/Iqaluit":"CA","America/Atikokan":"CA","America/Winnipeg":"CA","America/Resolute":"CA","America/Rankin_Inlet":"CA","America/Regina":"CA","America/Swift_Current":"CA","America/Edmonton":"CA","America/Cambridge_Bay":"CA","America/Inuvik":"CA","America/Vancouver":"CA","America/Creston":"CA","America/Dawson_Creek":"CA","America/Fort_Nelson":"CA","America/Whitehorse":"CA","America/Dawson":"CA","Indian/Cocos":"CC","Africa/Kinshasa":"CD","Africa/Lubumbashi":"CD","Africa/Bangui":"CF","Africa/Brazzaville":"CG","Europe/Zurich":"CH","Africa/Abidjan":"CI","Pacific/Rarotonga":"CK","America/Santiago":"CL","America/Coyhaique":"CL","America/Punta_Arenas":"CL","Pacific/Easter":"CL","Africa/Douala":"CM","Asia/Shanghai":"CN","Asia/Urumqi":"CN","America/Bogota":"CO","America/Costa_Rica":"CR","America/Havana":"CU","Atlantic/Cape_Verde":"CV","America/Curacao":"CW","Indian/Christmas":"CX","Asia/Nicosia":"CY","Asia/Famagusta":"CY","Europe/Prague":"CZ","Europe/Berlin":"DE","Europe/Busingen":"DE","Africa/Djibouti":"DJ","Europe/Copenhagen":"DK","America/Dominica":"DM","America/Santo_Domingo":"DO","Africa/Algiers":"DZ","America/Guayaquil":"EC","Pacific/Galapagos":"EC","Europe/Tallinn":"EE","Africa/Cairo":"EG","Africa/El_Aaiun":"EH","Africa/Asmara":"ER","Europe/Madrid":"ES","Africa/Ceuta":"ES","Atlantic/Canary":"ES","Africa/Addis_Ababa":"ET","Europe/Helsinki":"FI","Pacific/Fiji":"FJ","Atlantic/Stanley":"FK","Pacific/Chuuk":"FM","Pacific/Pohnpei":"FM","Pacific/Kosrae":"FM","Atlantic/Faroe":"FO","Europe/Paris":"FR","Africa/Libreville":"GA","Europe/London":"GB","America/Grenada":"GD","Asia/Tbilisi":"GE","America/Cayenne":"GF","Europe/Guernsey":"GG","Africa/Accra":"GH","Europe/Gibraltar":"GI","America/Nuuk":"GL","America/Danmarkshavn":"GL","America/Scoresbysund":"GL","America/Thule":"GL","Africa/Banjul":"GM","Africa/Conakry":"GN","America/Guadeloupe":"GP","Africa/Malabo":"GQ","Europe/Athens":"GR","Atlantic/South_Georgia":"GS","America/Guatemala":"GT","Pacific/Guam":"GU","Africa/Bissau":"GW","America/Guyana":"GY","Asia/Hong_Kong":"HK","America/Tegucigalpa":"HN","Europe/Zagreb":"HR","America/Port-au-Prince":"HT","Europe/Budapest":"HU","Asia/Jakarta":"ID","Asia/Pontianak":"ID","Asia/Makassar":"ID","Asia/Jayapura":"ID","Europe/Dublin":"IE","Asia/Jerusalem":"IL","Europe/Isle_of_Man":"IM","Asia/Kolkata":"IN","Indian/Chagos":"IO","Asia/Baghdad":"IQ","Asia/Tehran":"IR","Atlantic/Reykjavik":"IS","Europe/Rome":"IT","Europe/Jersey":"JE","America/Jamaica":"JM","Asia/Amman":"JO","Asia/Tokyo":"JP","Africa/Nairobi":"KE","Asia/Bishkek":"KG","Asia/Phnom_Penh":"KH","Pacific/Tarawa":"KI","Pacific/Kanton":"KI","Pacific/Kiritimati":"KI","Indian/Comoro":"KM","America/St_Kitts":"KN","Asia/Pyongyang":"KP","Asia/Seoul":"KR","Asia/Kuwait":"KW","America/Cayman":"KY","Asia/Almaty":"KZ","Asia/Qyzylorda":"KZ","Asia/Qostanay":"KZ","Asia/Aqtobe":"KZ","Asia/Aqtau":"KZ","Asia/Atyrau":"KZ","Asia/Oral":"KZ","Asia/Vientiane":"LA","Asia/Beirut":"LB","America/St_Lucia":"LC","Europe/Vaduz":"LI","Asia/Colombo":"LK","Africa/Monrovia":"LR","Africa/Maseru":"LS","Europe/Vilnius":"LT","Europe/Luxembourg":"LU","Europe/Riga":"LV","Africa/Tripoli":"LY","Africa/Casablanca":"MA","Europe/Monaco":"MC","Europe/Chisinau":"MD","Europe/Podgorica":"ME","America/Marigot":"MF","Indian/Antananarivo":"MG","Pacific/Majuro":"MH","Pacific/Kwajalein":"MH","Europe/Skopje":"MK","Africa/Bamako":"ML","Asia/Yangon":"MM","Asia/Ulaanbaatar":"MN","Asia/Hovd":"MN","Asia/Macau":"MO","Pacific/Saipan":"MP","America/Martinique":"MQ","Africa/Nouakchott":"MR","America/Montserrat":"MS","Europe/Malta":"MT","Indian/Mauritius":"MU","Indian/Maldives":"MV","Africa/Blantyre":"MW","America/Mexico_City":"MX","America/Cancun":"MX","America/Merida":"MX","America/Monterrey":"MX","America/Matamoros":"MX","America/Chihuahua":"MX","America/Ciudad_Juarez":"MX","America/Ojinaga":"MX","America/Mazatlan":"MX","America/Bahia_Banderas":"MX","America/Hermosillo":"MX","America/Tijuana":"MX","Asia/Kuala_Lumpur":"MY","Asia/Kuching":"MY","Africa/Maputo":"MZ","Africa/Windhoek":"NA","Pacific/Noumea":"NC","Africa/Niamey":"NE","Pacific/Norfolk":"NF","Africa/Lagos":"NG","America/Managua":"NI","Europe/Amsterdam":"NL","Europe/Oslo":"NO","Asia/Kathmandu":"NP","Pacific/Nauru":"NR","Pacific/Niue":"NU","Pacific/Auckland":"NZ","Pacific/Chatham":"NZ","Asia/Muscat":"OM","America/Panama":"PA","America/Lima":"PE","Pacific/Tahiti":"PF","Pacific/Marquesas":"PF","Pacific/Gambier":"PF","Pacific/Port_Moresby":"PG","Pacific/Bougainville":"PG","Asia/Manila":"PH","Asia/Karachi":"PK","Europe/Warsaw":"PL","America/Miquelon":"PM","Pacific/Pitcairn":"PN","America/Puerto_Rico":"PR","Asia/Gaza":"PS","Asia/Hebron":"PS","Europe/Lisbon":"PT","Atlantic/Madeira":"PT","Atlantic/Azores":"PT","Pacific/Palau":"PW","America/Asuncion":"PY","Asia/Qatar":"QA","Indian/Reunion":"RE","Europe/Bucharest":"RO","Europe/Belgrade":"RS","Europe/Kaliningrad":"RU","Europe/Moscow":"RU","Europe/Kirov":"RU","Europe/Volgograd":"RU","Europe/Astrakhan":"RU","Europe/Saratov":"RU","Europe/Ulyanovsk":"RU","Europe/Samara":"RU","Asia/Yekaterinburg":"RU","Asia/Omsk":"RU","Asia/Novosibirsk":"RU","Asia/Barnaul":"RU","Asia/Tomsk":"RU","Asia/Novokuznetsk":"RU","Asia/Krasnoyarsk":"RU","Asia/Irkutsk":"RU","Asia/Chita":"RU","Asia/Yakutsk":"RU","Asia/Khandyga":"RU","Asia/Vladivostok":"RU","Asia/Ust-Nera":"RU","Asia/Magadan":"RU","Asia/Sakhalin":"RU","Asia/Srednekolymsk":"RU","Asia/Kamchatka":"RU","Asia/Anadyr":"RU","Europe/Simferopol":"UA","Europe/Kyiv":"UA","Africa/Kigali":"RW","Asia/Riyadh":"SA","Pacific/Guadalcanal":"SB","Indian/Mahe":"SC","Africa/Khartoum":"SD","Europe/Stockholm":"SE","Asia/Singapore":"SG","Atlantic/St_Helena":"SH","Europe/Ljubljana":"SI","Arctic/Longyearbyen":"SJ","Europe/Bratislava":"SK","Africa/Freetown":"SL","Europe/San_Marino":"SM","Africa/Dakar":"SN","Africa/Mogadishu":"SO","America/Paramaribo":"SR","Africa/Juba":"SS","Africa/Sao_Tome":"ST","America/El_Salvador":"SV","America/Lower_Princes":"SX","Asia/Damascus":"SY","Africa/Mbabane":"SZ","America/Grand_Turk":"TC","Africa/Ndjamena":"TD","Indian/Kerguelen":"TF","Africa/Lome":"TG","Asia/Bangkok":"TH","Asia/Dushanbe":"TJ","Pacific/Fakaofo":"TK","Asia/Dili":"TL","Asia/Ashgabat":"TM","Africa/Tunis":"TN","Pacific/Tongatapu":"TO","Europe/Istanbul":"TR","America/Port_of_Spain":"TT","Pacific/Funafuti":"TV","Asia/Taipei":"TW","Africa/Dar_es_Salaam":"TZ","Africa/Kampala":"UG","Pacific/Midway":"UM","Pacific/Wake":"UM","America/New_York":"US","America/Detroit":"US","America/Kentucky/Louisville":"US","America/Kentucky/Monticello":"US","America/Indiana/Indianapolis":"US","America/Indiana/Vincennes":"US","America/Indiana/Winamac":"US","America/Indiana/Marengo":"US","America/Indiana/Petersburg":"US","America/Indiana/Vevay":"US","America/Chicago":"US","America/Indiana/Tell_City":"US","America/Indiana/Knox":"US","America/Menominee":"US","America/North_Dakota/Center":"US","America/North_Dakota/New_Salem":"US","America/North_Dakota/Beulah":"US","America/Denver":"US","America/Boise":"US","America/Phoenix":"US","America/Los_Angeles":"US","America/Anchorage":"US","America/Juneau":"US","America/Sitka":"US","America/Metlakatla":"US","America/Yakutat":"US","America/Nome":"US","America/Adak":"US","Pacific/Honolulu":"US","America/Montevideo":"UY","Asia/Samarkand":"UZ","Asia/Tashkent":"UZ","Europe/Vatican":"VA","America/St_Vincent":"VC","America/Caracas":"VE","America/Tortola":"VG","America/St_Thomas":"VI","Asia/Ho_Chi_Minh":"VN","Pacific/Efate":"VU","Pacific/Wallis":"WF","Pacific/Apia":"WS","Asia/Aden":"YE","Indian/Mayotte":"YT","Africa/Johannesburg":"ZA","Africa/Lusaka":"ZM","Africa/Harare":"ZW","Asia/Calcutta":"IN","Asia/Saigon":"VN","Asia/Rangoon":"MM","Asia/Katmandu":"NP","Asia/Ulan_Bator":"MN","Europe/Kiev":"UA","Europe/Uzhgorod":"UA","Europe/Zaporozhye":"UA","America/Buenos_Aires":"AR","America/Godthab":"GL","Pacific/Ponape":"FM","Pacific/Truk":"FM","Asia/Istanbul":"TR","Africa/Asmera":"ER","Atlantic/Faeroe":"FO","America/Indianapolis":"US","Asia/Chongqing":"CN","Asia/Macao":"MO","Pacific/Samoa":"WS","US/Pacific":"US","US/Eastern":"US","Japan":"JP","Singapore":"SG","Hongkong":"HK","ROK":"KR","PRC":"CN","Israel":"IL","Egypt":"EG","Turkey":"TR","Poland":"PL","Portugal":"PT","Iceland":"IS","Cuba":"CU","Jamaica":"JM","Iran":"IR"};
   var _나라이름={"KR":["대한민국","South Korea"],"US":["미국","United States"],"JP":["일본","Japan"],"CN":["중국","China"],"TW":["대만","Taiwan"],"HK":["홍콩","Hong Kong"],"GB":["영국","United Kingdom"],"DE":["독일","Germany"],"FR":["프랑스","France"],"IT":["이탈리아","Italy"],"ES":["스페인","Spain"],"PT":["포르투갈","Portugal"],"NL":["네덜란드","Netherlands"],"SE":["스웨덴","Sweden"],"NO":["노르웨이","Norway"],"FI":["핀란드","Finland"],"DK":["덴마크","Denmark"],"PL":["폴란드","Poland"],"RU":["러시아","Russia"],"UA":["우크라이나","Ukraine"],"TR":["튀르키예","Türkiye"],"IN":["인도","India"],"ID":["인도네시아","Indonesia"],"TH":["태국","Thailand"],"VN":["베트남","Viet Nam"],"PH":["필리핀","Philippines"],"MY":["말레이시아","Malaysia"],"SG":["싱가포르","Singapore"],"AU":["호주","Australia"],"NZ":["뉴질랜드","New Zealand"],"CA":["캐나다","Canada"],"MX":["멕시코","Mexico"],"BR":["브라질","Brazil"],"AR":["아르헨티나","Argentina"],"CL":["칠레","Chile"],"CO":["콜롬비아","Colombia"],"PE":["페루","Peru"],"SA":["사우디아라비아","Saudi Arabia"],"AE":["아랍에미리트","United Arab Emirates"],"EG":["이집트","Egypt"],"MA":["모로코","Morocco"],"ZA":["남아프리카","South Africa"],"NG":["나이지리아","Nigeria"],"KE":["케냐","Kenya"],"IL":["이스라엘","Israel"],"IR":["이란","Iran"],"PK":["파키스탄","Pakistan"],"BD":["방글라데시","Bangladesh"],"MN":["몽골","Mongolia"],"GR":["그리스","Greece"],"CZ":["체코","Czechia"],"AT":["오스트리아","Austria"],"CH":["스위스","Switzerland"],"BE":["벨기에","Belgium"],"IE":["아일랜드","Ireland"],"RO":["루마니아","Romania"],"HU":["헝가리","Hungary"]};
 
-  var _내나라='', _급보기='home', _차보기='home', _보기용=true;
+  var _내나라='', _급보기='home', _차보기='home', _보기용=true, _기준=null;
 
   function 나라찾기(){
     try{ var v=localStorage.getItem('juran_나라'); if(v) return v; }catch(e){}
@@ -887,9 +931,20 @@
     return '<div class="rise">'+
       '<span class="rk'+(순<=3?' top':'')+'">'+순+'</span>'+
       '<span class="cv" style="background:'+s.cv+'"></span>'+
-      '<div class="mid"><div class="t">'+s.t+'</div><div class="s">'+s.m+' · '+s.g+'</div></div>'+
+      '<div class="mid"><div class="t">'+s.t+'</div><div class="s">'+s.m+' · '+s.g+'</div>'+
+        '<div class="sim">'+_막대('곡',s.곡닮음)+_막대('가사',s.가사닮음)+'</div></div>'+
       '<div class="vt">'+fmt(s.votes||0)+'<small>표</small></div>'+
-      '<div class="d">▲ '+fmt(오름)+'</div></div>';
+      '<div class="d">▲ '+fmt(오름)+'</div>'+
+      '</div>';
+  }
+  /* 짧을수록 좋다 — 0~19 초록 · 20~39 노랑 · 40↑ 빨강 · 아직 안 쟀으면 회색 */
+  function _막대(이름,값){
+    var 잼=(typeof 값==='number'&&isFinite(값));
+    var v=잼?Math.max(0,Math.min(100,값)):0;
+    var c=!잼?'n':(v<20?'g':(v<40?'y':'r'));
+    return '<div class="one '+c+'"><span class="lb">'+이름+'</span>'+
+      '<span class="bar"><i style="width:'+(잼?Math.max(4,v):100)+'%"></i></span>'+
+      '<span class="pc">'+(잼?v+'%':'—')+'</span></div>';
   }
   function _풀(){ var a=[]; Object.keys(data).forEach(function(k){ a=a.concat(data[k]); }); return a; }
   function _급순(arr){
@@ -946,7 +1001,9 @@
         t:c.t||'', m:c.by||'', g:g.n, 나라:(c.나라||'').toUpperCase(),
         cv:grad([g.h[0]+((i*23)%40)-20, g.h[1]+((i*17)%40)-20]),
         votes:+c.표||0, 전표:+c.전표||0, score:(c.점수!=null?c.점수:88).toString(),
-        링크:c.링크||'', 자켓:c.자켓||null, prev:0
+        링크:c.링크||'', 자켓:c.자켓||null, prev:0,
+        곡닮음:(typeof c.곡닮음==='number'?c.곡닮음:null),
+        가사닮음:(typeof c.가사닮음==='number'?c.가사닮음:null)
       });
     });
     Object.keys(새).forEach(function(k){
@@ -955,6 +1012,13 @@
     });
     data=새;
     _보기용 = (j.보기용!==false);
+    _기준 = j.기준||null;
+    if(_기준){
+      var 말='저작권 1차 예측 — 공개된 곡 '+fmt(_기준.곡수||0)+'곡을 기준으로 잰 값입니다. '+
+             '낮을수록 덜 닮았다는 뜻이며, <b>예측일 뿐이라 틀릴 수 있습니다.</b>';
+      ['say-home','say-glob'].forEach(function(k){
+        var e=document.getElementById(k); if(e) e.innerHTML=말; });
+    }
     /* 시즌 · 문구 · 챔피언 */
     try{
       if(j.시즌&&j.시즌.끝){
@@ -1012,6 +1076,15 @@
       var lg=document.getElementById('pick-lang').value;
       if(lb) lb.textContent=(lg==='ko'?'KO':'EN')+' '+(c?나라깃발(c):'🌍')+' ▾';
       JN.고르기(false); paintRise(); render(true);
+    },
+    알림:function(on){
+      var e=document.getElementById('basis'); if(!e) return;
+      if(on){
+        var t=document.getElementById('basis-txt');
+        if(t) t.textContent=(_기준&&_기준.알림)||
+          '기계가 음과 글자를 견준 값입니다. 예측일 뿐이고 틀릴 수 있습니다.';
+      }
+      e.hidden=!on;
     },
     나라:function(){ return _내나라; }
   };
