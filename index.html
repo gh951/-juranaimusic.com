@@ -1451,7 +1451,7 @@
     if(name==='chart')render(true);
     if(name==='up'&&window.JK)JK.깨우기();
     if(name==='make'&&window.JM)JM.열기();
-    else if(window.JM&&JM.재우기)JM.재우기();      /* 특허 — 안 보이면 죽인다 */
+    else if(window.JM&&JM.재우기)JM.재우기(false);  /* 특허 — 안 보이면 고리를 끊는다 */
   };
   window.menu=function(open){document.getElementById('menu').hidden=!open;};
   document.getElementById('menu').addEventListener('click',function(e){if(e.target===this)menu(false);});
@@ -2099,7 +2099,13 @@ window.JK=JK;
 
   /* ════ 특허 자리 — 안 보이면 죽인다 ════ */
   var 뗀것=null;
-  function 재우기(){
+  /* ⚠️ 「나갔다」와 「앱을 내려놨다」는 다르다. 재서 알았다 —
+       떼어 내면 홈 조각이 7,090 → 3,174 로 줄지만, 다시 붙일 때 0.2초가 든다.
+       그런데 숨겨 둔 덩이는 그려지지도, 자리를 재지도 않는다. 자리만 차지한다.
+       그래서 **나갈 때는 고리만 끊고**(0.025초에 다시 뜬다),
+       **앱을 내려놓을 때 통째로 뗀다**(그때는 급할 일이 없다).
+       특허가 막으려는 것은 '안 보이는데 일하는 것'이고, 그건 둘 다에서 0 이다. */
+  function 재우기(떼기){
     var 자리=document.getElementById('cgo-music-mount');
     var m=window._cgoMusicMod;
     if(m){
@@ -2112,7 +2118,7 @@ window.JK=JK;
     }
     try{ if(window._cgoSrvStop) window._cgoSrvStop(); }catch(e){}
     try{ if(window._cgoScoreStop) window._cgoScoreStop(); }catch(e){}
-    if(자리&&자리.firstChild&&!뗀것){
+    if(떼기 && 자리 && 자리.firstChild && !뗀것){
       뗀것=document.createDocumentFragment();
       while(자리.firstChild) 뗀것.appendChild(자리.firstChild);
     }
@@ -2126,7 +2132,7 @@ window.JK=JK;
     try{ if(!m.bgAnimId&&m._startBgCanvas) m._startBgCanvas(); }catch(e){}
   }
   document.addEventListener('visibilitychange',function(){
-    if(document.hidden) 재우기();
+    if(document.hidden) 재우기(true);     /* 내려놨으면 통째로 뗀다 */
     else { var v=document.getElementById('v-make'); if(v&&!v.hidden) 깨우기(); }
   });
 
@@ -2171,10 +2177,31 @@ window.JK=JK;
   window.JM={
     선것:function(){ return 선것; },
     재우기:재우기, 깨우기:깨우기,
-    미리:function(){
+    /* 홈이 한가할 때 — 글만 받아 두는 게 아니라 **판까지 미리 지어 둔다.**
+       파트너 — "육안으로 새롭게 써지는 것이 보여여"
+       까닭을 찾았다. CGO 는 음악 페이지를 열면 가벼운 주파수 판(3KB)이 먼저 뜨고
+       추첨통은 그 탭을 눌러야 지어진다. 나는 들어가자마자 **269KB 짜리 추첨통 판**을
+       짓게 해 놨다. 2,915 조각을 그 자리에서 그리니 써지는 게 눈에 보인다.
+       이제 홈이 한가한 틈에 **떼어 놓은 채로** 미리 지어 둔다. 누르면 붙이기만 한다.
+       ⚠️ 떼어 놓은 채로 짓는다 — 화면에 안 붙어 있으니 손님 눈에 아무 일도 안 보인다. */
+    미리:async function(){
       try{ var c=navigator.connection;
            if(c && (c.saveData || /(^|-)2g$/.test(c.effectiveType||''))) return; }catch(e){}
-      글들(화면줄);
+      var 결과 = await 글들(화면줄);
+      if(선것 || !window.CGOMusicModule) return;
+      var 자리=document.getElementById('cgo-music-mount'); if(!자리) return;
+      받침();
+      try{
+        var m = new window.CGOMusicModule(자리);
+        if(m.init) m.init();
+        window._cgoMusicMod = m;
+        선것 = true;
+        다듬기();                       /* 탭 고르기 · CGO 간판 지우기 · 추첨통 판 짓기 */
+        /* ⚠️ 재우기를 여기서 바로 부르면 안 된다. 뒤따라오는 다듬기가 그림 고리를
+           **다시 켜기 때문**이다. 재 보니 홈에서 1초에 60번이 돌고 있었다.
+           그래서 다듬기가 다 끝난 뒤에 재운다. */
+        setTimeout(function(){ 다듬기(); 재우기(true); }, 650);
+      }catch(e){ try{ console.warn('[JM] 미리 짓기 걸림', e); }catch(_){} }
     },
     열기:async function(){
       if(선것){ 깨우기(); 소리받기(); return; }
@@ -2213,8 +2240,13 @@ window.JK=JK;
   document.addEventListener('DOMContentLoaded',function(){
     var 카드=document.querySelector('.doors2 .tile.make') || document.querySelector('.tile.make');
     if(!카드) return;
+    /* 손이 닿으면 ① 아직 안 받았으면 받고 ② 이미 지어 뒀으면 **미리 붙여 둔다.**
+       손가락이 닿고 화면이 바뀌기까지의 틈(보통 0.1~0.3초)에 붙는 일을 끝낸다.
+       그래서 화면이 바뀔 때는 이미 다 그려져 있다. */
     ['pointerenter','pointerdown','touchstart'].forEach(function(k){
-      카드.addEventListener(k,function(){ JM.미리(); },{once:true,passive:true});
+      카드.addEventListener(k,function(){
+        if(JM.선것()) JM.깨우기(); else JM.미리();
+      },{passive:true});
     });
   });
 })();
