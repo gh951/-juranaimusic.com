@@ -1451,6 +1451,7 @@
     if(name==='chart')render(true);
     if(name==='up'&&window.JK)JK.깨우기();
     if(name==='make'&&window.JM)JM.열기();
+    else if(window.JM&&JM.재우기)JM.재우기();      /* 특허 — 안 보이면 죽인다 */
   };
   window.menu=function(open){document.getElementById('menu').hidden=!open;};
   document.getElementById('menu').addEventListener('click',function(e){if(e.target===this)menu(false);});
@@ -2027,63 +2028,119 @@ window.JK=JK;
 
 <script>
 /* ════════════════════════════════════════════════════════════════════════
-   JM — CGO 주파수 뮤직 엔진을 JURAN 안으로 불러오는 자리   (2026-10-12)
+   JM — CGO 주파수 뮤직 엔진을 JURAN 안으로 불러오는 자리   (2026-10-13 · 3판)
    ------------------------------------------------------------------------
-   왜 이렇게 하나 —
-     엔진에 딸린 악기 소리가 12.5MB 다. 홈을 열 때마다 받으면 홈이 무거워진다.
-     그래서 「나도 작곡가」를 **처음 누를 때 한 번만** 받는다. 두 번째부터는 안 받는다.
-   어디서 받나 —
-     cgo-music.js · Tone.js   → JURAN 제 집 (이 파일 옆)
-     cgo-sound.js · 2.js      → CGO 집 (이미 거기 올라가 있다. 한 벌이면 족하다)
-   ⚠️ 소리통 주소를 옮기려면 아래 `소리집` 한 줄만 바꾸면 된다.
-   ⚠️ 차례가 있다 — Tone → 소리통 → 엔진. 엔진이 먼저 오면 소리가 안 난다.
-   ⚠️ 탭 다섯 중 「주파수」와 「목소리 나이」는 JURAN 에서 안 쓴다. 숨긴다.
+   【2판에서 파트너가 겪은 것 — 전부 내 잘못】
+     "엔진을 못 가져왔습니다. 다시 눌러 주세요" 가 뜨고,
+     다시 누르면 4초 넘게 걸렸다. 재서 그대로 재현했다. 까닭이 셋이었다.
+
+     ① 파일 이름을 한글로 지었다 (말.js · 악보.js).
+        서버와 집집마다 한글 이름을 달리 적는다. 한 글자만 달라도 못 찾는다.
+        → 영문 이름으로 바꿨다. juran-words.js · juran-score.js
+     ② 곁다리 파일 하나가 안 와도 **전부 실패**로 처리했다.
+        엔진(cgo-music.js)은 멀쩡히 실려 있었는데도 안 쓰고 버렸다.
+        → 꼭 있어야 하는 것은 엔진 하나뿐이다. 나머지는 없으면 없는 대로 간다.
+           말 사전이 없으면 글자가 번호로 뜨지만, 앱은 돈다.
+     ③ 다시 누르면 **이미 받아 둔 1.33MB 까지 새로 받았다.**
+        → 파일마다 따로 적어 둔다. 온 것은 두 번 안 받는다.
+
+   【무엇이 꼭 있어야 하나】
+     cgo-music.js            — 없으면 아무것도 안 된다
+     juran-words.js          — 없으면 글자가 번호로 뜬다 (돌긴 돈다)
+     juran-score.js          — 없으면 악보가 안 그려진다 (돌긴 돈다)
+     Tone.js · 소리통 둘      — 없으면 소리가 안 난다 (화면은 돈다)
+
+   【특허 자리】 보이는 것만 살리고, 안 보이는 것은 **죽인다.**
+     나가면 그림 고리를 끊고, 소리틀을 재우고, 화면 조각을 통째로 떼어 둔다.
+     재 보니 안 그랬을 때는 홈에 나와서도 1초에 60번 돌고 조각 7,090개가
+     매달려 있었다. 떼어 둔 것은 쥐고 있다가 다시 들어오면 그대로 붙인다.
    ════════════════════════════════════════════════════════════════════════ */
 (function(){
   var 소리집 = 'https://www.c-go-fuli.com/';
-  var 내집   = 'js/';          /* 우리 글은 js 칸에 모아 둔다. 나중에 번역·다른 글도 여기로. */
-  /* ⚠️ 차례가 뜻을 가진다 — 말 사전이 작곡실보다 **먼저** 와야 글자가 숫자로 안 뜬다. */
-  var 줄     = [내집+'\ub9d0.js', 내집+'Tone.js', 소리집+'cgo-sound.js', 소리집+'cgo-sound2.js',
-                내집+'cgo-music.js', 내집+'\uc545\ubcf4.js'];
-  /* 악보 판은 작곡실 **뒤에** 와도 된다. 작곡실은 곡을 다 만든 뒤에야 악보를 부른다. */
-  var 받는중=false, 선것=false;
+  var 내집   = 'js/';
+  var 화면줄 = [{주소:내집+'juran-words.js', 꼭:false, 이름:'말 사전'},
+                {주소:내집+'cgo-music.js',   꼭:true,  이름:'작곡 엔진'},
+                {주소:내집+'juran-score.js', 꼭:false, 이름:'악보 판'}];
+  var 소리줄 = [{주소:내집+'Tone.js',          꼭:false, 이름:'드럼'},
+                {주소:소리집+'cgo-sound.js',  꼭:false, 이름:'악기 소리'},
+                {주소:소리집+'cgo-sound2.js', 꼭:false, 이름:'악기 소리 2'}];
+
+  var 온것={}, 가는중={}, 선것=false, 소리시작=false;
 
   function 쪽지(글){ var e=document.getElementById('jm-note'); if(e) e.textContent=글||''; }
 
-  function 글하나(주소){
-    return new Promise(function(ok,no){
+  /* 파일 하나 — 이미 온 것은 두 번 안 받는다 */
+  function 글하나(u){
+    if(온것[u]) return Promise.resolve(true);
+    if(가는중[u]) return 가는중[u];
+    가는중[u]=new Promise(function(ok){
       var s=document.createElement('script');
-      s.src=주소; s.async=false;
-      s.onload=function(){ ok(); };
-      s.onerror=function(){ no(new Error(주소)); };
+      s.src=u; s.async=false;
+      s.onload =function(){ 온것[u]=true;  가는중[u]=null; ok(true);  };
+      s.onerror=function(){                가는중[u]=null; ok(false); };
       document.head.appendChild(s);
     });
+    return 가는중[u];
+  }
+  /* 한꺼번에 띄워 나란히 받는다. async=false 라 도는 차례는 지켜진다. */
+  function 글들(줄){
+    var 할것=줄.filter(function(x){ return !온것[x.주소]; });
+    var 모두=할것.map(function(x){ return 글하나(x.주소).then(function(ok){ return {x:x,ok:ok}; }); });
+    return Promise.all(모두);
   }
 
-  /* 모듈이 CGO 쪽을 부를 때 쓰는 것들 — JURAN 에는 없으니 작게 받쳐 둔다 */
   function 받침(){
     if(!window.cgoGoPage) window.cgoGoPage=function(p){
       try{ if(p==='dashboard'||p==='home') showView('home'); }catch(e){}
     };
     if(!window._spd2Mark) window._spd2Mark=function(){};
-    /* 소개 팝업은 CGO 것이라 JURAN 에서는 안 띄운다 */
     try{ localStorage.setItem('cgo_music_intro_v2','1'); }catch(e){}
   }
+
+  /* ════ 특허 자리 — 안 보이면 죽인다 ════ */
+  var 뗀것=null;
+  function 재우기(){
+    var 자리=document.getElementById('cgo-music-mount');
+    var m=window._cgoMusicMod;
+    if(m){
+      try{ if(m.bgAnimId){ cancelAnimationFrame(m.bgAnimId); m.bgAnimId=null; } }catch(e){}
+      try{ (m.slotKeys||[]).forEach(function(k){
+             if(m.slotAnimIds&&m.slotAnimIds[k]){ cancelAnimationFrame(m.slotAnimIds[k]); m.slotAnimIds[k]=null; }
+           }); }catch(e){}
+      try{ if(m.isPlaying&&m._stopAudio) m._stopAudio(); }catch(e){}
+      try{ if(m.audioCtx&&m.audioCtx.state==='running') m.audioCtx.suspend(); }catch(e){}
+    }
+    try{ if(window._cgoSrvStop) window._cgoSrvStop(); }catch(e){}
+    try{ if(window._cgoScoreStop) window._cgoScoreStop(); }catch(e){}
+    if(자리&&자리.firstChild&&!뗀것){
+      뗀것=document.createDocumentFragment();
+      while(자리.firstChild) 뗀것.appendChild(자리.firstChild);
+    }
+  }
+  function 깨우기(){
+    var 자리=document.getElementById('cgo-music-mount');
+    if(자리&&뗀것){ 자리.appendChild(뗀것); 뗀것=null; }
+    var m=window._cgoMusicMod; if(!m) return;
+    try{ if(m.audioCtx&&m.audioCtx.state==='suspended') m.audioCtx.resume(); }catch(e){}
+    try{ if(m._resizeBg) m._resizeBg(); }catch(e){}
+    try{ if(!m.bgAnimId&&m._startBgCanvas) m._startBgCanvas(); }catch(e){}
+  }
+  document.addEventListener('visibilitychange',function(){
+    if(document.hidden) 재우기();
+    else { var v=document.getElementById('v-make'); if(v&&!v.hidden) 깨우기(); }
+  });
 
   function 다듬기(){
     var r=document.getElementById('cgo-music-root'); if(!r) return;
     /* ⚠️ cgo-music.js 는 두 앱이 같이 쓰는 한 벌이다. 거기 글을 고치면 CGO 도 바뀐다.
-       그래서 JURAN 쪽 손질은 **여기서 화면만** 바꾼다. 파일은 안 건드린다. */
+       그래서 JURAN 쪽 손질은 여기서 화면만 바꾼다. 파일은 안 건드린다. */
     ['freq','voice'].forEach(function(t){
       var e=r.querySelector('.cgo-mtab[data-tab="'+t+'"]'); if(e) e.style.display='none';
     });
     var h=r.querySelector('.cgo-mhdr'); if(h) h.style.display='none';
-    /* CGO 간판 — 위성·생체·역학·치료음악. JURAN 은 전문 음악 앱이라 안 맞는다.
-       소리틀(player)은 쓰는 것이니 그대로 둔다. */
     ['.cgo-mhero-tag','.cgo-mhero-h1','.cgo-mhero-desc'].forEach(function(q){
       var e=r.querySelector(q); if(e) e.style.display='none';
     });
-    /* CGO 말씨를 JURAN 말씨로 */
     var 바꿀=[['치유 주파수 선택','바탕 주파수 고르기'],['치유 주파수','바탕 주파수']];
     var it=document.createNodeIterator(r, NodeFilter.SHOW_TEXT);
     var nd; while((nd=it.nextNode())){
@@ -2100,30 +2157,66 @@ window.JK=JK;
     try{ window._cgoMusicMod._switchTab('make'); }catch(e){}
   }
 
+  function 소리받기(){
+    if(소리시작) return; 소리시작=true;
+    쪽지('🔊 악기 소리를 가져오는 중입니다 — 화면은 지금 쓰셔도 됩니다');
+    글들(소리줄).then(function(결과){
+      var 못온=결과.filter(function(r){ return !r.ok; });
+      if(!못온.length){ 쪽지(''); return; }
+      소리시작=false;
+      쪽지('소리 가운데 '+못온.map(function(r){return r.x.이름;}).join('·')+' 을(를) 못 가져왔습니다. 다시 들어오시면 받습니다.');
+    });
+  }
+
   window.JM={
     선것:function(){ return 선것; },
+    재우기:재우기, 깨우기:깨우기,
+    미리:function(){
+      try{ var c=navigator.connection;
+           if(c && (c.saveData || /(^|-)2g$/.test(c.effectiveType||''))) return; }catch(e){}
+      글들(화면줄);
+    },
     열기:async function(){
-      if(선것||받는중) return;
+      if(선것){ 깨우기(); 소리받기(); return; }
       var 자리=document.getElementById('cgo-music-mount'); if(!자리) return;
-      받는중=true; 받침();
-      쪽지('🎹 작곡 엔진을 가져오는 중입니다 — 처음 한 번만 받습니다 (약 14MB)');
-      try{
-        for(var i=0;i<줄.length;i++){ await 글하나(줄[i]); }
-      }catch(e){
-        받는중=false;
-        쪽지('엔진을 못 가져왔습니다. 잠시 뒤 다시 눌러 주세요.');
+      받침();
+      쪽지('🎹 작곡 엔진을 여는 중입니다');
+      var 결과 = await 글들(화면줄);
+      var 못온 = 결과.filter(function(r){ return !r.ok; });
+      if(!window.CGOMusicModule){
+        쪽지('작곡 엔진(cgo-music.js)을 못 가져왔습니다. 다시 눌러 주세요.');
         return;
       }
-      if(!window.CGOMusicModule){ 받는중=false; 쪽지('엔진이 안 실렸습니다.'); return; }
       try{
         window._cgoMusicMod = new window.CGOMusicModule(자리);
         if(window._cgoMusicMod.init) window._cgoMusicMod.init();
-      }catch(e){ 받는중=false; 쪽지('엔진을 여는 데 걸렸습니다.'); return; }
-      setTimeout(다듬기, 400);
-      setTimeout(다듬기, 1800);
-      쪽지(''); 선것=true; 받는중=false;
+      }catch(e){ 쪽지('엔진을 여는 데 걸렸습니다. 다시 눌러 주세요.'); return; }
+      setTimeout(다듬기, 300); setTimeout(다듬기, 1500);
+      선것=true;
+      /* 꼭 있어야 하는 것은 왔다. 곁다리가 빠졌으면 알려만 주고 그대로 쓴다. */
+      if(못온.length){
+        try{ console.warn('[JM] 못 온 곁다리:', 못온.map(function(r){return r.x.주소;})); }catch(e){}
+      }
+      소리받기();
     }
   };
+
+  function 한가할때(){
+    try{
+      if(window.requestIdleCallback) requestIdleCallback(function(){ JM.미리(); },{timeout:4000});
+      else setTimeout(function(){ JM.미리(); }, 2500);
+    }catch(e){ setTimeout(function(){ JM.미리(); }, 2500); }
+  }
+  if(document.readyState==='complete') setTimeout(한가할때,1500);
+  else window.addEventListener('load',function(){ setTimeout(한가할때,1500); });
+
+  document.addEventListener('DOMContentLoaded',function(){
+    var 카드=document.querySelector('.doors2 .tile.make') || document.querySelector('.tile.make');
+    if(!카드) return;
+    ['pointerenter','pointerdown','touchstart'].forEach(function(k){
+      카드.addEventListener(k,function(){ JM.미리(); },{once:true,passive:true});
+    });
+  });
 })();
 </script>
 
