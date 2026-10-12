@@ -2043,7 +2043,9 @@ window.JK=JK;
   var 소리집 = 'https://www.c-go-fuli.com/';
   var 내집   = 'js/';          /* 우리 글은 js 칸에 모아 둔다. 나중에 번역·다른 글도 여기로. */
   /* ⚠️ 차례가 뜻을 가진다 — 말 사전이 작곡실보다 **먼저** 와야 글자가 숫자로 안 뜬다. */
-  var 줄     = [내집+'\ub9d0.js', 내집+'Tone.js', 소리집+'cgo-sound.js', 소리집+'cgo-sound2.js', 내집+'cgo-music.js'];
+  var 줄     = [내집+'\ub9d0.js', 내집+'Tone.js', 소리집+'cgo-sound.js', 소리집+'cgo-sound2.js',
+                내집+'cgo-music.js', 내집+'\uc545\ubcf4.js'];
+  /* 악보 판은 작곡실 **뒤에** 와도 된다. 작곡실은 곡을 다 만든 뒤에야 악보를 부른다. */
   var 받는중=false, 선것=false;
 
   function 쪽지(글){ var e=document.getElementById('jm-note'); if(e) e.textContent=글||''; }
