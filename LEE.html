@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>JURAN 관리</title>
+<style>
+html{color-scheme:light;word-break:keep-all;overflow-wrap:break-word}
+:root{
+  --bg:#f3f7f6; --card:#fff; --card2:#eef5f3; --fg:#0d2b28; --muted:#5b7a74; --faint:#93aba6;
+  --line:rgba(8,60,55,.13); --mint:#06b6a4; --deep:#03897d; --soft:#d9f3ed;
+  --gold:#eaa61b; --goldsoft:#fff1cf; --red:#d6453f;
+  --s:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',"Malgun Gothic",system-ui,sans-serif;
+  --m:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --bg:#07201d; --card:#0c2b28; --card2:#113631; --fg:#eafff8; --muted:#93b6af; --faint:#6d938c;
+  --line:rgba(255,255,255,.12); --mint:#2fe6c0; --deep:#7ff2dc; --soft:#0f3f39;
+  --gold:#ffcf5c; --goldsoft:#3a3216; --red:#ff7b76; color-scheme:dark; }}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.6 var(--s);
+     padding:0 14px calc(40px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:1180px;margin:0 auto}
+header{padding:22px 0 14px;border-bottom:1px solid var(--line);margin-bottom:18px;
+       display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+h1{margin:0;font-size:20px;font-weight:800;letter-spacing:-.01em}
+.tag{font:700 10.5px/1 var(--m);letter-spacing:.14em;color:var(--deep);
+     background:var(--soft);padding:6px 10px;border-radius:999px}
+.sp{flex:1}
+.box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:15px 16px;margin-bottom:14px}
+.box h2{margin:0 0 12px;font-size:15px;font-weight:800}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+label{display:flex;flex-direction:column;gap:5px;font-size:11.5px;color:var(--muted);flex:1 1 150px;min-width:0}
+input,select,textarea{width:100%;font:14px var(--s);color:var(--fg);background:var(--card2);
+  border:1px solid var(--line);border-radius:9px;padding:9px 10px}
+input[type=number]{font-family:var(--m)}
+textarea{min-height:68px;resize:vertical}
+button{font:700 13px var(--s);cursor:pointer;border-radius:10px;border:1px solid var(--line);
+  background:var(--card2);color:var(--fg);min-height:42px;padding:0 14px}
+button.pri{background:var(--deep);color:#fff;border-color:var(--deep)}
+button.warn{color:var(--red);border-color:rgba(214,69,63,.4)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--fg);outline-offset:1px}
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+table{border-collapse:collapse;width:100%;min-width:1060px;font-size:13px}
+th,td{padding:6px 7px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{position:sticky;top:0;background:var(--card2);font:700 11px var(--m);letter-spacing:.06em;
+   color:var(--muted);z-index:2;white-space:nowrap}
+td input,td select{padding:7px 8px;border-radius:7px;font-size:13px}
+td.n{width:42px;color:var(--faint);font:600 11px var(--m);text-align:right}
+td.x{width:38px}
+td.x button{min-height:30px;padding:0 9px;font-size:12px}
+.w-t{min-width:180px}.w-by{min-width:130px}.w-g{min-width:130px}.w-c{min-width:120px}
+.w-v{min-width:100px}.w-s{min-width:76px}.w-l{min-width:160px}
+.note{font-size:12px;color:var(--muted);line-height:1.65}
+.note b{color:var(--fg)}
+.warnbar{background:var(--goldsoft);border:1px solid rgba(180,140,20,.32);border-radius:12px;
+         padding:11px 13px;font-size:12.5px;line-height:1.65;margin-bottom:14px}
+.bar{position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--line);
+     padding:12px 0;display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.cnt{font:700 12px var(--m);color:var(--muted)}
+.ok{color:var(--deep);font-weight:700}
+.gate{max-width:380px;margin:90px auto;text-align:center}
+.gate input{text-align:center;height:50px;font-size:17px;margin:14px 0}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="gate" hidden>
+  <div class="gate">
+    <h1>JURAN 관리</h1>
+    <p class="note" style="margin-top:10px">아는 사람만 들어옵니다.</p>
+    <input id="pw" type="password" placeholder="열쇠말" autocomplete="off">
+    <button class="pri" style="width:100%" onclick="열기()">들어가기</button>
+    <p class="note" id="gmsg" style="margin-top:12px;color:var(--red)"></p>
+  </div>
+</div>
+
+<div class="wrap" id="main" hidden>
+
+<header>
+  <h1>JURAN 관리</h1>
+  <span class="tag">LEE</span>
+  <div class="sp"></div>
+  <button onclick="파일열기()">📂 juran.json 불러오기</button>
+  <input type="file" id="f" accept=".json,application/json" hidden>
+  <button class="pri" onclick="내려받기()">⬇ juran.json 내려받기</button>
+</header>
+
+<div class="warnbar" id="howto">
+  <b>쓰는 법</b> — 여기서 고치고 <b>⬇ juran.json 내려받기</b> 를 누르면 파일 하나가 떨어집니다.
+  그 파일만 깃허브 <code>juranaimusic.com</code> 저장소 맨 위에 올리면 사이트가 바뀝니다.
+  <b>index.html 은 손대지 않습니다.</b> (5KB쯤이라 10초면 올라갑니다)
+</div>
+
+<div class="box">
+  <h2>시즌</h2>
+  <div class="row">
+    <label>이름<input id="s-name" value="시즌 1"></label>
+    <label>시작<input id="s-from" type="date"></label>
+    <label>끝나는 날<input id="s-to" type="date"></label>
+    <label style="flex:0 0 190px">남은 날<input id="s-dday" readonly></label>
+  </div>
+  <p class="note" style="margin-top:10px">끝나는 날만 적으면 첫 화면의 <b>D-○○</b> 가 저절로 세어집니다.</p>
+</div>
+
+<div class="box">
+  <h2>첫 화면 문구</h2>
+  <div class="row">
+    <label>첫 줄<input id="t1" value="누구나 작곡가가 되는"></label>
+    <label>둘째 줄 <span style="color:var(--deep)">(색 들어가는 줄)</span><input id="t2" value="지구에서 가장 공정한 무대"></label>
+  </div>
+  <label style="margin-top:10px">설명<textarea id="t3"></textarea></label>
+</div>
+
+<div class="box">
+  <h2>자료 상태</h2>
+  <div class="row" style="align-items:center">
+    <label style="flex:0 0 auto;flex-direction:row;align-items:center;gap:9px;font-size:13.5px;color:var(--fg)">
+      <input type="checkbox" id="demo" checked style="width:20px;height:20px;flex:none">
+      아직 <b>보기용</b> 자료입니다
+    </label>
+  </div>
+  <p class="note" style="margin-top:10px">켜 두면 첫 화면에 <b>「여기 보이는 곡·표·점수는 아직 보기용입니다」</b> 라는 띠가 뜹니다.
+    진짜 곡이 올라오면 꺼 주세요. 켜 두는 게 속이지 않는 길입니다.</p>
+</div>
+
+<div class="box">
+  <h2>저작권 1차 예측 — 공시</h2>
+  <div class="row">
+    <label style="flex:0 0 190px">몇 곡을 기준으로 쟀나<input id="b-n" type="number" value="1000"></label>
+    <label>갱신한 날<input id="b-d" type="date"></label>
+  </div>
+  <label style="margin-top:10px">손님에게 보일 알림글<textarea id="b-t"></textarea></label>
+  <p class="note" style="margin-top:10px">차트 카드 밑과 <b>ⓘ 기준</b> 쪽지에 그대로 나옵니다.
+    <b>「예측일 뿐이고 틀릴 수 있습니다」</b> 는 꼭 남겨 두세요. 숨기지 않는 것이 우리를 지킵니다.</p>
+</div>
+
+<div class="box">
+  <h2>뉴스 <span style="font-weight:400;color:var(--faint);font-size:12px">· 비워 두면 안 뜹니다</span></h2>
+  <div id="news"></div>
+  <button style="margin-top:10px" onclick="뉴스줄()">+ 한 줄 더</button>
+</div>
+
+<div class="box">
+  <h2>곡 <span style="font-weight:400;color:var(--faint);font-size:12px">· 여기만 채우면 챔피언·급상승·차트가 저절로 나옵니다</span></h2>
+  <p class="note" style="margin-bottom:12px">
+    <b>챔피언</b> = 표 1등 · <b>급상승</b> = (표 − 전표) 큰 순 15곡 · <b>차트</b> = 표 많은 순 50곡 ·
+    <b>국내</b> = 보는 사람 나라와 같은 곡.<br>
+    <b>전표</b> 는 「지난번에 셌을 때의 표」입니다. 지금 표보다 작게 적으면 그만큼 올랐다고 봅니다.
+  </p>
+  <div class="tblwrap">
+    <table>
+      <thead><tr>
+        <th class="n">#</th><th class="w-t">제목</th><th class="w-by">지은이</th>
+        <th class="w-g">장르</th><th class="w-c">나라</th>
+        <th class="w-v">표</th><th class="w-v">전표</th><th class="w-s">점수</th>
+        <th class="w-s">곡 닮음%</th><th class="w-s">가사 닮음%</th>
+        <th class="w-l">링크 (없으면 비움)</th><th class="x"></th>
+      </tr></thead>
+      <tbody id="tb"></tbody>
+    </table>
+  </div>
+  <div class="bar">
+    <button onclick="줄추가()">+ 한 줄</button>
+    <button onclick="줄추가(10)">+ 열 줄</button>
+    <button onclick="붙여넣기()">📋 표에서 붙여넣기</button>
+    <button class="warn" onclick="비우기()">모두 지우기</button>
+    <div class="sp"></div>
+    <span class="cnt" id="cnt"></span>
+    <button class="pri" onclick="내려받기()">⬇ juran.json 내려받기</button>
+  </div>
+  <p class="note">📋 <b>표에서 붙여넣기</b> — 엑셀이나 구글 시트에서 칸을 복사해 붙이면 한꺼번에 들어갑니다.
+    차례는 <b>제목 · 지은이 · 장르 · 나라 · 표 · 전표 · 점수 · 링크</b> 입니다.</p>
+</div>
+
+</div>
+
+<script>
+"use strict";
+/* ══════════════════════════════════════════════════════════
+   juranaimusic.com/LEE  ·  곡 하나만 적으면 나머지는 저절로
+   지금은 서버가 없다 → juran.json 을 떨궈서 깃허브에 올린다.
+   보관소가 붙으면 「내려받기」가 「바로 저장」으로 바뀐다. 이 페이지는 그대로.
+   ══════════════════════════════════════════════════════════ */
+
+var 열쇠='juran';           /* 지금은 자물쇠가 아니라 문패다. 아래 설명 참조 */
+var 장르들=["K-팝","발라드","힙합/랩","R&B","EDM/댄스","록/밴드","시티팝","재즈","트로트","로파이","힐링(주파수)"];
+var 자켓장르={"K-팝":4,"발라드":0,"힙합/랩":1,"R&B":6,"EDM/댄스":2,"록/밴드":3,
+              "시티팝":13,"재즈":7,"트로트":27,"로파이":15,"힐링(주파수)":20};
+var 나라들={"KR":"대한민국","US":"미국","JP":"일본","CN":"중국","TW":"대만","HK":"홍콩",
+"GB":"영국","DE":"독일","FR":"프랑스","IT":"이탈리아","ES":"스페인","PT":"포르투갈","NL":"네덜란드",
+"SE":"스웨덴","NO":"노르웨이","FI":"핀란드","DK":"덴마크","PL":"폴란드","RU":"러시아","UA":"우크라이나",
+"TR":"튀르키예","IN":"인도","ID":"인도네시아","TH":"태국","VN":"베트남","PH":"필리핀","MY":"말레이시아",
+"SG":"싱가포르","AU":"호주","NZ":"뉴질랜드","CA":"캐나다","MX":"멕시코","BR":"브라질","AR":"아르헨티나",
+"CL":"칠레","CO":"콜롬비아","PE":"페루","SA":"사우디아라비아","AE":"아랍에미리트","EG":"이집트",
+"MA":"모로코","ZA":"남아프리카","NG":"나이지리아","KE":"케냐","IL":"이스라엘","IR":"이란",
+"PK":"파키스탄","BD":"방글라데시","MN":"몽골","GR":"그리스","CZ":"체코","AT":"오스트리아",
+"CH":"스위스","BE":"벨기에","IE":"아일랜드","RO":"루마니아","HU":"헝가리"};
+
+function $(i){ return document.getElementById(i); }
+function 깃발(c){ if(!c||c.length!==2) return '🌍';
+  try{ return String.fromCodePoint(0x1F1E6+c.charCodeAt(0)-65,0x1F1E6+c.charCodeAt(1)-65); }catch(e){ return '🌍'; } }
+function 해시(s){ var h=2166136261; s=String(s);
+  for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0); }
+
+/* ── 문 ── */
+function 열기(){
+  if($('pw').value===열쇠){
+    try{ sessionStorage.setItem('lee','1'); }catch(e){}
+    $('gate').hidden=true; $('main').hidden=false; 처음();
+  } else $('gmsg').textContent='열쇠말이 다릅니다.';
+}
+$('pw').addEventListener('keydown',function(e){ if(e.key==='Enter') 열기(); });
+(function(){
+  var 들어와있나=false;
+  try{ 들어와있나=sessionStorage.getItem('lee')==='1'; }catch(e){}
+  if(들어와있나){ $('main').hidden=false; 처음(); } else $('gate').hidden=false;
+})();
+
+/* ── 곡 표 ── */
+function 칸(값,형,넓){
+  return '<input value="'+String(값==null?'':값).replace(/"/g,'&quot;')+'"'+
+         (형?' type="'+형+'"':'')+(넓?' class="'+넓+'"':'')+'>';
+}
+function 줄HTML(c){
+  var g=장르들.map(function(x){ return '<option'+(x===c.g?' selected':'')+'>'+x+'</option>'; }).join('');
+  var ks=Object.keys(나라들).sort(function(a,b){ return 나라들[a].localeCompare(나라들[b],'ko'); });
+  var n=ks.map(function(k){ return '<option value="'+k+'"'+(k===c.나라?' selected':'')+'>'+깃발(k)+' '+나라들[k]+'</option>'; }).join('');
+  return '<tr>'+
+   '<td class="n"></td>'+
+   '<td>'+칸(c.t)+'</td>'+
+   '<td>'+칸(c.by)+'</td>'+
+   '<td><select>'+g+'</select></td>'+
+   '<td><select><option value="">🌍 없음</option>'+n+'</select></td>'+
+   '<td>'+칸(c.표,'number')+'</td>'+
+   '<td>'+칸(c.전표,'number')+'</td>'+
+   '<td>'+칸(c.점수,'number')+'</td>'+
+   '<td>'+칸(c.곡닮음,'number')+'</td>'+
+   '<td>'+칸(c.가사닮음,'number')+'</td>'+
+   '<td>'+칸(c.링크)+'</td>'+
+   '<td class="x"><button class="warn" onclick="this.closest(\'tr\').remove();셈()">✕</button></td>'+
+  '</tr>';
+}
+function 줄추가(n){
+  n=(typeof n==='number'&&n>0)?n:1;
+  var h=''; for(var i=0;i<n;i++) h+=줄HTML({t:'',by:'',g:장르들[0],나라:'KR',표:0,전표:0,점수:90,링크:''});
+  $('tb').insertAdjacentHTML('beforeend',h); 셈();
+}
+function 비우기(){ if(confirm('곡을 모두 지웁니다. 되돌릴 수 없습니다.')){ $('tb').innerHTML=''; 셈(); } }
+function 셈(){
+  var tr=$('tb').querySelectorAll('tr');
+  for(var i=0;i<tr.length;i++) tr[i].querySelector('td.n').textContent=i+1;
+  $('cnt').textContent=tr.length+' 곡';
+}
+function 읽기(){
+  var out=[];
+  $('tb').querySelectorAll('tr').forEach(function(tr,i){
+    var v=tr.querySelectorAll('input'), s=tr.querySelectorAll('select');
+    /* 칸 차례 : 0 제목 · 1 지은이 · 2 표 · 3 전표 · 4 점수 · 5 곡닮음 · 6 가사닮음 · 7 링크
+       ⚠️ 한 번 한 칸 밀려 세어 표·점수·링크가 통째로 어긋났었다. 칸을 더할 때마다 다시 센다 */
+    var t=(v[0].value||'').trim(); if(!t) return;
+    var g=s[0].value, 표=+v[2].value||0;
+    function 퍼(x){ var n=parseFloat(x); return isFinite(n)? Math.max(0,Math.min(100,Math.round(n))) : null; }
+    out.push({ id:'s'+('00'+(i+1)).slice(-3), t:t, by:(v[1].value||'').trim(), g:g,
+      나라:(s[1].value||'').toUpperCase(),
+      표:표, 전표:Math.min(+v[3].value||0, 표), 점수:+v[4].value||0,
+      곡닮음:퍼(v[5].value), 가사닮음:퍼(v[6].value),
+      링크:(v[7].value||'').trim(),
+      자켓:{ gi:(자켓장르[g]||0), img:해시(t)%40, 색:0, 결:null } });
+  });
+  out.sort(function(a,b){ return b.표-a.표; });
+  return out;
+}
+
+/* ── 붙여넣기 ── */
+function 붙여넣기(){
+  var t=prompt('엑셀·구글 시트에서 칸을 복사해 여기에 붙여 넣으세요.\n차례 : 제목 ⇥ 지은이 ⇥ 장르 ⇥ 나라 ⇥ 표 ⇥ 전표 ⇥ 점수 ⇥ 곡닮음 ⇥ 가사닮음 ⇥ 링크');
+  if(!t) return;
+  var 넣=0;
+  t.split(/\r?\n/).forEach(function(line){
+    if(!line.trim()) return;
+    var c=line.split('\t');
+    var g=(c[2]||'').trim(); if(장르들.indexOf(g)<0) g=장르들[0];
+    var 나=(c[3]||'').trim().toUpperCase(); if(!나라들[나]) 나='';
+    var 표=parseInt((c[4]||'0').replace(/[^0-9]/g,''),10)||0;
+    var 전=parseInt((c[5]||'0').replace(/[^0-9]/g,''),10)||0;
+    $('tb').insertAdjacentHTML('beforeend', 줄HTML({
+      t:(c[0]||'').trim(), by:(c[1]||'').trim(), g:g, 나라:나,
+      표:표, 전표:Math.min(전,표), 점수:parseFloat(c[6])||90,
+      곡닮음:(isFinite(parseFloat(c[7]))?Math.round(parseFloat(c[7])):null),
+      가사닮음:(isFinite(parseFloat(c[8]))?Math.round(parseFloat(c[8])):null),
+      링크:(c[9]||'').trim() }));
+    넣++;
+  });
+  셈(); alert(넣+'줄 들어갔습니다.');
+}
+
+/* ── 뉴스 ── */
+function 뉴스줄(n){
+  n=n||{};
+  $('news').insertAdjacentHTML('beforeend',
+   '<div class="row" style="margin-bottom:9px">'+
+   '<label>제목<input value="'+(n.t||'').replace(/"/g,'&quot;')+'"></label>'+
+   '<label style="flex:2 1 260px">내용<input value="'+(n.d||'').replace(/"/g,'&quot;')+'"></label>'+
+   '<button class="warn" style="flex:0 0 auto" onclick="this.parentNode.remove()">✕</button></div>');
+}
+function 뉴스읽기(){
+  var out=[];
+  $('news').querySelectorAll('.row').forEach(function(r){
+    var v=r.querySelectorAll('input');
+    if((v[0].value||'').trim()) out.push({t:v[0].value.trim(), d:(v[1].value||'').trim()});
+  });
+  return out;
+}
+
+/* ── 남은 날 ── */
+function 날세기(){
+  var to=$('s-to').value;
+  if(!to){ $('s-dday').value=''; return; }
+  var d=Math.ceil((new Date(to+'T23:59:59')-new Date())/86400000);
+  $('s-dday').value = d>=0 ? ('D-'+d) : ('끝남 ('+(-d)+'일 지남)');
+}
+$('s-to').addEventListener('change',날세기);
+
+/* ── 내려받기 / 불러오기 ── */
+function 모으기(){
+  return { 보기용: $('demo').checked,
+    시즌:{ 이름:$('s-name').value, 시작:$('s-from').value, 끝:$('s-to').value },
+    문구:{ 제목1:$('t1').value, 제목2:$('t2').value, 설명:$('t3').value },
+    기준:{ 곡수:+$('b-n').value||0, 갱신:$('b-d').value, 알림:$('b-t').value },
+    뉴스: 뉴스읽기(), 곡: 읽기() };
+}
+function 내려받기(){
+  var j=모으기();
+  if(!j.곡.length && !confirm('곡이 하나도 없습니다. 그래도 내려받을까요?')) return;
+  var b=new Blob([JSON.stringify(j,null,1)],{type:'application/json'});
+  var a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='juran.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); },3000);
+}
+function 파일열기(){ $('f').click(); }
+$('f').addEventListener('change',function(e){
+  var f=e.target.files[0]; if(!f) return;
+  var fr=new FileReader();
+  fr.onload=function(ev){ try{ 채우기(JSON.parse(ev.target.result)); }
+    catch(err){ alert('파일을 못 읽었습니다 — '+err.message); } };
+  fr.readAsText(f); e.target.value='';
+});
+function 채우기(j){
+  if(j.시즌){ $('s-name').value=j.시즌.이름||''; $('s-from').value=j.시즌.시작||''; $('s-to').value=j.시즌.끝||''; }
+  if(j.문구){ $('t1').value=j.문구.제목1||''; $('t2').value=j.문구.제목2||''; $('t3').value=j.문구.설명||''; }
+  if(j.기준){ $('b-n').value=j.기준.곡수||0; $('b-d').value=j.기준.갱신||''; $('b-t').value=j.기준.알림||''; }
+  $('demo').checked = (j.보기용!==false);
+  $('news').innerHTML=''; (j.뉴스||[]).forEach(뉴스줄);
+  $('tb').innerHTML=(j.곡||[]).map(줄HTML).join('');
+  셈(); 날세기();
+}
+
+/* ── 처음 열 때 지금 사이트 자료를 끌어온다 ── */
+function 처음(){
+  날세기();
+  fetch('../juran.json?'+Date.now(),{cache:'no-store'})
+    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+    .then(채우기)
+    .catch(function(){ 줄추가(5); 뉴스줄(); });
+}
+</script>
+</body>
+</html>
