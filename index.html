@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<style>html{color-scheme:light}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+<style>html{color-scheme:light;word-break:keep-all;overflow-wrap:break-word;line-break:strict;hanging-punctuation:allow-end}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>JURAN</title>
 
 <!-- 링크 보낼 때 뜨는 그림·제목 (카톡·페북·X 공통) -->
@@ -66,6 +66,7 @@
     background:radial-gradient(1200px 600px at 80% -10%,var(--bg2),transparent 60%),radial-gradient(900px 500px at -10% 10%,var(--bg3),transparent 55%),linear-gradient(180deg,var(--bg1),var(--bg3));
     background-attachment:fixed;-webkit-font-smoothing:antialiased}
   h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;letter-spacing:-.02em}
+  p,li,.lede,.hint,.auto,.note{text-wrap:pretty}
   .num{font-family:var(--display);font-variant-numeric:tabular-nums}
   a{color:inherit;text-decoration:none}
   .wrap{max-width:1080px;margin:0 auto;padding-inline:18px}
@@ -139,6 +140,125 @@
   .tile.make h3{font-size:22px;color:#fff}.tile.make p{color:#c9f3ea}
   .tile.make .ic{background:rgba(255,255,255,.16)}
   .tile.make .free{align-self:flex-start;font-family:var(--display);font-weight:800;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#3a2600;background:linear-gradient(135deg,var(--gold),#ffcf5c);padding:5px 11px;border-radius:999px}
+/* ───────── 내 곡 올리기 (v-up) · 자켓 ───────── */
+.doors{grid-template-columns:1fr;gap:16px}
+.doors .tile{padding:26px 24px;gap:12px}
+.doors .tile h3{font-size:25px}
+.doors .tile p{font-size:14px;max-width:46ch}
+.doors .two{max-width:420px}
+.doors .tile.make{grid-column:auto}
+.tile.up{background:var(--surface);border-color:var(--mint-soft)}
+.tile.up .ic{background:var(--mint-soft)}
+.tile.up h3{font-size:22px}
+.menu-btn{white-space:nowrap}
+@media(max-width:430px){.brand small{display:none}}
+/* ───────── 나라 · 급상승 탭 ───────── */
+.ntab{display:flex;gap:6px;margin-bottom:10px}
+.ntab button{flex:1;min-height:38px;border-radius:10px;border:1px solid var(--line);
+  background:var(--surface2);color:var(--muted);font:700 12.5px var(--display);cursor:pointer;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ntab button[aria-pressed=true]{background:var(--mint-deep);color:#fff;border-color:var(--mint-deep)}
+.ntab button:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+@media(min-width:900px){ .side .ntab{display:none} }
+.twin{display:none;gap:14px}
+@media(min-width:900px){ .twin{display:grid;grid-template-columns:1fr 1fr} }
+.rcol .rh{display:flex;align-items:center;gap:7px;margin-bottom:8px;font:700 12.5px var(--display);color:var(--muted)}
+.more{display:block;width:100%;margin-top:9px;min-height:40px;border-radius:10px;border:1px dashed var(--line);
+  background:transparent;color:var(--mint-deep);font:700 12.5px var(--display);cursor:pointer}
+.riselist{max-height:none}
+.champs{margin-top:22px;display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:760px){ .champs{grid-template-columns:1fr 1fr} }
+.champion.glob{background:linear-gradient(135deg,#16233a,#0f2a4c 55%,#114066)}
+.charts,.doors2{margin-top:16px;display:flex;flex-direction:column;gap:16px}
+.doors2 .tile{padding:24px;gap:12px}
+.doors2 .tile h3{font-size:23px}
+.doors2 .tile.make{grid-column:auto}
+.doors2 .tile p{max-width:62ch}
+/* 가로가 넓어졌으니 한 줄에 순위와 표까지 */
+.rise .rk{flex:none;width:26px;text-align:right;font-family:var(--display);font-weight:800;
+  font-size:14px;color:var(--faint);font-variant-numeric:tabular-nums}
+.rise .rk.top{color:var(--gold)}
+.rise .vt{flex:none;text-align:right;font-family:var(--display);font-weight:700;font-size:13px;
+  color:var(--muted);font-variant-numeric:tabular-nums;min-width:92px}
+.rise .vt small{font-weight:600;font-size:10.5px;color:var(--faint);margin-left:3px}
+.rise .d{min-width:78px;text-align:right}
+@media(max-width:560px){ .rise .vt{display:none} .rise .d{min-width:62px} }
+.side .hcap{margin-left:auto;font:700 11px var(--display);color:var(--faint);letter-spacing:.06em}
+.bcol .tiles{grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+
+@media(min-width:900px){ #rise{display:none} }
+.stage{align-items:start}
+.side .riselist .rise:last-child{border-bottom:0}
+
+
+/* 나라·말 고르는 쪽지 */
+.pick{position:fixed;inset:0;z-index:60;background:rgba(5,30,28,.42);display:grid;place-items:center;padding:18px}
+.pick-card{width:min(420px,100%);max-height:80vh;overflow:auto;background:var(--surface);
+  border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-lg);padding:18px}
+.pick-card h3{font-size:17px;margin-bottom:4px}
+.pick-card p{color:var(--muted);font-size:12.5px;margin:0 0 14px}
+.pick-card label{display:block;font-size:12px;color:var(--muted);margin:12px 0 5px}
+.pick-card select{width:100%;height:46px;border-radius:11px;border:1px solid var(--line);
+  background:var(--surface2);color:var(--fg);font:14px var(--body);padding:0 11px}
+.pick-card .ok{width:100%;min-height:48px;margin-top:16px;border-radius:12px;border:0;
+  background:var(--mint-deep);color:#fff;font:800 14px var(--display);cursor:pointer}
+.pick-card .auto{margin-top:10px;font-size:11.5px;color:var(--faint);line-height:1.6}
+
+/* 보기용 자료 알림 */
+.demo-bar{background:var(--gold-soft);color:#5b4200;border:1px solid rgba(180,140,20,.3);
+  border-radius:12px;padding:10px 13px;font-size:12.5px;line-height:1.6;margin:14px 0}
+:root:not([data-theme="light"]) .demo-bar{color:var(--gold)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .demo-bar{color:var(--gold)}}
+
+.tile .free.gold2{align-self:flex-start;font-family:var(--display);font-weight:800;font-size:10px;letter-spacing:.12em;color:#3a2600;background:linear-gradient(135deg,var(--gold),#ffcf5c);padding:5px 11px;border-radius:999px}
+.two{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap}
+.two button{flex:1 1 118px;min-height:44px;border-radius:12px;font-family:var(--display);font-weight:800;font-size:13.5px;cursor:pointer;border:1px solid var(--mint-deep)}
+.two .go{background:var(--mint-deep);color:#fff}
+.two .go2{background:transparent;color:var(--mint-deep)}
+.two button:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
+
+#v-up .step{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:13px}
+#v-up .sh{display:flex;align-items:center;gap:9px;margin-bottom:11px;flex-wrap:wrap}
+#v-up .no{width:24px;height:24px;border-radius:8px;background:var(--mint-soft);color:var(--mint-deep);display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:12px;flex:none}
+#v-up .sh b{font-family:var(--display);font-size:15px}
+#v-up .soon{font-family:var(--display);font-weight:700;font-size:10px;letter-spacing:.08em;color:var(--gold);background:var(--gold-soft);padding:4px 9px;border-radius:999px}
+#v-up .hint{color:var(--muted);font-size:12.5px;line-height:1.6;margin:9px 0 0}
+#v-up .hint b{color:var(--fg)}
+#v-up .drop{border:1.5px dashed var(--line);border-radius:12px;padding:20px 14px;text-align:center;font-size:12.5px;color:var(--muted);cursor:pointer;background:var(--surface2)}
+#v-up .drop.on{border-color:var(--mint);color:var(--mint-deep)}
+#v-up .drop b{display:block;color:var(--fg);font-size:14px;font-weight:700;margin-bottom:4px}
+#v-up input[type=text],#v-up textarea,#v-up select{width:100%;font:14px/1.6 var(--body);color:var(--fg);background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:11px 12px}
+#v-up textarea{min-height:120px;resize:vertical}
+#v-up input[type=text]{height:46px;padding-block:0}
+#v-up label{display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--muted);flex:1 1 150px;min-width:0}
+#v-up .r{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+#v-up .chip{height:38px;padding:0 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface2);color:var(--fg);font:600 12.5px var(--body);cursor:pointer}
+#v-up .chip[aria-pressed=true]{background:var(--mint-deep);color:#fff;border-color:var(--mint-deep)}
+#v-up .chip.sq{border-radius:10px}
+#v-up input[type=range]{width:100%;accent-color:var(--mint-deep);height:38px}
+#v-up .jkwrap{display:grid;gap:15px}
+@media(min-width:780px){#v-up .jkwrap{grid-template-columns:320px 1fr;align-items:start}}
+#v-up #jkbig{width:100%;aspect-ratio:1/1;display:block;border-radius:6px;cursor:grab;box-shadow:0 2px 8px rgba(0,0,0,.16),0 16px 40px rgba(0,0,0,.13);touch-action:none}
+#v-up #jkbig.drag{cursor:grabbing}
+#v-up .lib{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:5px}
+@media(max-width:460px){#v-up .lib{grid-template-columns:repeat(6,minmax(0,1fr))}}
+#v-up .lib canvas,#v-up .lib img{width:100%;aspect-ratio:1/1;display:block;border-radius:5px;cursor:pointer;border:2px solid transparent;object-fit:cover}
+#v-up .lib [data-on="1"]{border-color:var(--mint-deep)}
+#v-up .nine{display:grid;grid-template-columns:repeat(3,36px);gap:5px;flex:none}
+#v-up .nine button{height:32px;border-radius:8px;border:1px solid var(--line);background:var(--surface2);color:var(--fg);cursor:pointer;font-size:11px}
+#v-up .auto{font-size:12px;color:var(--muted);line-height:1.6}
+#v-up .auto b{color:var(--fg)}
+#v-up .res{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+#v-up .res div{display:flex;gap:10px;align-items:center;padding:12px 13px;font-size:13px;border-top:1px solid var(--line-2)}
+#v-up .res div:first-child{border-top:0}
+#v-up .res .k{font-weight:700;width:58px;flex:none}
+#v-up .res .v{color:var(--muted);font-size:12.5px}
+#v-up .end{display:flex;gap:9px;flex-wrap:wrap;margin:18px 0 6px}
+#v-up .end button{flex:1 1 150px;min-height:50px;border-radius:13px;font-family:var(--display);font-weight:800;font-size:14px;cursor:pointer;border:1px solid var(--mint-deep);background:var(--mint-deep);color:#fff}
+#v-up .end button.gh{background:transparent;color:var(--mint-deep)}
+#v-up .end button[disabled]{opacity:.5;cursor:not-allowed}
+#v-up audio{width:100%;margin-top:10px}
+
   .ic-award{background:var(--gold-soft)} .ic-chart{background:var(--mint-soft)} .ic-news{background:#e5eefb} .ic-hall{background:#f3e9fb}
   :root[data-theme="dark"] .tile.make h3,:root:not([data-theme="light"]) .tile.make h3{color:#eafff8}
 
@@ -351,7 +471,7 @@
   <div class="wrap">
     <div class="brand" onclick="showView('home')"><span>JURA<span class="dot">N</span></span> <small>AI MUSIC AWARDS</small></div>
     <div class="spacer"></div>
-    <button class="lang">KO ▾</button>
+    <button class="lang" id="langbtn" onclick="JN.고르기(true)">KO ▾</button>
     <button class="menu-btn" onclick="menu(true)">☰ 메뉴</button>
   </div>
 </div>
@@ -364,48 +484,81 @@
       <h1>누구나 작곡가가 되는<br><span class="hl">지구에서 가장 공정한 무대</span></h1>
       <p class="lede">AI로 곡을 만들고, 악보째 올리고, 전 세계가 실시간으로 순위를 매깁니다. 심사는 9개의 AI가 — 악보를 보고, 모든 점수를 공개하면서.</p>
 
-      <div class="stage">
+      <div class="champs">
         <div class="champion">
-          <div class="top"><div class="crown">♔</div><div class="lbl">이번 시즌 JURAN 챔피언</div><div class="live" style="margin-left:auto"><i></i>투표중</div></div>
+          <div class="top"><div class="crown">♔</div><div class="lbl" id="cl-home">국내 챔피언</div><div class="live" style="margin-left:auto"><i></i>투표중</div></div>
           <div>
-            <h2>새벽 세 시의 고백</h2>
-            <div class="by">@달토끼 · 발라드 · 9-AI 심사 94.2점</div>
-            <div class="foot"><div class="v"><span class="num" id="ch-v">1,284,910</span> <span>표</span></div><button class="playc" aria-label="재생">▶</button></div>
+            <h2 id="ch-t">—</h2>
+            <div class="by" id="ch-by">아직 곡이 없습니다</div>
+            <div class="foot"><div class="v"><span class="num" id="ch-v">0</span> <span>표</span></div><button class="playc" aria-label="재생">▶</button></div>
           </div>
         </div>
-        <div class="side">
-          <div class="h"><b>실시간 급상승</b><span class="live"><i></i>LIVE</span></div>
-          <div id="rise"></div>
+        <div class="champion glob">
+          <div class="top"><div class="crown">♔</div><div class="lbl">🌍 글로벌 챔피언</div><div class="live" style="margin-left:auto"><i></i>투표중</div></div>
+          <div>
+            <h2 id="cg-t">—</h2>
+            <div class="by" id="cg-by">—</div>
+            <div class="foot"><div class="v"><span class="num" id="cg-v">0</span> <span>표</span></div><button class="playc" aria-label="재생">▶</button></div>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div class="launch-h">바로가기</div>
-    <div class="tiles">
-      <button class="tile make" onclick="showView('make')">
-        <span class="free">1년간 무제한 무료</span>
-        <div class="ic">🎹</div>
-        <h3>나도 작곡가</h3>
-        <p>장르 10개까지 섞고, 박자 돌리고, 악보 보면서 편곡. 악보 못 읽어도 됩니다.</p>
-      </button>
-      <button class="tile" onclick="showView('chart')">
-        <div class="ic ic-chart">📊</div>
-        <h3>실시간 차트</h3>
-        <p>장르별 TOP 30이 실시간으로 오르내려요.</p>
-        <span class="stat">지금 12,480곡 경쟁중</span>
-      </button>
-      <button class="tile" onclick="showView('hall')">
-        <div class="ic ic-award">🏆</div>
-        <h3>어워즈 · 명예의 전당</h3>
-        <p>매 시즌 챔피언과 역대 수상 기록.</p>
-        <span class="stat">이번 시즌 D-12</span>
-      </button>
-      <button class="tile" onclick="showView('news')">
-        <div class="ic ic-news">📰</div>
-        <h3>AI 뮤직 뉴스</h3>
-        <p>JURAN과 AI 음악 씬에서 지금 벌어지는 일.</p>
-        <span class="stat">방금 3건 업데이트</span>
-      </button>
+      <div class="charts">
+
+        <div class="side">
+          <div class="h"><b id="rh-home">국내</b><span class="live"><i></i>LIVE</span><span class="hcap">급상승</span></div>
+          <div id="rise-home"></div>
+          <button class="more" onclick="showView('chart');JN.차트('home')">국내 차트 50위까지 →</button>
+        </div>
+
+        <div class="side">
+          <div class="h"><b>🌍 글로벌</b><span class="live"><i></i>LIVE</span><span class="hcap">급상승</span></div>
+          <div id="rise-glob"></div>
+          <button class="more" onclick="showView('chart');JN.차트('global')">글로벌 차트 50위까지 →</button>
+        </div>
+
+      </div>
+
+      <div class="doors2">
+        <div class="tile up">
+          <span class="free gold2">저작권 1차 검사 무료</span>
+          <div class="ic">🎤</div>
+          <h3>내 곡 올리기</h3>
+          <p>AI로 만든 곡, 여기 올리고 자랑하세요. 악보까지 뽑아 드립니다.</p>
+          <div class="two">
+            <button class="go"  onclick="showView('up');JK.mode('up')">올리기</button>
+            <button class="go2" onclick="showView('up');JK.mode('check')">검사만 받기</button>
+          </div>
+        </div>
+        <button class="tile make" onclick="showView('make')">
+          <span class="free">1년간 무제한 무료</span>
+          <div class="ic">🎹</div>
+          <h3>나도 작곡가</h3>
+          <p>장르 10개까지 섞고, 박자 돌리고, 악보 보면서 편곡. 악보 못 읽어도 됩니다.</p>
+        </button>
+      </div>
+
+      <div class="launch-h">바로가기</div>
+      <div class="tiles">
+        <button class="tile" onclick="showView('chart')">
+          <div class="ic ic-chart">📊</div>
+          <h3>실시간 차트</h3>
+          <p>장르별 50위가 실시간으로 오르내려요.</p>
+          <span class="stat" id="nsong">지금 겨루는 중</span>
+        </button>
+        <button class="tile" onclick="showView('hall')">
+          <div class="ic ic-award">🏆</div>
+          <h3>어워즈 · 명예의 전당</h3>
+          <p>매 시즌 챔피언과 역대 수상 기록.</p>
+          <span class="stat" id="dday">이번 시즌</span>
+        </button>
+        <button class="tile" onclick="showView('news')">
+          <div class="ic ic-news">📰</div>
+          <h3>AI 뮤직 뉴스</h3>
+          <p>JURAN과 AI 음악 씬에서 지금 벌어지는 일.</p>
+          <span class="stat">씬 실시간 소식</span>
+        </button>
+      </div>
     </div>
 
     <footer><div class="fgrid">
@@ -415,14 +568,18 @@
   </div>
 </section>
 
-<!-- ===== CHART ===== -->
+
 <section class="view" id="v-chart" hidden>
   <div class="wrap">
     <button class="back" onclick="showView('home')">← 홈</button>
-    <div class="vhead"><h2>📊 실시간 차트</h2><p>장르당 TOP 30 · 4초마다 순위 갱신</p></div>
+    <div class="vhead"><h2>📊 실시간 차트</h2><p>장르당 TOP 50 · 국내와 글로벌 따로 · 4초마다 순위 갱신</p></div>
+    <div class="ntab" style="max-width:420px;margin-bottom:12px">
+      <button id="ct-home" aria-pressed="true" onclick="JN.차트('home')">국내</button>
+      <button id="ct-glob" aria-pressed="false" onclick="JN.차트('global')">🌍 글로벌</button>
+    </div>
     <div class="chips" id="chips" role="tablist"></div>
     <div class="board">
-      <div class="bh"><div class="nm"><span id="g-emoji">🎧</span> <span id="g-name">K-팝</span> <span class="live"><i></i></span></div><div class="sub">TOP 10 표시 · 실시간</div></div>
+      <div class="bh"><div class="nm"><span id="g-emoji">🎧</span> <span id="g-name">K-팝</span> <span class="live"><i></i></span></div><div class="sub">TOP 50 · 실시간</div></div>
       <ol id="list"></ol>
     </div>
   </div>
@@ -436,6 +593,149 @@
     <div class="acc" id="acc"></div>
     <div class="genbar"><button class="genbtn" onclick="generate()">🎲 작곡 생성 — 무한 무료</button></div>
     <div id="result"></div>
+  </div>
+</section>
+
+<!-- ===== 내 곡 올리기 ===== -->
+<section class="view" id="v-up" hidden>
+  <div class="wrap">
+    <button class="back" onclick="showView('home')">← 홈</button>
+    <div class="vhead"><h2>🎤 내 곡 올리기 <span class="live" style="color:var(--mint-deep)">· 검사 무료</span></h2>
+      <p id="up-lede">AI로 만든 곡을 올리고 자랑하세요. 악보도 자켓도 여기서 만듭니다.</p></div>
+
+    <div class="r" style="margin-bottom:16px">
+      <button class="chip" id="m-up"    aria-pressed="true"  onclick="JK.mode('up')">올리기</button>
+      <button class="chip" id="m-check" aria-pressed="false" onclick="JK.mode('check')">검사만 받기</button>
+    </div>
+
+    <!-- ① 곡 -->
+    <div class="step" id="st1">
+      <div class="sh"><span class="no">1</span><b>곡 파일</b></div>
+      <div class="drop" id="up-drop"><b>🎵 곡 올리기</b>눌러서 고르거나 여기로 끌어다 놓으세요 · mp3 · wav · m4a</div>
+      <input type="file" id="up-file" accept="audio/*" hidden>
+      <div id="up-info"></div>
+      <p class="hint">곡은 <b>이 폰 안에서만</b> 열립니다. 아직 어디로도 보내지 않습니다.</p>
+    </div>
+
+    <!-- ② 제목 -->
+    <div class="step" id="st2">
+      <div class="sh"><span class="no">2</span><b>제목 · 지은이 · 장르</b></div>
+      <div class="r">
+        <label>제목<input type="text" id="up-t" value="새벽 세 시의 고백"></label>
+        <label>지은이<input type="text" id="up-by" value="@달토끼"></label>
+      </div>
+      <label style="margin-top:10px"><span>장르 <i style="font-style:normal;color:var(--faint)">· 46가지</i></span><select id="up-gen"></select></label>
+    </div>
+
+    <!-- ③ 자켓 -->
+    <div class="step" id="st3">
+      <div class="sh"><span class="no">3</span><b>자켓</b><span class="soon" style="color:var(--mint-deep);background:var(--mint-soft)">바로 됩니다</span></div>
+      <div class="jkwrap">
+        <div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+          <canvas id="jkbig"></canvas>
+          <div class="auto" id="jk-auto"></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+
+          <div>
+            <div class="r" style="margin-bottom:9px">
+              <button class="chip sq" id="jk-our"  aria-pressed="true"  onclick="JK.그림모드(0)">우리 그림</button>
+              <button class="chip sq" id="jk-mine" aria-pressed="false" onclick="JK.그림모드(1)">내 그림 올리기</button>
+            </div>
+            <div id="jk-ourbox" style="display:flex;flex-direction:column;gap:9px">
+              <div class="r">
+                <button class="chip sq" onclick="JK.넘기기(-1)">◀</button>
+                <button class="chip sq" onclick="JK.섞기()">🎲 다른 그림</button>
+                <button class="chip sq" onclick="JK.넘기기(1)">▶</button>
+                <span style="flex:1"></span><span class="auto" id="jk-no"></span>
+              </div>
+              <div class="lib" id="jk-lib"></div>
+            </div>
+            <div id="jk-minebox" style="display:none;flex-direction:column;gap:9px">
+              <div class="drop" id="jk-drop"><b>🖼 그림 올리기</b>이미 가지고 있는 자켓 그림도 그대로 올리시면 됩니다</div>
+              <input type="file" id="jk-file" accept="image/*" multiple hidden>
+              <div class="lib" id="jk-mylib"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="auto" style="margin-bottom:7px"><b>색</b> — 장르 빛깔에서 돌려 봅니다
+              <span id="jk-huen" style="color:var(--mint-deep)"></span></div>
+            <input type="range" id="jk-hue" min="0" max="360" step="5" value="0">
+          </div>
+
+          <div>
+            <div class="auto" style="margin-bottom:7px"><b>그라데이션</b></div>
+            <div class="r" id="jk-tex"></div>
+          </div>
+
+          <div>
+            <div class="auto" style="margin-bottom:7px"><b>글씨</b></div>
+            <div class="r">
+              <button class="chip" id="jk-h" aria-pressed="true"  onclick="JK.쓰기('가로')">↔ 가로</button>
+              <button class="chip" id="jk-v" aria-pressed="false" onclick="JK.쓰기('세로')">↕ 세로</button>
+              <button class="chip" id="jk-n" aria-pressed="false" onclick="JK.쓰기('없음')">글씨 없음</button>
+            </div>
+            <label style="margin-top:9px">크기<input type="range" id="jk-sz" min="35" max="130" value="80"></label>
+          </div>
+
+          <div>
+            <div class="auto" style="margin-bottom:7px"><b>자리</b> — 그림 위에서 끌어도 되고, 아홉 칸으로 한 번에 놓아도 됩니다</div>
+            <div class="r" style="align-items:flex-start;gap:13px">
+              <div class="nine" id="jk-nine"></div>
+              <div style="flex:1;min-width:140px">
+                <label>가로 <span id="jk-pxn" style="color:var(--mint-deep)"></span><input type="range" id="jk-px" min="4" max="96" value="8"></label>
+                <label>세로 <span id="jk-pyn" style="color:var(--mint-deep)"></span><input type="range" id="jk-py" min="4" max="96" value="86"></label>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="auto" style="margin-bottom:7px"><b>악보 얹기</b></div>
+            <div class="r" id="jk-sc"></div>
+          </div>
+
+        </div>
+      </div>
+      <p class="hint">그림 1,000장으로 곡 10만 개를 덮으면 <b>100곡이 같은 그림</b>을 씁니다.
+        그 위에 그 곡의 음표를 얹으면 <b>그림이 같아도 자켓이 다릅니다.</b>
+        놓은 자리의 밝기와 얼룩짐을 재서 흰 글씨·검은 글씨를 저절로 고릅니다.</p>
+    </div>
+
+    <!-- ④ 가사 -->
+    <div class="step" id="st4">
+      <div class="sh"><span class="no">4</span><b>가사</b></div>
+      <textarea id="up-ly" placeholder="가사를 붙여 넣으세요. 없으면 비워 두셔도 됩니다."></textarea>
+    </div>
+
+    <!-- ⑤ 악보 -->
+    <div class="step" id="st5">
+      <div class="sh"><span class="no">5</span><b>악보</b><span class="soon">준비 중</span></div>
+      <p class="hint">①에 넣은 곡에서 <b>악보를 뽑아 드립니다.</b> 목소리를 먼저 떼어 내면 음을 거의 그대로 받아 냅니다 —
+        폰 안에서, 서버 없이. 뽑은 악보는 ③ 자켓에 그대로 얹히고 ⑥ 검사에도 쓰입니다.<br>
+        지금 ③에 보이는 악보는 <b>보기용</b>입니다.</p>
+    </div>
+
+    <!-- ⑥ 검사 -->
+    <div class="step" id="st6">
+      <div class="sh"><span class="no">6</span><b>저작권 1차 검사</b><span class="soon">준비 중</span></div>
+      <div class="res">
+        <div><span class="k">음</span><span>🟢 안전</span><span class="v" style="margin-left:auto">가장 닮은 곡과 12%</span></div>
+        <div><span class="k">가사</span><span>🟡 볼 것 있음</span><span class="v" style="margin-left:auto">한 줄이 기존 가사와 닮음</span></div>
+        <div><span class="k">금기어</span><span>🟢 없음</span><span class="v" style="margin-left:auto">—</span></div>
+        <div><span class="k">실명</span><span>🟢 없음</span><span class="v" style="margin-left:auto">—</span></div>
+      </div>
+      <p class="hint">위 네 줄은 <b>결과가 이렇게 나온다는 모습</b>입니다. 아직 진짜로 재지 않습니다.<br>
+        더 정확한 검사증이 필요하면 바깥 검사 기관으로 이어 드립니다.</p>
+    </div>
+
+    <div class="end">
+      <button id="up-send" disabled>올리기 — 곧 열립니다</button>
+      <button class="gh" onclick="JK.저장()">⬇ 자켓 저장 (1024px)</button>
+    </div>
+    <p class="hint" style="margin-bottom:34px">올린 곡을 어디에 보관할지는 아직 정하지 않았습니다.
+      그 전까지는 <b>이 폰 안에서만</b> 돌아갑니다 — 만들고, 꾸미고, 내려받기까지 다 됩니다.</p>
+
   </div>
 </section>
 
@@ -461,12 +761,27 @@
   </div>
 </section>
 
+<div class="pick" id="pick" hidden onclick="if(event.target===this)JN.고르기(false)">
+  <div class="pick-card">
+    <h3>말과 나라</h3>
+    <p>나라를 바꾸면 「국내」 차트가 그 나라 것으로 바뀝니다.</p>
+    <label>말</label>
+    <select id="pick-lang"><option value="ko">한국어</option><option value="en">English</option></select>
+    <label>나라</label>
+    <select id="pick-country"></select>
+    <button class="ok" onclick="JN.고름()">이대로 보기</button>
+    <div class="auto" id="pick-auto"></div>
+  </div>
+</div>
+
 <!-- ===== MENU POPUP ===== -->
 <div class="overlay" id="menu" hidden>
   <div class="menu-card">
     <div class="mh"><b>JURAN 메뉴</b><button class="x" onclick="menu(false)">✕</button></div>
     <div class="mitem" onclick="showView('home')"><span class="mic ic-award">🏆</span><div><b>어워즈 홈</b><span>이번 시즌 챔피언 무대</span></div></div>
-    <div class="mitem" onclick="showView('chart')"><span class="mic ic-chart">📊</span><div><b>실시간 차트</b><span>장르별 TOP 30</span></div></div>
+    <div class="mitem" onclick="showView('up');JK.mode('up')"><span class="mic" style="background:var(--mint-soft)">🎤</span><div><b>내 곡 올리기</b><span>악보 · 자켓 · 무료 검사</span></div></div>
+    <div class="mitem" onclick="showView('up');JK.mode('check')"><span class="mic" style="background:var(--gold-soft)">🔍</span><div><b>무료 저작권 검사</b><span>올리지 않아도 됩니다</span></div></div>
+    <div class="mitem" onclick="showView('chart')"><span class="mic ic-chart">📊</span><div><b>실시간 차트</b><span>국내 · 글로벌 각 50위</span></div></div>
     <div class="mitem" onclick="showView('make')"><span class="mic" style="background:var(--mint-soft)">🎹</span><div><b>음악 만들기</b><span>무한 무료 작곡</span></div></div>
     <div class="mitem" onclick="showView('news')"><span class="mic ic-news">📰</span><div><b>AI 뮤직 뉴스</b><span>씬 실시간 소식</span></div></div>
     <div class="mitem" onclick="showView('hall')"><span class="mic ic-hall">🏛</span><div><b>명예의 전당</b><span>역대 수상 기록</span></div></div>
@@ -533,19 +848,193 @@
   var seed=42;function rnd(){seed=(seed*1103515245+12345)&0x7fffffff;return seed/0x7fffffff;}
 
   var data={};
-  genres.forEach(function(g,gi){var arr=[];for(var i=0;i<16;i++){arr.push({t:pick(titles,gi*3+i*5+i*i),m:pick(makers,gi*2+i*7+i),g:g.n,cv:grad([g.h[0]+((i*23)%40)-20,g.h[1]+((i*17)%40)-20]),votes:rint(60000,1300000),score:(80+rnd()*18).toFixed(1),prev:0});}arr.sort(function(a,b){return b.votes-a.votes;});arr.forEach(function(s,ix){s.prev=ix;});data[g.n]=arr;});
+  genres.forEach(function(g,gi){var arr=[];for(var i=0;i<16;i++){arr.push({t:pick(titles,gi*3+i*5+i*i),m:pick(makers,gi*2+i*7+i),g:g.n,cv:grad([g.h[0]+((i*23)%40)-20,g.h[1]+((i*17)%40)-20]),votes:rint(60000,1300000),score:(80+rnd()*18).toFixed(1),prev:0,나라:pick(['KR','KR','KR','KR','US','US','JP','JP','BR','ID','SA','DE','FR','GB','IN','MX'],gi*5+i*3)});}arr.sort(function(a,b){return b.votes-a.votes;});arr.forEach(function(s,ix){s.prev=ix;s.전표=Math.max(0,s.votes-rint(200,9000));});data[g.n]=arr;});
 
-  // rising (home)
-  var riseBox=document.getElementById('rise');
-  function paintRise(){var pool=[];Object.keys(data).forEach(function(k){pool=pool.concat(data[k]);});pool.sort(function(a,b){return (b.votes%50000)-(a.votes%50000);});
-    riseBox.innerHTML=pool.slice(0,4).map(function(s){return '<div class="rise"><span class="cv" style="background:'+s.cv+'"></span><div class="mid"><div class="t">'+s.t+'</div><div class="s">'+s.m+' · '+s.g+'</div></div><div class="d">▲ '+rint(3,240)+'</div></div>';}).join('');}
+
+  /* ════════ 나라 · 급상승 · 차트 ════════════════════════════════
+     나라는 **묻지 않고** 안다 — 시간대가 말보다 정확하다.
+     (인도 사람이 폰을 영어로 쓰면 말은 「미국」이라 하지만 시간대는 못 속인다)
+     순서 : 손으로 고른 것 → 시간대 → 말 → 없으면 글로벌만
+     ══════════════════════════════════════════════════════════ */
+  /* 시간대 → 나라 · 418칸 · 247개 나라. 묻지 않고 그 자리에서 안다 */
+  var _나라표={"Europe/Andorra":"AD","Asia/Dubai":"AE","Asia/Kabul":"AF","America/Antigua":"AG","America/Anguilla":"AI","Europe/Tirane":"AL","Asia/Yerevan":"AM","Africa/Luanda":"AO","Antarctica/McMurdo":"AQ","Antarctica/Casey":"AQ","Antarctica/Davis":"AQ","Antarctica/DumontDUrville":"AQ","Antarctica/Mawson":"AQ","Antarctica/Palmer":"AQ","Antarctica/Rothera":"AQ","Antarctica/Syowa":"AQ","Antarctica/Troll":"AQ","Antarctica/Vostok":"AQ","America/Argentina/Buenos_Aires":"AR","America/Argentina/Cordoba":"AR","America/Argentina/Salta":"AR","America/Argentina/Jujuy":"AR","America/Argentina/Tucuman":"AR","America/Argentina/Catamarca":"AR","America/Argentina/La_Rioja":"AR","America/Argentina/San_Juan":"AR","America/Argentina/Mendoza":"AR","America/Argentina/San_Luis":"AR","America/Argentina/Rio_Gallegos":"AR","America/Argentina/Ushuaia":"AR","Pacific/Pago_Pago":"AS","Europe/Vienna":"AT","Australia/Lord_Howe":"AU","Antarctica/Macquarie":"AU","Australia/Hobart":"AU","Australia/Melbourne":"AU","Australia/Sydney":"AU","Australia/Broken_Hill":"AU","Australia/Brisbane":"AU","Australia/Lindeman":"AU","Australia/Adelaide":"AU","Australia/Darwin":"AU","Australia/Perth":"AU","Australia/Eucla":"AU","America/Aruba":"AW","Europe/Mariehamn":"AX","Asia/Baku":"AZ","Europe/Sarajevo":"BA","America/Barbados":"BB","Asia/Dhaka":"BD","Europe/Brussels":"BE","Africa/Ouagadougou":"BF","Europe/Sofia":"BG","Asia/Bahrain":"BH","Africa/Bujumbura":"BI","Africa/Porto-Novo":"BJ","America/St_Barthelemy":"BL","Atlantic/Bermuda":"BM","Asia/Brunei":"BN","America/La_Paz":"BO","America/Kralendijk":"BQ","America/Noronha":"BR","America/Belem":"BR","America/Fortaleza":"BR","America/Recife":"BR","America/Araguaina":"BR","America/Maceio":"BR","America/Bahia":"BR","America/Sao_Paulo":"BR","America/Campo_Grande":"BR","America/Cuiaba":"BR","America/Santarem":"BR","America/Porto_Velho":"BR","America/Boa_Vista":"BR","America/Manaus":"BR","America/Eirunepe":"BR","America/Rio_Branco":"BR","America/Nassau":"BS","Asia/Thimphu":"BT","Africa/Gaborone":"BW","Europe/Minsk":"BY","America/Belize":"BZ","America/St_Johns":"CA","America/Halifax":"CA","America/Glace_Bay":"CA","America/Moncton":"CA","America/Goose_Bay":"CA","America/Blanc-Sablon":"CA","America/Toronto":"CA","America/Iqaluit":"CA","America/Atikokan":"CA","America/Winnipeg":"CA","America/Resolute":"CA","America/Rankin_Inlet":"CA","America/Regina":"CA","America/Swift_Current":"CA","America/Edmonton":"CA","America/Cambridge_Bay":"CA","America/Inuvik":"CA","America/Vancouver":"CA","America/Creston":"CA","America/Dawson_Creek":"CA","America/Fort_Nelson":"CA","America/Whitehorse":"CA","America/Dawson":"CA","Indian/Cocos":"CC","Africa/Kinshasa":"CD","Africa/Lubumbashi":"CD","Africa/Bangui":"CF","Africa/Brazzaville":"CG","Europe/Zurich":"CH","Africa/Abidjan":"CI","Pacific/Rarotonga":"CK","America/Santiago":"CL","America/Coyhaique":"CL","America/Punta_Arenas":"CL","Pacific/Easter":"CL","Africa/Douala":"CM","Asia/Shanghai":"CN","Asia/Urumqi":"CN","America/Bogota":"CO","America/Costa_Rica":"CR","America/Havana":"CU","Atlantic/Cape_Verde":"CV","America/Curacao":"CW","Indian/Christmas":"CX","Asia/Nicosia":"CY","Asia/Famagusta":"CY","Europe/Prague":"CZ","Europe/Berlin":"DE","Europe/Busingen":"DE","Africa/Djibouti":"DJ","Europe/Copenhagen":"DK","America/Dominica":"DM","America/Santo_Domingo":"DO","Africa/Algiers":"DZ","America/Guayaquil":"EC","Pacific/Galapagos":"EC","Europe/Tallinn":"EE","Africa/Cairo":"EG","Africa/El_Aaiun":"EH","Africa/Asmara":"ER","Europe/Madrid":"ES","Africa/Ceuta":"ES","Atlantic/Canary":"ES","Africa/Addis_Ababa":"ET","Europe/Helsinki":"FI","Pacific/Fiji":"FJ","Atlantic/Stanley":"FK","Pacific/Chuuk":"FM","Pacific/Pohnpei":"FM","Pacific/Kosrae":"FM","Atlantic/Faroe":"FO","Europe/Paris":"FR","Africa/Libreville":"GA","Europe/London":"GB","America/Grenada":"GD","Asia/Tbilisi":"GE","America/Cayenne":"GF","Europe/Guernsey":"GG","Africa/Accra":"GH","Europe/Gibraltar":"GI","America/Nuuk":"GL","America/Danmarkshavn":"GL","America/Scoresbysund":"GL","America/Thule":"GL","Africa/Banjul":"GM","Africa/Conakry":"GN","America/Guadeloupe":"GP","Africa/Malabo":"GQ","Europe/Athens":"GR","Atlantic/South_Georgia":"GS","America/Guatemala":"GT","Pacific/Guam":"GU","Africa/Bissau":"GW","America/Guyana":"GY","Asia/Hong_Kong":"HK","America/Tegucigalpa":"HN","Europe/Zagreb":"HR","America/Port-au-Prince":"HT","Europe/Budapest":"HU","Asia/Jakarta":"ID","Asia/Pontianak":"ID","Asia/Makassar":"ID","Asia/Jayapura":"ID","Europe/Dublin":"IE","Asia/Jerusalem":"IL","Europe/Isle_of_Man":"IM","Asia/Kolkata":"IN","Indian/Chagos":"IO","Asia/Baghdad":"IQ","Asia/Tehran":"IR","Atlantic/Reykjavik":"IS","Europe/Rome":"IT","Europe/Jersey":"JE","America/Jamaica":"JM","Asia/Amman":"JO","Asia/Tokyo":"JP","Africa/Nairobi":"KE","Asia/Bishkek":"KG","Asia/Phnom_Penh":"KH","Pacific/Tarawa":"KI","Pacific/Kanton":"KI","Pacific/Kiritimati":"KI","Indian/Comoro":"KM","America/St_Kitts":"KN","Asia/Pyongyang":"KP","Asia/Seoul":"KR","Asia/Kuwait":"KW","America/Cayman":"KY","Asia/Almaty":"KZ","Asia/Qyzylorda":"KZ","Asia/Qostanay":"KZ","Asia/Aqtobe":"KZ","Asia/Aqtau":"KZ","Asia/Atyrau":"KZ","Asia/Oral":"KZ","Asia/Vientiane":"LA","Asia/Beirut":"LB","America/St_Lucia":"LC","Europe/Vaduz":"LI","Asia/Colombo":"LK","Africa/Monrovia":"LR","Africa/Maseru":"LS","Europe/Vilnius":"LT","Europe/Luxembourg":"LU","Europe/Riga":"LV","Africa/Tripoli":"LY","Africa/Casablanca":"MA","Europe/Monaco":"MC","Europe/Chisinau":"MD","Europe/Podgorica":"ME","America/Marigot":"MF","Indian/Antananarivo":"MG","Pacific/Majuro":"MH","Pacific/Kwajalein":"MH","Europe/Skopje":"MK","Africa/Bamako":"ML","Asia/Yangon":"MM","Asia/Ulaanbaatar":"MN","Asia/Hovd":"MN","Asia/Macau":"MO","Pacific/Saipan":"MP","America/Martinique":"MQ","Africa/Nouakchott":"MR","America/Montserrat":"MS","Europe/Malta":"MT","Indian/Mauritius":"MU","Indian/Maldives":"MV","Africa/Blantyre":"MW","America/Mexico_City":"MX","America/Cancun":"MX","America/Merida":"MX","America/Monterrey":"MX","America/Matamoros":"MX","America/Chihuahua":"MX","America/Ciudad_Juarez":"MX","America/Ojinaga":"MX","America/Mazatlan":"MX","America/Bahia_Banderas":"MX","America/Hermosillo":"MX","America/Tijuana":"MX","Asia/Kuala_Lumpur":"MY","Asia/Kuching":"MY","Africa/Maputo":"MZ","Africa/Windhoek":"NA","Pacific/Noumea":"NC","Africa/Niamey":"NE","Pacific/Norfolk":"NF","Africa/Lagos":"NG","America/Managua":"NI","Europe/Amsterdam":"NL","Europe/Oslo":"NO","Asia/Kathmandu":"NP","Pacific/Nauru":"NR","Pacific/Niue":"NU","Pacific/Auckland":"NZ","Pacific/Chatham":"NZ","Asia/Muscat":"OM","America/Panama":"PA","America/Lima":"PE","Pacific/Tahiti":"PF","Pacific/Marquesas":"PF","Pacific/Gambier":"PF","Pacific/Port_Moresby":"PG","Pacific/Bougainville":"PG","Asia/Manila":"PH","Asia/Karachi":"PK","Europe/Warsaw":"PL","America/Miquelon":"PM","Pacific/Pitcairn":"PN","America/Puerto_Rico":"PR","Asia/Gaza":"PS","Asia/Hebron":"PS","Europe/Lisbon":"PT","Atlantic/Madeira":"PT","Atlantic/Azores":"PT","Pacific/Palau":"PW","America/Asuncion":"PY","Asia/Qatar":"QA","Indian/Reunion":"RE","Europe/Bucharest":"RO","Europe/Belgrade":"RS","Europe/Kaliningrad":"RU","Europe/Moscow":"RU","Europe/Kirov":"RU","Europe/Volgograd":"RU","Europe/Astrakhan":"RU","Europe/Saratov":"RU","Europe/Ulyanovsk":"RU","Europe/Samara":"RU","Asia/Yekaterinburg":"RU","Asia/Omsk":"RU","Asia/Novosibirsk":"RU","Asia/Barnaul":"RU","Asia/Tomsk":"RU","Asia/Novokuznetsk":"RU","Asia/Krasnoyarsk":"RU","Asia/Irkutsk":"RU","Asia/Chita":"RU","Asia/Yakutsk":"RU","Asia/Khandyga":"RU","Asia/Vladivostok":"RU","Asia/Ust-Nera":"RU","Asia/Magadan":"RU","Asia/Sakhalin":"RU","Asia/Srednekolymsk":"RU","Asia/Kamchatka":"RU","Asia/Anadyr":"RU","Europe/Simferopol":"UA","Europe/Kyiv":"UA","Africa/Kigali":"RW","Asia/Riyadh":"SA","Pacific/Guadalcanal":"SB","Indian/Mahe":"SC","Africa/Khartoum":"SD","Europe/Stockholm":"SE","Asia/Singapore":"SG","Atlantic/St_Helena":"SH","Europe/Ljubljana":"SI","Arctic/Longyearbyen":"SJ","Europe/Bratislava":"SK","Africa/Freetown":"SL","Europe/San_Marino":"SM","Africa/Dakar":"SN","Africa/Mogadishu":"SO","America/Paramaribo":"SR","Africa/Juba":"SS","Africa/Sao_Tome":"ST","America/El_Salvador":"SV","America/Lower_Princes":"SX","Asia/Damascus":"SY","Africa/Mbabane":"SZ","America/Grand_Turk":"TC","Africa/Ndjamena":"TD","Indian/Kerguelen":"TF","Africa/Lome":"TG","Asia/Bangkok":"TH","Asia/Dushanbe":"TJ","Pacific/Fakaofo":"TK","Asia/Dili":"TL","Asia/Ashgabat":"TM","Africa/Tunis":"TN","Pacific/Tongatapu":"TO","Europe/Istanbul":"TR","America/Port_of_Spain":"TT","Pacific/Funafuti":"TV","Asia/Taipei":"TW","Africa/Dar_es_Salaam":"TZ","Africa/Kampala":"UG","Pacific/Midway":"UM","Pacific/Wake":"UM","America/New_York":"US","America/Detroit":"US","America/Kentucky/Louisville":"US","America/Kentucky/Monticello":"US","America/Indiana/Indianapolis":"US","America/Indiana/Vincennes":"US","America/Indiana/Winamac":"US","America/Indiana/Marengo":"US","America/Indiana/Petersburg":"US","America/Indiana/Vevay":"US","America/Chicago":"US","America/Indiana/Tell_City":"US","America/Indiana/Knox":"US","America/Menominee":"US","America/North_Dakota/Center":"US","America/North_Dakota/New_Salem":"US","America/North_Dakota/Beulah":"US","America/Denver":"US","America/Boise":"US","America/Phoenix":"US","America/Los_Angeles":"US","America/Anchorage":"US","America/Juneau":"US","America/Sitka":"US","America/Metlakatla":"US","America/Yakutat":"US","America/Nome":"US","America/Adak":"US","Pacific/Honolulu":"US","America/Montevideo":"UY","Asia/Samarkand":"UZ","Asia/Tashkent":"UZ","Europe/Vatican":"VA","America/St_Vincent":"VC","America/Caracas":"VE","America/Tortola":"VG","America/St_Thomas":"VI","Asia/Ho_Chi_Minh":"VN","Pacific/Efate":"VU","Pacific/Wallis":"WF","Pacific/Apia":"WS","Asia/Aden":"YE","Indian/Mayotte":"YT","Africa/Johannesburg":"ZA","Africa/Lusaka":"ZM","Africa/Harare":"ZW","Asia/Calcutta":"IN","Asia/Saigon":"VN","Asia/Rangoon":"MM","Asia/Katmandu":"NP","Asia/Ulan_Bator":"MN","Europe/Kiev":"UA","Europe/Uzhgorod":"UA","Europe/Zaporozhye":"UA","America/Buenos_Aires":"AR","America/Godthab":"GL","Pacific/Ponape":"FM","Pacific/Truk":"FM","Asia/Istanbul":"TR","Africa/Asmera":"ER","Atlantic/Faeroe":"FO","America/Indianapolis":"US","Asia/Chongqing":"CN","Asia/Macao":"MO","Pacific/Samoa":"WS","US/Pacific":"US","US/Eastern":"US","Japan":"JP","Singapore":"SG","Hongkong":"HK","ROK":"KR","PRC":"CN","Israel":"IL","Egypt":"EG","Turkey":"TR","Poland":"PL","Portugal":"PT","Iceland":"IS","Cuba":"CU","Jamaica":"JM","Iran":"IR"};
+  var _나라이름={"KR":["대한민국","South Korea"],"US":["미국","United States"],"JP":["일본","Japan"],"CN":["중국","China"],"TW":["대만","Taiwan"],"HK":["홍콩","Hong Kong"],"GB":["영국","United Kingdom"],"DE":["독일","Germany"],"FR":["프랑스","France"],"IT":["이탈리아","Italy"],"ES":["스페인","Spain"],"PT":["포르투갈","Portugal"],"NL":["네덜란드","Netherlands"],"SE":["스웨덴","Sweden"],"NO":["노르웨이","Norway"],"FI":["핀란드","Finland"],"DK":["덴마크","Denmark"],"PL":["폴란드","Poland"],"RU":["러시아","Russia"],"UA":["우크라이나","Ukraine"],"TR":["튀르키예","Türkiye"],"IN":["인도","India"],"ID":["인도네시아","Indonesia"],"TH":["태국","Thailand"],"VN":["베트남","Viet Nam"],"PH":["필리핀","Philippines"],"MY":["말레이시아","Malaysia"],"SG":["싱가포르","Singapore"],"AU":["호주","Australia"],"NZ":["뉴질랜드","New Zealand"],"CA":["캐나다","Canada"],"MX":["멕시코","Mexico"],"BR":["브라질","Brazil"],"AR":["아르헨티나","Argentina"],"CL":["칠레","Chile"],"CO":["콜롬비아","Colombia"],"PE":["페루","Peru"],"SA":["사우디아라비아","Saudi Arabia"],"AE":["아랍에미리트","United Arab Emirates"],"EG":["이집트","Egypt"],"MA":["모로코","Morocco"],"ZA":["남아프리카","South Africa"],"NG":["나이지리아","Nigeria"],"KE":["케냐","Kenya"],"IL":["이스라엘","Israel"],"IR":["이란","Iran"],"PK":["파키스탄","Pakistan"],"BD":["방글라데시","Bangladesh"],"MN":["몽골","Mongolia"],"GR":["그리스","Greece"],"CZ":["체코","Czechia"],"AT":["오스트리아","Austria"],"CH":["스위스","Switzerland"],"BE":["벨기에","Belgium"],"IE":["아일랜드","Ireland"],"RO":["루마니아","Romania"],"HU":["헝가리","Hungary"]};
+
+  var _내나라='', _급보기='home', _차보기='home', _보기용=true;
+
+  function 나라찾기(){
+    try{ var v=localStorage.getItem('juran_나라'); if(v) return v; }catch(e){}
+    try{ var tz=Intl.DateTimeFormat().resolvedOptions().timeZone;
+         if(tz&&_나라표[tz]) return _나라표[tz]; }catch(e){}
+    try{ if(window.Intl&&Intl.Locale){ var r=new Intl.Locale(navigator.language).region; if(r) return r; } }catch(e){}
+    try{ var m=(navigator.language||'').match(/[-_]([A-Za-z]{2})$/); if(m) return m[1].toUpperCase(); }catch(e){}
+    return '';
+  }
+  function 나라글(cc){
+    if(!cc) return '글로벌';
+    var n=_나라이름[cc]; return n? n[0] : cc;
+  }
+  function 나라깃발(cc){
+    if(!cc||cc.length!==2) return '🌍';
+    try{ return String.fromCodePoint(0x1F1E6+cc.charCodeAt(0)-65, 0x1F1E6+cc.charCodeAt(1)-65); }
+    catch(e){ return '🌍'; }
+  }
+  _내나라=나라찾기();
+
+  /* ── 곡 한 줄 그리기 ── */
+  function _줄(s,순){
+    var 오름=Math.max(0,(s.votes||0)-(s.전표||0));
+    return '<div class="rise">'+
+      '<span class="rk'+(순<=3?' top':'')+'">'+순+'</span>'+
+      '<span class="cv" style="background:'+s.cv+'"></span>'+
+      '<div class="mid"><div class="t">'+s.t+'</div><div class="s">'+s.m+' · '+s.g+'</div></div>'+
+      '<div class="vt">'+fmt(s.votes||0)+'<small>표</small></div>'+
+      '<div class="d">▲ '+fmt(오름)+'</div></div>';
+  }
+  function _풀(){ var a=[]; Object.keys(data).forEach(function(k){ a=a.concat(data[k]); }); return a; }
+  function _급순(arr){
+    return arr.slice().sort(function(a,b){
+      return ((b.votes||0)-(b.전표||0)) - ((a.votes||0)-(a.전표||0)); });
+  }
+  var _급수=15;
+
+  function paintRise(){
+    var pool=_풀();
+    var 국=_내나라? pool.filter(function(s){ return s.나라===_내나라; }) : [];
+    var 국HTML=국.length? _급순(국).slice(0,_급수).map(function(x,i){return _줄(x,i+1);}).join('')
+      : '<div class="rise" style="opacity:.7"><div class="mid"><div class="s">'+
+        (_내나라? nf(나라깃발(_내나라)+' '+나라글(_내나라)+' 곡이 아직 없습니다. 첫 곡을 올려 보세요.')
+                : '나라를 아직 모릅니다. 위쪽 단추에서 골라 주세요.')+'</div></div></div>';
+    var 글HTML=_급순(pool).slice(0,_급수).map(function(x,i){return _줄(x,i+1);}).join('');
+    var 이름=(_내나라? 나라깃발(_내나라)+' '+나라글(_내나라) : '국내');
+    var th=document.getElementById('rt-home'); if(th) th.textContent=이름;
+    var rh=document.getElementById('rh-home'); if(rh) rh.textContent=이름;
+    var one=document.getElementById('rise'); if(one) one.innerHTML=(_급보기==='home'?국HTML:글HTML);
+    var a=document.getElementById('rise-home'); if(a) a.innerHTML=국HTML;
+    var b=document.getElementById('rise-glob'); if(b) b.innerHTML=글HTML;
+    _왕그리기();
+  }
+
+  /* 챔피언 두 장 — 왼쪽은 내 나라, 오른쪽은 온 세계 */
+  function _왕그리기(){
+    var 모두=_풀().slice().sort(function(x,y){ return y.votes-x.votes; });
+    var 국=_내나라? 모두.filter(function(x){ return x.나라===_내나라; }) : [];
+    function 넣(id1,id2,id3,s,빈){
+      var t=document.getElementById(id1), b2=document.getElementById(id2), v=document.getElementById(id3);
+      if(!t||!b2||!v) return;
+      if(s){ t.textContent=s.t; b2.textContent=s.m+' · '+s.g+' · 9-AI 심사 '+s.score+'점'; v.textContent=fmt(s.votes); }
+      else { t.textContent='—'; b2.textContent=빈; v.textContent='0'; }
+    }
+    넣('ch-t','ch-by','ch-v', 국[0],
+       (_내나라? 나라글(_내나라)+' 곡이 아직 없습니다 — 첫 곡의 자리입니다' : '위쪽 단추에서 나라를 골라 주세요'));
+    넣('cg-t','cg-by','cg-v', 모두[0], '아직 곡이 없습니다');
+    var l=document.getElementById('cl-home');
+    if(l) l.textContent=(_내나라? 나라깃발(_내나라)+' '+나라글(_내나라) : '국내')+' 챔피언';
+    var n=document.getElementById('nsong');
+    if(n) n.textContent='지금 '+fmt(모두.length)+'곡 겨루는 중';
+  }
+  function nf(t){ return String(t).replace(/[<>&]/g,''); }
+
+  /* ── 곡 자료를 juran.json 에서 ── */
+  function _자료넣기(j){
+    if(!j||!j.곡||!j.곡.length) return false;
+    var 새={}; genres.forEach(function(g){ 새[g.n]=[]; });
+    j.곡.forEach(function(c){
+      var g=genres.filter(function(x){ return x.n===c.g; })[0] || genres[0];
+      var i=(새[g.n]||[]).length;
+      (새[g.n]=새[g.n]||[]).push({
+        t:c.t||'', m:c.by||'', g:g.n, 나라:(c.나라||'').toUpperCase(),
+        cv:grad([g.h[0]+((i*23)%40)-20, g.h[1]+((i*17)%40)-20]),
+        votes:+c.표||0, 전표:+c.전표||0, score:(c.점수!=null?c.점수:88).toString(),
+        링크:c.링크||'', 자켓:c.자켓||null, prev:0
+      });
+    });
+    Object.keys(새).forEach(function(k){
+      새[k].sort(function(a,b){ return b.votes-a.votes; });
+      새[k].forEach(function(s,ix){ s.prev=ix; });
+    });
+    data=새;
+    _보기용 = (j.보기용!==false);
+    /* 시즌 · 문구 · 챔피언 */
+    try{
+      if(j.시즌&&j.시즌.끝){
+        var 남=Math.max(0,Math.ceil((new Date(j.시즌.끝)-new Date())/86400000));
+        var d=document.getElementById('dday'); if(d) d.textContent='이번 시즌 D-'+남;
+      }
+      if(j.문구){
+        var h1=document.querySelector('.hero h1');
+        if(h1&&j.문구.제목1) h1.innerHTML=nf(j.문구.제목1)+'<br><span class="hl">'+nf(j.문구.제목2||'')+'</span>';
+        var ld=document.querySelector('.hero .lede');
+        if(ld&&j.문구.설명) ld.textContent=j.문구.설명;
+      }
+      /* 보기용이면 솔직히 적어 둔다 */
+      var 띠=document.getElementById('demo-bar');
+      if(_보기용&&!띠){
+        var e=document.createElement('div'); e.className='demo-bar'; e.id='demo-bar';
+        e.textContent='여기 보이는 곡·표·점수는 아직 보기용입니다. 진짜 곡이 올라오면 바뀝니다.';
+        var st=document.querySelector('.hero .champs'); if(st&&st.parentNode) st.parentNode.insertBefore(e,st);
+      } else if(!_보기용&&띠&&띠.parentNode){ 띠.parentNode.removeChild(띠); }
+    }catch(e){}
+    return true;
+  }
+
+  window.JN={
+    급상승:function(w){ _급보기=w;
+      var a=document.getElementById('rt-home'), b=document.getElementById('rt-glob');
+      if(a) a.setAttribute('aria-pressed', w==='home'); if(b) b.setAttribute('aria-pressed', w==='global');
+      paintRise(); },
+    차트:function(w){ _차보기=w;
+      var a=document.getElementById('ct-home'), b=document.getElementById('ct-glob');
+      if(a) a.setAttribute('aria-pressed', w==='home'); if(b) b.setAttribute('aria-pressed', w==='global');
+      render(true); },
+    고르기:function(on){
+      var p=document.getElementById('pick'); if(!p) return;
+      if(on){
+        var sel=document.getElementById('pick-country');
+        if(!sel.options.length){
+          var ks=Object.keys(_나라이름).sort(function(a,b){ return _나라이름[a][0].localeCompare(_나라이름[b][0],'ko'); });
+          sel.innerHTML='<option value="">🌍 글로벌만 보기</option>'+
+            ks.map(function(c){ return '<option value="'+c+'">'+나라깃발(c)+' '+_나라이름[c][0]+'</option>'; }).join('');
+        }
+        sel.value=_내나라||'';
+        var tz=''; try{ tz=Intl.DateTimeFormat().resolvedOptions().timeZone||''; }catch(e){}
+        document.getElementById('pick-auto').textContent=
+          '시간대로 알아낸 나라 : '+(tz? tz+' → '+(나라글(_나라표[tz]||'')) : '모름')+
+          ' · 물어보는 창 없이, 서버에 묻지 않고 그 자리에서 압니다.';
+      }
+      p.hidden=!on;
+    },
+    고름:function(){
+      var c=document.getElementById('pick-country').value||'';
+      _내나라=c;
+      try{ localStorage.setItem('juran_나라', c); }catch(e){}
+      var lb=document.getElementById('langbtn');
+      var lg=document.getElementById('pick-lang').value;
+      if(lb) lb.textContent=(lg==='ko'?'KO':'EN')+' '+(c?나라깃발(c):'🌍')+' ▾';
+      JN.고르기(false); paintRise(); render(true);
+    },
+    나라:function(){ return _내나라; }
+  };
+  (function(){ var lb=document.getElementById('langbtn');
+    if(lb) lb.textContent='KO '+(_내나라?나라깃발(_내나라):'🌍')+' ▾'; })();
+
+  /* ── juran.json 을 읽어서 채운다. 없으면 보기용 자료 그대로 ── */
+  (function(){
+    try{
+      fetch('juran.json?'+Date.now(),{cache:'no-store'})
+        .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+        .then(function(j){ if(_자료넣기(j)){ paintRise(); render(true); } })
+        .catch(function(){ /* 없으면 그냥 둔다 */ });
+    }catch(e){}
+  })();
+
   paintRise();
 
   // chart board
   var chips=document.getElementById('chips'),listEl=document.getElementById('list'),current=genres[0].n;
   chips.innerHTML=genres.map(function(g){return '<button class="chip" role="tab" data-g="'+g.n+'" aria-selected="'+(g.n===current)+'">'+g.e+' '+g.n+'</button>';}).join('');
   chips.addEventListener('click',function(e){var b=e.target.closest('.chip');if(!b)return;current=b.dataset.g;[].forEach.call(chips.children,function(c){c.setAttribute('aria-selected',c.dataset.g===current);});var g=genres.find(function(x){return x.n===current;});document.getElementById('g-emoji').textContent=g.e;document.getElementById('g-name').textContent=g.n;render(true);});
-  function render(reset){var arr=data[current].slice(0,10),max=arr[0].votes,olds={};[].forEach.call(listEl.children,function(li){olds[li.dataset.id]=li.getBoundingClientRect().top;});
+  function render(reset){var _전=data[current]||[];var _골=(_차보기==='home'&&_내나라)?_전.filter(function(x){return x.나라===_내나라;}):_전;var arr=_골.slice(0,50);if(!arr.length){listEl.innerHTML='<li class="item" style="opacity:.7"><span class="info"><span class="s">이 나라에는 아직 이 장르 곡이 없습니다. 🌍 글로벌을 눌러 보세요.</span></span></li>';return;}var max=arr[0].votes,olds={};[].forEach.call(listEl.children,function(li){olds[li.dataset.id]=li.getBoundingClientRect().top;});
     listEl.innerHTML=arr.map(function(s,ix){var mv=s.prev-ix,cls=mv>0?'up':(mv<0?'down':'same'),ar=mv>0?('▲'+mv):(mv<0?('▼'+(-mv)):'–');
       return '<li class="item" data-id="'+s.t+'"><span class="rank'+(ix<3?' top':'')+'">'+(ix+1)+'</span><span class="mv '+cls+'">'+ar+'</span><span class="cv2" style="background:'+s.cv+'"></span><span class="info"><span class="t">'+s.t+'</span><span class="s">'+s.m+' · 9-AI '+s.score+'점</span></span><span class="bars"><i style="width:'+Math.round(s.votes/max*100)+'%"></i></span><span class="votes"><b class="num">'+fmt(s.votes)+'</b><small>표</small></span></li>';}).join('');
     if(!reset&&!reduce){[].forEach.call(listEl.children,function(li){var o=olds[li.dataset.id];if(o==null)return;var d=o-li.getBoundingClientRect().top;if(Math.abs(d)>1){li.style.transform='translateY('+d+'px)';li.style.transition='none';requestAnimationFrame(function(){li.style.transition='transform .6s cubic-bezier(.22,1,.36,1)';li.style.transform='';});li.classList.add('flash');}});}
@@ -874,13 +1363,14 @@
   };
 
   // ===== router =====
-  var views={home:'v-home',chart:'v-chart',make:'v-make',news:'v-news',hall:'v-hall'};
+  var views={home:'v-home',chart:'v-chart',make:'v-make',news:'v-news',hall:'v-hall',up:'v-up'};
   var currentView='home';
   window.showView=function(name){
     if(!views[name])name='home';currentView=name;
     Object.keys(views).forEach(function(k){document.getElementById(views[k]).hidden=(k!==name);});
     menu(false);window.scrollTo({top:0,behavior:'auto'});
     if(name==='chart')render(true);
+    if(name==='up'&&window.JK)JK.깨우기();
   };
   window.menu=function(open){document.getElementById('menu').hidden=!open;};
   document.getElementById('menu').addEventListener('click',function(e){if(e.target===this)menu(false);});
@@ -889,10 +1379,568 @@
   // live tick
   if(!reduce){setInterval(function(){
     Object.keys(data).forEach(function(k){data[k].forEach(function(s){s.votes+=rint(0,k===current?900:300);});});
-    var chv=document.getElementById('ch-v');if(chv){chv.textContent=fmt(parseInt(chv.textContent.replace(/,/g,''),10)+rint(20,700));}
+    if(currentView==='home')paintRise();
     if(currentView==='chart'){data[current].sort(function(a,b){return b.votes-a.votes;});render(false);}
   },4000);
   setInterval(function(){if(currentView==='home')paintRise();},6000);}
+})();
+</script>
+
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   JURAN · 내 곡 올리기 + 자켓
+   자켓 = [ 그림 ] + [ 악보 ] + [ 글씨 ]
+   그림 : ㉮ 우리 그림 1,000장 (장르별 빛결)  ㉯ 손님이 올린 그림
+   악보 : 그 곡의 음표. 그림이 같아도 이것 때문에 자켓이 달라진다.
+   글씨 : 자리는 아무 데나 — 끌어서 놓는다. 가로·세로 둘 다.
+   ※ 이름을 전부 한글로 두어 기존 앱 함수와 섞이지 않게 한다.
+   ══════════════════════════════════════════════════════════════ */
+(function(){
+"use strict";
+
+function 해시(s){ var h=2166136261; s=String(s);
+  for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); }
+  return (h>>>0); }
+function 씨뿌리기(n){ var s=n>>>0;
+  return function(){ s^=s<<13; s>>>=0; s^=s>>17; s^=s<<5; s>>>=0; return s/4294967296; }; }
+
+var 장르=[
+ {g:'🔥 글로벌 인기',n:'팝·발라드',en:'Pop & Ballad',수:52,h:[205,265],채:34,밝:54,결:'안개'},
+ {g:'🔥 글로벌 인기',n:'힙합',en:'Hip-Hop',수:43,h:[0,30],채:52,밝:32,결:'블록'},
+ {g:'🔥 글로벌 인기',n:'EDM',en:'EDM / Future Bass',수:43,h:[170,300],채:72,밝:50,결:'빛살'},
+ {g:'🔥 글로벌 인기',n:'팝록',en:'Pop Rock',수:35,h:[335,25],채:58,밝:34,결:'긁힘'},
+ {g:'🔥 글로벌 인기',n:'K팝 아이돌',en:'K-Pop Idol',수:43,h:[300,340],채:66,밝:58,결:'빛살'},
+ {g:'🔥 글로벌 인기',n:'K팝 발라드',en:'K-Pop Ballad',수:35,h:[250,215],채:30,밝:62,결:'안개'},
+ {g:'🔥 글로벌 인기',n:'K-R&B',en:'R&B / Soul',수:35,h:[280,230],채:40,밝:30,결:'연기'},
+ {g:'🔥 글로벌 인기',n:'재즈',en:'Jazz',수:35,h:[25,55],채:44,밝:26,결:'연기'},
+ {g:'🎸 록 & 얼터너티브',n:'블루스',en:'Blues',수:21,h:[215,195],채:38,밝:24,결:'연기'},
+ {g:'🎸 록 & 얼터너티브',n:'컨트리',en:'Country',수:21,h:[35,70],채:36,밝:48,결:'알갱이'},
+ {g:'🎸 록 & 얼터너티브',n:'헤비메탈',en:'Heavy Metal',수:21,h:[355,15],채:30,밝:16,결:'긁힘'},
+ {g:'🎸 록 & 얼터너티브',n:'그런지',en:'Grunge / Alt Punk',수:21,h:[30,90],채:22,밝:26,결:'긁힘'},
+ {g:'💃 댄스 & 일렉트로닉',n:'디스코',en:'Disco',수:21,h:[45,330],채:70,밝:52,결:'빛살'},
+ {g:'💃 댄스 & 일렉트로닉',n:'시티팝',en:'City Pop',수:28,h:[195,350],채:48,밝:58,결:'빛살'},
+ {g:'💃 댄스 & 일렉트로닉',n:'신스팝',en:'Synth-Pop',수:21,h:[310,180],채:68,밝:46,결:'빛살'},
+ {g:'💃 댄스 & 일렉트로닉',n:'로파이',en:'Lo-Fi',수:35,h:[18,46],채:30,밝:46,결:'알갱이'},
+ {g:'💃 댄스 & 일렉트로닉',n:'테크노',en:'Techno / House',수:21,h:[210,270],채:36,밝:22,결:'블록'},
+ {g:'💃 댄스 & 일렉트로닉',n:'치프튠',en:'Chiptune / 8-bit',수:14,h:[100,220],채:80,밝:50,결:'블록'},
+ {g:'💃 댄스 & 일렉트로닉',n:'레게',en:'Reggae',수:14,h:[90,55],채:58,밝:44,결:'알갱이'},
+ {g:'💃 댄스 & 일렉트로닉',n:'스카',en:'Ska',수:14,h:[50,40],채:62,밝:54,결:'블록'},
+ {g:'💚 힐링 & 명상',n:'힐링',en:'Healing',수:28,h:[150,110],채:26,밝:70,결:'안개'},
+ {g:'💚 힐링 & 명상',n:'앰비언트',en:'Ambient',수:21,h:[230,190],채:20,밝:34,결:'안개'},
+ {g:'💚 힐링 & 명상',n:'뉴에이지',en:'New Age',수:21,h:[265,200],채:22,밝:72,결:'안개'},
+ {g:'🎬 클래식 & 시네마틱',n:'시네마틱',en:'Cinematic / OST',수:28,h:[190,30],채:34,밝:28,결:'연기'},
+ {g:'🎬 클래식 & 시네마틱',n:'오케스트라',en:'Orchestra',수:21,h:[220,45],채:24,밝:30,결:'연기'},
+ {g:'🎬 클래식 & 시네마틱',n:'바로크',en:'Baroque',수:14,h:[40,20],채:30,밝:36,결:'먹'},
+ {g:'🎬 클래식 & 시네마틱',n:'종교음악',en:'Sacred Music',수:14,h:[45,60],채:18,밝:76,결:'안개'},
+ {g:'🇰🇷 한국 전통',n:'트로트',en:'Trot',수:21,h:[350,20],채:50,밝:46,결:'알갱이'},
+ {g:'🇰🇷 한국 전통',n:'국악',en:'Korean Traditional',수:21,h:[90,150],채:30,밝:48,결:'먹'},
+ {g:'🌍 유럽 전통',n:'샹송',en:'Chanson',수:14,h:[320,250],채:28,밝:38,결:'연기'},
+ {g:'🌍 유럽 전통',n:'칸소네',en:'Canzone',수:14,h:[70,45],채:34,밝:44,결:'연기'},
+ {g:'🌍 유럽 전통',n:'플라멩코',en:'Flamenco',수:14,h:[355,30],채:62,밝:34,결:'긁힘'},
+ {g:'🌍 유럽 전통',n:'켈틱',en:'Celtic',수:14,h:[120,180],채:34,밝:38,결:'안개'},
+ {g:'🌎 라틴 & 아프리카',n:'보사노바',en:'Bossa Nova',수:14,h:[175,55],채:40,밝:58,결:'안개'},
+ {g:'🌎 라틴 & 아프리카',n:'살사',en:'Salsa & Afro-Cuban',수:14,h:[20,330],채:68,밝:46,결:'블록'},
+ {g:'🌎 라틴 & 아프리카',n:'탱고',en:'Tango',수:14,h:[350,40],채:44,밝:22,결:'연기'},
+ {g:'🌎 라틴 & 아프리카',n:'마리아치',en:'Mariachi',수:14,h:[0,50],채:70,밝:48,결:'블록'},
+ {g:'🌎 라틴 & 아프리카',n:'아프로비트',en:'Afrobeat',수:14,h:[30,120],채:60,밝:44,결:'블록'},
+ {g:'🌎 라틴 & 아프리카',n:'안데스',en:'Andean / Quechua',수:14,h:[25,200],채:34,밝:44,결:'먹'},
+ {g:'🌏 아시아 & 중동',n:'인도 라가',en:'Indian Raga',수:14,h:[25,300],채:56,밝:40,결:'먹'},
+ {g:'🌏 아시아 & 중동',n:'중국 전통',en:'Chinese Traditional',수:14,h:[0,45],채:48,밝:40,결:'먹'},
+ {g:'🌏 아시아 & 중동',n:'일본 전통',en:'Japanese Traditional',수:14,h:[340,215],채:26,밝:62,결:'먹'},
+ {g:'🌏 아시아 & 중동',n:'아랍 마캄',en:'Arabian Maqam',수:14,h:[40,265],채:44,밝:32,결:'먹'},
+ {g:'🌏 아시아 & 중동',n:'흐미(후미)',en:'Khoomei',수:14,h:[200,35],채:22,밝:46,결:'안개'},
+ {g:'🌏 아시아 & 중동',n:'가멜란',en:'Gamelan',수:14,h:[45,170],채:44,밝:40,결:'먹'},
+ {g:'🌏 아시아 & 중동',n:'마오리',en:'Maori',수:14,h:[0,140],채:40,밝:28,결:'먹'}
+];
+function 결선(k){ return k==='긁힘'||k==='연기'||k==='먹'; }
+
+function 그림그리기(c,장,번호,S,색틀기,결고름){
+  var r=씨뿌리기(해시(장.n+'#'+번호));
+  var h0=장.h[0], h1=장.h[1]<장.h[0]?장.h[1]+360:장.h[1];
+  var 틀=(색틀기||0);
+  function hue(t){ return (h0+(h1-h0)*t+틀+360)%360; }
+  var 밝=장.밝+(r()*2-1)*20+(r()<0.18?26:0);
+  var 채=Math.max(6,장.채+(r()*2-1)*16);
+  /* ⚠️ 결고름이 있어도 추첨은 똑같이 돌려야 한다.
+        안 그러면 뒤의 모든 추첨이 밀려서 그림이 통째로 바뀐다 */
+  var _뽑= (r()<0.62) ? 장.결 : ['안개','알갱이','블록','긁힘','빛살','연기','먹'][(r()*7)|0];
+  var 결=결고름||_뽑;
+  var g=c.createLinearGradient(0,0,S*(0.3+r()*0.7),S);
+  g.addColorStop(0,'hsl('+hue(r())+' '+채+'% '+(밝+14)+'%)');
+  g.addColorStop(1,'hsl('+hue(r())+' '+(채-8)+'% '+(밝-18)+'%)');
+  c.fillStyle=g; c.fillRect(0,0,S,S);
+  for(var i=0,덩이=3+((r()*4)|0);i<덩이;i++){
+    var cx=r()*S, cy=r()*S, rad=S*(0.16+r()*0.42), hh=hue(r());
+    var rg=c.createRadialGradient(cx,cy,0,cx,cy,rad);
+    rg.addColorStop(0,'hsla('+hh+' '+(채+16)+'% '+(밝+22)+'% / '+(0.3+r()*0.4).toFixed(2)+')');
+    rg.addColorStop(1,'hsla('+hh+' '+채+'% '+밝+'% / 0)');
+    c.fillStyle=rg; c.beginPath(); c.arc(cx,cy,rad,0,Math.PI*2); c.fill();
+  }
+  if(결==='블록'||결==='빛살'){
+    c.save(); c.globalAlpha=0.22;
+    for(var j=0;j<6+((r()*8)|0);j++){
+      c.fillStyle='hsl('+hue(r())+' '+(채+10)+'% '+(밝+(r()<0.5?26:-22))+'%)';
+      if(결==='블록') c.fillRect(r()*S,r()*S,S*(0.05+r()*0.3),S*(0.03+r()*0.18));
+      else { c.save(); c.translate(r()*S,r()*S); c.rotate(r()*Math.PI);
+             c.fillRect(-S*0.5,0,S,S*(0.004+r()*0.012)); c.restore(); }
+    }
+    c.restore();
+  }
+  if(결==='안개'){
+    c.save(); c.globalAlpha=0.26;
+    for(var a1=0,안=4+((r()*4)|0);a1<안;a1++){
+      var ax=r()*S, ay=r()*S, ar=S*(0.30+r()*0.50), ah=hue(r());
+      var ag=c.createRadialGradient(ax,ay,0,ax,ay,ar);
+      ag.addColorStop(0,'hsla('+ah+' '+채+'% '+(밝+28)+'% / .55)');
+      ag.addColorStop(1,'hsla('+ah+' '+채+'% '+밝+'% / 0)');
+      c.fillStyle=ag; c.beginPath(); c.arc(ax,ay,ar,0,Math.PI*2); c.fill();
+    }
+    c.restore();
+  }
+  if(결==='알갱이'){
+    c.save(); c.globalAlpha=0.17;
+    var 굵=Math.max(1,S*0.0042);
+    for(var a2=0,알2=Math.max(300,(S*S)/900);a2<알2;a2++){
+      c.fillStyle=r()<0.5?'#000':'#fff'; c.fillRect(r()*S,r()*S,굵,굵);
+    }
+    c.restore();
+  }
+  /* 긁힘·연기·먹은 느낌이 다르다 — 셋을 같이 그리면 이름만 셋이 된다 */
+  if(결==='긁힘'){            /* 곧고 가는 금 */
+    c.save(); c.globalAlpha=0.34; c.lineCap='round';
+    for(var g1=0;g1<18;g1++){
+      c.lineWidth=Math.max(0.8,S*(0.0012+r()*0.0022));
+      c.strokeStyle='hsla('+hue(r())+' '+채+'% '+(밝+(r()<0.5?34:-28))+'% / .6)';
+      var gx=r()*S, gy=r()*S, 각=(r()-0.5)*1.1, 길=S*(0.15+r()*0.55);
+      c.beginPath(); c.moveTo(gx,gy); c.lineTo(gx+Math.cos(각)*길, gy+Math.sin(각)*길); c.stroke();
+    }
+    c.restore();
+  }
+  if(결==='연기'){            /* 길고 두껍고 부드러운 휘감김 */
+    c.save(); c.globalAlpha=0.20; c.lineCap='round';
+    for(var g2=0;g2<10;g2++){
+      c.lineWidth=S*(0.012+r()*0.05);
+      c.strokeStyle='hsla('+hue(r())+' '+채+'% '+(밝+(r()<0.5?26:-22))+'% / .45)';
+      c.beginPath(); c.moveTo(r()*S,r()*S);
+      c.bezierCurveTo(r()*S,r()*S,r()*S,r()*S,r()*S,r()*S); c.stroke();
+    }
+    c.restore();
+  }
+  if(결==='먹'){              /* 굵은 붓자국 + 번짐 */
+    c.save(); c.lineCap='round'; c.globalAlpha=0.30;
+    for(var g3=0;g3<7;g3++){
+      c.lineWidth=S*(0.006+r()*0.030);
+      c.strokeStyle='hsla('+hue(r())+' '+Math.max(4,채-10)+'% '+(밝-30)+'% / .7)';
+      var bx=r()*S, by=r()*S;
+      c.beginPath(); c.moveTo(bx,by);
+      c.quadraticCurveTo(bx+(r()-0.5)*S*0.6, by+(r()-0.5)*S*0.6, r()*S, r()*S); c.stroke();
+    }
+    c.globalAlpha=0.22;
+    for(var g4=0;g4<4;g4++){
+      var mx=r()*S, my=r()*S, mr=S*(0.02+r()*0.07);
+      c.fillStyle='hsla('+hue(r())+' '+채+'% '+(밝-34)+'% / .6)';
+      c.beginPath(); c.ellipse(mx,my,mr,mr*(0.5+r()),r()*3.1416,0,Math.PI*2); c.fill();
+    }
+    c.restore();
+  }
+  c.save(); c.globalAlpha=0.07;
+  for(var m=0,알=Math.max(600,(S*S)/260);m<알;m++){
+    c.fillStyle=r()<0.5?'#000':'#fff'; c.fillRect(r()*S,r()*S,1,1);
+  }
+  c.restore();
+  var vg=c.createRadialGradient(S/2,S/2,S*0.3,S/2,S/2,S*0.78);
+  vg.addColorStop(0,'rgba(0,0,0,0)');
+  vg.addColorStop(1,'rgba(0,0,0,'+(0.06+r()*0.22).toFixed(2)+')');
+  c.fillStyle=vg; c.fillRect(0,0,S,S);
+}
+
+var 내그림=[];
+function 올린그림그리기(c,img,S){
+  if(!img||!img.width){ c.fillStyle='#777'; c.fillRect(0,0,S,S); return; }
+  var r=Math.max(S/img.width,S/img.height), w=img.width*r, h=img.height*r;
+  c.drawImage(img,(S-w)/2,(S-h)/2,w,h);
+}
+
+/* 그 자리의 밝기와 얼룩짐을 잰다 */
+function 재기(c,x,y,w,h){
+  try{
+    x=Math.max(0,x|0); y=Math.max(0,y|0); w=Math.max(1,w|0); h=Math.max(1,h|0);
+    var d=c.getImageData(x,y,w,h).data, s=0, ss=0, n=0;
+    for(var i=0;i<d.length;i+=16){
+      var L=(0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2])/255; s+=L; ss+=L*L; n++;
+    }
+    if(!n) return {밝:0.4,들쭉:0};
+    var m=s/n;
+    return {밝:m, 들쭉:Math.sqrt(Math.max(0,ss/n-m*m))};
+  }catch(e){ return {밝:0.35,들쭉:0.2}; }
+}
+
+var LET={0:0,1:0,2:1,3:1,4:2,5:3,6:3,7:4,8:4,9:5,10:5,11:6};
+function 악보얹기(c,곡,S,피할){
+  var ns=곡.n||[]; if(!ns.length||곡.악보==='없음') return;
+  var 끝=0; for(var i=0;i<ns.length;i++){ var e=ns[i][0]+ns[i][1]; if(e>끝) 끝=e; }
+  if(!(끝>0)) 끝=1;
+  /* ⚠️ 오선만 재면 안 된다 — 음표 기둥이 오선 위아래로 더 뻗는다 */
+  var 뻗음=0.17, 중;
+  if(곡.악보==='자동'){
+    var 후=[0.22,0.46,0.78];
+    if(!피할) 중=0.46;
+    else{
+      var t0=(피할.y)/S-0.015, t1=(피할.y+피할.h)/S+0.015, 최고=-1e9; 중=0.46;
+      for(var q=0;q<3;q++){
+        var s0=후[q]-뻗음, s1=후[q]+뻗음;
+        var 겹=Math.max(0,Math.min(s1,t1)-Math.max(s0,t0));
+        var 점=-겹*10+Math.abs(후[q]-(t0+t1)/2);
+        if(점>최고){ 최고=점; 중=후[q]; }
+      }
+    }
+  } else 중 = 곡.악보==='위'?0.22:(곡.악보==='아래'?0.78:0.46);
+  var pad=S*0.12, W=S-pad*2, g=S*0.049;
+  /* ⚠️ 세로쓰기 글씨는 높이의 절반을 넘는다 — 위아래로 피할 데가 없으니 옆으로 비킨다 */
+  if(피할&&곡.악보==='자동'&&피할.h>S*0.40){
+    var 글왼=피할.x, 글오=피할.x+피할.w, 틈=S*0.05;
+    var 왼남=글왼-S*0.08, 오남=S*0.92-글오;
+    if(오남>=왼남){ pad=글오+틈; W=Math.max(S*0.30,S*0.92-pad); }
+    else { pad=S*0.08; W=Math.max(S*0.30,글왼-틈-pad); }
+    중=0.5;
+  }
+  var 위=S*중-g*2, 밑=위+g*4;
+  var hw=g*0.9, hh=g*0.7, sw=Math.max(1,S*0.0055);
+  function py(m){ return 밑-((((Math.floor(m/12)-1)*7)+LET[((m%12)+12)%12])-30)*(g/2); }
+  function px(b){ return pad+(b/끝)*W; }
+  var z=재기(c,pad,위-g,W,g*6);
+  var 선색=z.밝>0.58?'#14171a':'#ffffff';
+  var 그=z.밝>0.58?'rgba(255,255,255,.5)':'rgba(0,0,0,.45)';
+  c.save();
+  c.globalAlpha=0.30; c.strokeStyle=선색; c.lineWidth=Math.max(0.8,S*0.0028);
+  for(var j=0;j<5;j++){ var y=Math.round(위+j*g)+0.5;
+    c.beginPath(); c.moveTo(pad,y); c.lineTo(pad+W,y); c.stroke(); }
+  c.globalAlpha=0.92; c.shadowColor=그; c.shadowBlur=S*0.012;
+  for(var n=0;n<ns.length;n++){
+    var x=px(ns[n][0]), yy=py(ns[n][2]), d=ns[n][1], 속빔=d>=2;
+    c.save(); c.translate(x,yy); c.rotate(-19*Math.PI/180);
+    c.beginPath(); c.ellipse(0,0,hw/2,hh/2,0,0,Math.PI*2);
+    if(속빔){ c.lineWidth=Math.max(1,sw*1.6); c.strokeStyle=선색; c.stroke(); }
+    else { c.fillStyle=선색; c.fill(); }
+    c.restore();
+    if(d<4){ var 위로=yy>위+g*2; c.fillStyle=선색;
+      c.fillRect(위로?(x+hw/2-sw):(x-hw/2), 위로?(yy-g*2.4):yy, sw, g*2.4); }
+  }
+  c.restore();
+}
+
+/* 글씨 — 자리는 비율(0~1). 그래야 작은 미리보기든 1024px 저장이든 같은 데 찍힌다 */
+function 글씨얹기(c,S,곡,알림,재기만){
+  if(곡.쓰기==='없음') return null;
+  var 제목=곡.t||'', 지은이=곡.by||'', 세로=(곡.쓰기==='세로');
+  var 큰=S*(곡.크기||0.08), 작=큰*0.50, ax=S*곡.x, ay=S*곡.y;
+  var 가=곡.x<0.34?'left':(곡.x>0.66?'right':'center');
+  var 세=곡.y<0.34?'top':(곡.y>0.66?'bottom':'middle');
+  var 큰꼴=function(px){ return '800 '+px.toFixed(1)+'px "Sora",-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif'; };
+  var 작꼴='600 '+작.toFixed(1)+'px -apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  var 상자;
+  if(!세로){
+    c.font=큰꼴(큰);
+    var 최대=S*0.84;
+    while(c.measureText(제목).width>최대&&큰>S*0.030){ 큰*=0.94; c.font=큰꼴(큰); }
+    var w1=c.measureText(제목).width;
+    c.font=작꼴; var w2=c.measureText(지은이).width;
+    var W=Math.max(w1,w2), H=큰*1.05+(지은이?작*1.7:0);
+    상자={ x:(가==='left'?ax:(가==='right'?ax-W:ax-W/2)),
+           y:(세==='top'?ay:(세==='bottom'?ay-H:ay-H/2)), w:W, h:H, 큰:큰 };
+  } else {
+    var 글자=제목.replace(/\s+/g,'').split('');
+    var 칸=큰*1.08, H2=글자.length*칸, 최대H=S*0.84;
+    if(H2>최대H){ 큰*=최대H/H2; 칸=큰*1.08; H2=글자.length*칸; 작=큰*0.5; }
+    var W2=큰+(지은이?작*1.9:0);
+    상자={ x:(가==='left'?ax:(가==='right'?ax-W2:ax-W2/2)),
+           y:(세==='top'?ay:(세==='bottom'?ay-H2:ay-H2/2)),
+           w:W2, h:H2, 큰:큰, 글자:글자, 칸:칸, 작:작 };
+  }
+  if(재기만) return 상자;   /* 악보가 피할 자리를 알려 주려고 재기만 한다 */
+
+  var 여=S*0.03;
+  var z=재기(c,상자.x-여,상자.y-여,상자.w+여*2,상자.h+여*2);
+  var 환함=z.밝>0.58, 어지러움=z.들쭉>0.16;
+  var 글색=환함?'#14171a':'#ffffff';
+  var 보조=환함?'rgba(20,23,26,.74)':'rgba(255,255,255,.80)';
+  var 그늘깖=(어지러움||(환함&&z.밝<0.72)||(!환함&&z.밝>0.42));
+  if(그늘깖){
+    var cx=상자.x+상자.w/2, cy=상자.y+상자.h/2;
+    var rad=Math.max(상자.w,상자.h)*0.95+S*0.05;
+    var sg=c.createRadialGradient(cx,cy,0,cx,cy,rad);
+    var 색=환함?'255,255,255':'0,0,0';
+    sg.addColorStop(0,'rgba('+색+',.52)'); sg.addColorStop(0.55,'rgba('+색+',.34)');
+    sg.addColorStop(1,'rgba('+색+',0)');
+    c.save(); c.fillStyle=sg;
+    c.beginPath(); c.ellipse(cx,cy,rad*1.25,rad*0.95,0,0,Math.PI*2); c.fill(); c.restore();
+  }
+  c.save();
+  c.shadowColor=환함?'rgba(255,255,255,.6)':'rgba(0,0,0,.52)';
+  c.shadowBlur=S*0.016; c.textAlign='left'; c.textBaseline='alphabetic';
+  if(!세로){
+    c.font=큰꼴(상자.큰); c.fillStyle=글색;
+    c.fillText(제목,상자.x,상자.y+상자.큰*0.86);
+    if(지은이){ c.font=작꼴; c.fillStyle=보조;
+      c.fillText(지은이,상자.x,상자.y+상자.큰*0.86+작*1.55); }
+  } else {
+    c.font=큰꼴(상자.큰); c.fillStyle=글색; c.textAlign='center';
+    var colx=상자.x+상자.큰/2;
+    for(var i2=0;i2<상자.글자.length;i2++)
+      c.fillText(상자.글자[i2],colx,상자.y+i2*상자.칸+상자.큰*0.86);
+    if(지은이){
+      c.font=작꼴; c.fillStyle=보조;
+      var 작글=지은이.replace(/\s+/g,'').split(''), cx2=상자.x+상자.큰+작*1.25;
+      for(var i3=0;i3<작글.length;i3++)
+        c.fillText(작글[i3],cx2,상자.y+i3*(작*1.14)+작*0.86);
+    }
+  }
+  c.restore();
+  if(알림) 알림(환함,그늘깖,z);
+  return 상자;
+}
+
+function 자켓(cv,곡,S,알림){
+  var dpr=Math.min(window.devicePixelRatio||1,3);
+  cv.width=Math.round(S*dpr); cv.height=Math.round(S*dpr);
+  var c=cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0);
+  if(곡.내그림!=null&&내그림[곡.내그림]) 올린그림그리기(c,내그림[곡.내그림],S);
+  else 그림그리기(c,장르[곡.gi],곡.img,S,곡.색,곡.결);
+  /* 글씨 자리를 먼저 재고 → 악보가 그 자리를 피해 앉고 → 글씨를 그린다 */
+  var 글상자=글씨얹기(c,S,곡,null,true);
+  악보얹기(c,곡,S,글상자);
+  글씨얹기(c,S,곡,알림);
+}
+
+/* 보기용 악보 — ①에서 곡을 넣고 ⑤가 열리면 진짜 악보로 바뀐다 */
+var 보기악보=[[0,0.25,71],[0.25,0.25,69],[0.5,1,65],[2,2,62],[4,0.25,65],[4.25,0.25,64],
+  [5,4,65],[9,1,60],[10,2,59],[12,0.5,60],[12.5,1,64],[13.5,0.5,71],[14,0.5,60],
+  [14.5,0.5,67],[15,0.5,76],[15.5,1,72],[16.5,0.5,67],[17,1,69]];
+
+var 지금={ id:'my', gi:0, t:'새벽 세 시의 고백', by:'@달토끼', n:보기악보,
+           x:0.08, y:0.86, 쓰기:'가로', 크기:0.08, 악보:'자동', 내그림:null,
+           색:0, 결:null };
+지금.img=해시(지금.id)%장르[지금.gi].수;
+
+var 깼나=false, 큰판=null, 내모드=false;
+function $(i){ return document.getElementById(i); }
+function 눌림(el,on){ if(el) el.setAttribute('aria-pressed', on?'true':'false'); }
+
+function 그려(){
+  if(!큰판) return;
+  자켓(큰판,지금,1024,function(환함,그늘,z){
+    var a=$('jk-auto'); if(!a) return;
+    a.innerHTML='<b>이 자리에서 저절로 고른 것</b> — '+(환함?'검은 글씨':'흰 글씨')+
+      ' · 그늘 '+(그늘?'깖':'안 깖')+' · 악보는 '+
+      (지금.악보==='자동'?'글씨를 피해 앉음':지금.악보)+
+      ' <span style="color:var(--faint)">(밝기 '+z.밝.toFixed(2)+' · 얼룩 '+z.들쭉.toFixed(2)+')</span>';
+  });
+  $('jk-pxn').textContent=Math.round(지금.x*100)+'%';
+  $('jk-pyn').textContent=Math.round(지금.y*100)+'%';
+  $('jk-px').value=Math.round(지금.x*100);
+  $('jk-py').value=Math.round(지금.y*100);
+  눌림($('jk-h'),지금.쓰기==='가로'); 눌림($('jk-v'),지금.쓰기==='세로'); 눌림($('jk-n'),지금.쓰기==='없음');
+  if(지금.내그림==null)
+    $('jk-no').textContent=장르[지금.gi].n+' '+(지금.img+1)+' / '+장르[지금.gi].수+'장';
+  else $('jk-no').textContent='내 그림';
+}
+
+function 서랍(){
+  var lib=$('jk-lib'); if(!lib) return;
+  lib.innerHTML=''; var 장=장르[지금.gi];
+  for(var i=0;i<16;i++) (function(k){
+    var cv=document.createElement('canvas');
+    var dpr=Math.min(window.devicePixelRatio||1,2);
+    cv.width=110*dpr; cv.height=110*dpr;
+    var c=cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0);
+    그림그리기(c,장,k,110,지금.색,지금.결);
+    if(k===지금.img&&지금.내그림==null) cv.setAttribute('data-on','1');
+    cv.addEventListener('click',function(){ 지금.img=k; 지금.내그림=null; 그려(); 서랍(); });
+    lib.appendChild(cv);
+  })((지금.img+i-4+장.수*2)%장.수);
+}
+
+function 내서랍(){
+  var lib=$('jk-mylib'); if(!lib) return;
+  lib.innerHTML='';
+  내그림.forEach(function(img,k){
+    var el=document.createElement('img'); el.src=img.src; el.alt='올린 그림 '+(k+1);
+    if(지금.내그림===k) el.setAttribute('data-on','1');
+    el.addEventListener('click',function(){ 지금.내그림=k; 그려(); 내서랍(); });
+    lib.appendChild(el);
+  });
+}
+
+function 그림받기(files){
+  [].slice.call(files).forEach(function(f){
+    if(!/^image\//.test(f.type)) return;
+    var fr=new FileReader();
+    fr.onload=function(e){
+      var img=new Image();
+      img.onload=function(){ 내그림.push(img); 지금.내그림=내그림.length-1;
+                             JK.그림모드(1); 그려(); 내서랍(); };
+      img.src=e.target.result;
+    };
+    fr.readAsDataURL(f);
+  });
+}
+
+function 칩들(통,목록,고른,고름){
+  통.innerHTML='';
+  목록.forEach(function(v,i){
+    var b=document.createElement('button'); b.className='chip'; b.textContent=v;
+    b.setAttribute('aria-pressed',(v===고른||i===고른)?'true':'false');
+    b.addEventListener('click',function(){ 고름(v,i); });
+    통.appendChild(b);
+  });
+}
+
+var JK = {
+  mode:function(m){
+    var 검사=(m==='check');
+    눌림($('m-up'),!검사); 눌림($('m-check'),검사);
+    ['st2','st3','st5'].forEach(function(k){ var e=$(k); if(e) e.hidden=검사; });
+    /* 숨긴 칸을 건너뛰고 번호를 다시 매긴다 — 1 → 4 → 6 으로 뛰면 안 된다 */
+    var 번호=0;
+    ['st1','st2','st3','st4','st5','st6'].forEach(function(k){
+      var e=$(k); if(!e||e.hidden) return;
+      번호++; var d=e.querySelector('.no'); if(d) d.textContent=번호;
+    });
+    var 안내5=$('up-say5'); if(안내5) 안내5.hidden=검사;
+    $('up-lede').textContent = 검사
+      ? '곡과 가사만 넣으면 저작권·가사·금기어·실명을 한 번에 봐 드립니다. 올리지 않아도 됩니다.'
+      : 'AI로 만든 곡을 올리고 자랑하세요. 악보도 자켓도 여기서 만듭니다.';
+    var s=$('up-send');
+    s.textContent = 검사 ? '검사 돌리기 — 곧 열립니다' : '올리기 — 곧 열립니다';
+  },
+  그림모드:function(mine){
+    내모드=!!mine;
+    $('jk-ourbox').style.display  = mine?'none':'flex';
+    $('jk-minebox').style.display = mine?'flex':'none';
+    눌림($('jk-our'),!mine); 눌림($('jk-mine'),!!mine);
+    if(!mine){ 지금.내그림=null; 그려(); 서랍(); }
+  },
+  넘기기:function(d){ var 수=장르[지금.gi].수;
+    지금.내그림=null; 지금.img=(지금.img+d+수)%수; 그려(); 서랍(); },
+  섞기:function(){ 지금.내그림=null;
+    지금.img=(Math.random()*장르[지금.gi].수)|0; 그려(); 서랍(); },
+  쓰기:function(v){ 지금.쓰기=v; 그려(); },
+  저장:function(){
+    var t=document.createElement('canvas'); 자켓(t,지금,1024);
+    var a=document.createElement('a');
+    a.download=((지금.t||'자켓').replace(/[\\/:*?"<>|]/g,'')||'자켓')+'.png';
+    a.href=t.toDataURL('image/png');
+    document.body.appendChild(a); a.click(); a.remove();
+  },
+  깨우기:function(){
+    if(깼나) return; 깼나=true;
+    큰판=$('jkbig');
+
+    function 장르칩(){
+      /* 46개를 칩으로 늘어놓으면 폰에서 벽이 된다 — 묶음별 고르개로 */
+      var sel=$('up-gen'); if(sel.options.length) return;
+      var 묶음=null, og=null;
+      장르.forEach(function(g,i){
+        if(g.g!==묶음){ 묶음=g.g; og=document.createElement('optgroup'); og.label=묶음; sel.appendChild(og); }
+        var o=document.createElement('option'); o.value=i; o.textContent=g.n+'  ·  '+g.en;
+        if(i===지금.gi) o.selected=true;
+        og.appendChild(o);
+      });
+      sel.addEventListener('change',function(e){
+        var i=+e.target.value;
+        지금.gi=i; 지금.내그림=null; 지금.img=해시(지금.id+'/'+i)%장르[i].수;
+        지금.색=0; $('jk-hue').value=0; $('jk-huen').textContent='장르 그대로';
+        JK.그림모드(0); 그려(); 서랍();
+      });
+    }
+    function 악보칩(){
+      var L=['자동','위','가운데','아래','없음'];
+      칩들($('jk-sc'), L, 지금.악보, function(v){ 지금.악보=v; 악보칩(); 그려(); });
+    }
+    function 결칩(){
+      var L=['장르대로','안개','알갱이','블록','긁힘','빛살','연기','먹'];
+      칩들($('jk-tex'), L, 지금.결||'장르대로', function(v){
+        지금.결 = (v==='장르대로') ? null : v;
+        결칩(); 그려(); 서랍();
+      });
+    }
+    function 색글(){ $('jk-huen').textContent = 지금.색 ? ('+'+지금.색+'°') : '장르 그대로'; }
+    $('jk-hue').addEventListener('input',function(e){
+      지금.색=+e.target.value; 색글(); 그려(); 서랍(); });
+    장르칩(); 악보칩(); 결칩(); 색글();
+
+    /* 아홉 칸 */
+    var 자=[[0.08,0.10],[0.5,0.10],[0.92,0.10],
+            [0.08,0.50],[0.5,0.50],[0.92,0.50],
+            [0.08,0.86],[0.5,0.86],[0.92,0.86]];
+    var 글=['↖','↑','↗','←','·','→','↙','↓','↘'];
+    var n9=$('jk-nine');
+    자.forEach(function(p,i){
+      var b=document.createElement('button'); b.textContent=글[i];
+      b.setAttribute('aria-label','글씨를 '+글[i]+' 자리로');
+      b.addEventListener('click',function(){ 지금.x=p[0]; 지금.y=p[1]; 그려(); });
+      n9.appendChild(b);
+    });
+
+    /* 제목·지은이는 ②번 칸이 주인이다 */
+    $('up-t').addEventListener('input',function(e){ 지금.t=e.target.value; 그려(); });
+    $('up-by').addEventListener('input',function(e){ 지금.by=e.target.value; 그려(); });
+    $('jk-px').addEventListener('input',function(e){ 지금.x=e.target.value/100; 그려(); });
+    $('jk-py').addEventListener('input',function(e){ 지금.y=e.target.value/100; 그려(); });
+    $('jk-sz').addEventListener('input',function(e){ 지금.크기=e.target.value/1000; 그려(); });
+
+    /* 그림 위에서 끌어 옮기기 */
+    var 끄는중=false;
+    function 자리로(e){
+      var r=큰판.getBoundingClientRect();
+      지금.x=Math.max(0.03,Math.min(0.97,(e.clientX-r.left)/r.width));
+      지금.y=Math.max(0.03,Math.min(0.97,(e.clientY-r.top )/r.height));
+      그려();
+    }
+    큰판.addEventListener('pointerdown',function(e){
+      if(지금.쓰기==='없음') return;
+      끄는중=true; 큰판.classList.add('drag');
+      try{ 큰판.setPointerCapture(e.pointerId); }catch(_){}
+      자리로(e); e.preventDefault();
+    });
+    큰판.addEventListener('pointermove',function(e){ if(끄는중) 자리로(e); });
+    ['pointerup','pointercancel'].forEach(function(k){
+      큰판.addEventListener(k,function(){ 끄는중=false; 큰판.classList.remove('drag'); }); });
+
+    /* 내 그림 올리기 */
+    var 드=$('jk-drop'), 파=$('jk-file');
+    드.addEventListener('click',function(){ 파.click(); });
+    파.addEventListener('change',function(e){ 그림받기(e.target.files); e.target.value=''; });
+    ['dragenter','dragover'].forEach(function(k){
+      드.addEventListener(k,function(e){ e.preventDefault(); 드.classList.add('on'); }); });
+    ['dragleave','drop'].forEach(function(k){
+      드.addEventListener(k,function(e){ e.preventDefault(); 드.classList.remove('on'); }); });
+    드.addEventListener('drop',function(e){ if(e.dataTransfer) 그림받기(e.dataTransfer.files); });
+
+    /* 곡 파일 — 폰 안에서만 연다 */
+    var 곡드=$('up-drop'), 곡파=$('up-file');
+    function 곡받기(files){
+      var f=files&&files[0]; if(!f) return;
+      if(!/^audio\//.test(f.type)&&!/\.(mp3|wav|m4a|ogg|flac)$/i.test(f.name)){
+        $('up-info').innerHTML='<p class="hint" style="color:var(--down)">소리 파일이 아닙니다.</p>'; return;
+      }
+      var mb=(f.size/1048576).toFixed(1);
+      $('up-info').innerHTML='<p class="hint"><b>'+f.name.replace(/[<>&]/g,'')+'</b> · '+mb+'MB</p>'+
+        '<audio controls src="'+URL.createObjectURL(f)+'"></audio>';
+    }
+    곡드.addEventListener('click',function(){ 곡파.click(); });
+    곡파.addEventListener('change',function(e){ 곡받기(e.target.files); e.target.value=''; });
+    ['dragenter','dragover'].forEach(function(k){
+      곡드.addEventListener(k,function(e){ e.preventDefault(); 곡드.classList.add('on'); }); });
+    ['dragleave','drop'].forEach(function(k){
+      곡드.addEventListener(k,function(e){ e.preventDefault(); 곡드.classList.remove('on'); }); });
+    곡드.addEventListener('drop',function(e){ if(e.dataTransfer) 곡받기(e.dataTransfer.files); });
+
+    그려(); 서랍(); 내서랍(); JK.mode('up');
+  }
+};
+window.JK=JK;
 })();
 </script>
 
