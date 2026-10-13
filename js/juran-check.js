@@ -27,6 +27,9 @@
        드럼만 바꿈 48 · 아주 다른 곡 2.5      → 같은 음원과 다른 음원이 260배 벌어진다
        지문 뜨는 데 폰에서 1.5~4초 (음 따기는 15~40분이다)
 
+   【판 558】 누른 자리의 가사를 잰다 · 검사증 제목은 「내 곡 올리기」에서만 가져온다
+   【판 560】 악보 겹치기 그림 — 닮은 씨앗과 같은 토막을 같은 칸에 세워 빨갛게 칠한다
+
    끄기 : window.JC끔 = true
    ══════════════════════════════════════════════════════════════════════════ */
 (function(){
@@ -169,17 +172,21 @@ function 지금가락(){
   }catch(e){}
   return null;
 }
-/* 연달아 똑같은 토막이 몇 음인가 */
-function 가장긴같은토막(a,b){
-  if(!a.length||!b.length) return 0;
-  var 앞=new Int32Array(b.length+1), 이번=new Int32Array(b.length+1), 최대=0;
+/* 연달아 똑같은 토막이 몇 음인가 — 그리고 **어디인가** (판 560)
+   음 수 = 뛴 폭 수 + 1. 뛴 폭이 9개 같으면 음 10개가 같은 차례로 오르내린다. */
+function 같은토막찾기(a,b){
+  if(!a.length||!b.length) return {음수:0};
+  var 앞=new Int32Array(b.length+1), 이번=new Int32Array(b.length+1), 최대=0, ai=0, bi=0;
   for(var i=1;i<=a.length;i++){
-    for(var t=1;t<=b.length;t++) 이번[t]=(a.charCodeAt(i-1)===b.charCodeAt(t-1))?앞[t-1]+1:0;
-    for(var q=1;q<=b.length;q++) if(이번[q]>최대) 최대=이번[q];
+    for(var t=1;t<=b.length;t++){
+      이번[t]=(a.charCodeAt(i-1)===b.charCodeAt(t-1))?앞[t-1]+1:0;
+      if(이번[t]>최대){ 최대=이번[t]; ai=i-최대; bi=t-최대; }
+    }
     var tmp=앞; 앞=이번; 이번=tmp; 이번.fill(0);
   }
-  return 최대? 최대+1 : 0;
+  return 최대? {음수:최대+1, 내시작:ai, 씨시작:bi} : {음수:0};
 }
+function 가장긴같은토막(a,b){ return 같은토막찾기(a,b).음수; }
 function 토막모음(v,N){ var s=Object.create(null),n=0; for(var i=0;i+N<=v.length;i++){ var k=v.substr(i,N); if(!s[k]){s[k]=1;n++;} } return {s:s,n:n}; }
 function 악보검사(미디들){
   var S=씨앗준비();
@@ -200,7 +207,12 @@ function 악보검사(미디들){
   }
   결과.닮음 = Math.round(제일.닮음*100);
   결과.닮은곡 = 제일.번호>=0 ? S.제목[제일.번호] : '';
-  결과.같은토막 = 제일.번호>=0 ? 가장긴같은토막(v, S.가락[제일.번호]) : 0;
+  var 자리 = 제일.번호>=0 ? 같은토막찾기(v, S.가락[제일.번호]) : {음수:0};
+  결과.같은토막 = 자리.음수;
+  /* 겹치기 그림에 쓸 것 (판 560) */
+  결과.자리 = 자리.음수>=3 ? 자리 : null;
+  결과.씨줄 = 제일.번호>=0 ? S.가락[제일.번호] : '';
+  결과.미디 = 미디들.slice();
   /* 흔한 정도 — 내 3음 토막 가운데 씨앗에 10번 넘게 나오는 것이 몇 % */
   var 모두=0, 흔한것=0;
   for(var k=0;k+3<=v.length;k++){ 모두++; if((S.흔함[v.substr(k,3)]||0)>=10) 흔한것++; }
@@ -376,7 +388,12 @@ function 만들기팝(){
     'background:#0f241e;border:1px solid #1d3a32;margin-bottom:7px;font-size:13px;line-height:1.5}'+
     '#jc-out .row b{min-width:76px;color:#9fd8c8;font-weight:700}'+
     '#jc-out .sec{font-size:12px;color:#7fae9f;margin:12px 0 7px;font-weight:700}'+
-    '#jc-out .note{font-size:11px;color:#6f9b8d;line-height:1.6;margin-top:9px}';
+    '#jc-out .note{font-size:11px;color:#6f9b8d;line-height:1.6;margin-top:9px}'+
+    '#jc-out .over{padding:10px 11px;border-radius:10px;background:#0a1d18;border:1px solid #3b2a2a;margin-bottom:7px}'+
+    '#jc-out .ovh{font-size:12.5px;font-weight:800;color:#fca5a5;margin-bottom:6px}'+
+    '#jc-out .ovh span{font-weight:600;color:#e6c0c0}'+
+    '#jc-out .ovn{font-size:11px;color:#7fae9f;line-height:1.6;margin-top:6px}'+
+    '#jc-out .ovn b{color:#d7ece5}';
   document.head.appendChild(st);
   o.addEventListener('click',function(e){ if(e.target===o) 닫기(); });
   o.querySelector('#jc-x').onclick=닫기;
@@ -392,18 +409,29 @@ function 닫기(){ if(팝){ 팝.hidden=true; document.body.style.overflow=''; } 
 function 켜기(k,on){ var b=팝.querySelector('.jc-sw[data-k="'+k+'"]'); if(b) b.setAttribute('aria-pressed',on?'true':'false'); }
 function 켜졌나(k){ var b=팝.querySelector('.jc-sw[data-k="'+k+'"]'); return !!b && b.getAttribute('aria-pressed')==='true'; }
 
-function 열기(어디){
+/* (판 558) 열기(어디, 가사칸)
+   ⚠️ 전에는 가사 칸 셋(VVIP · 내 곡 올리기 · 검사기) 가운데 **가장 긴 것**을 가져왔다.
+      그래서 「내 곡 올리기」에서 눌러도 작곡실 가사가 더 길면 **그쪽을** 쟀다.
+      이제 **누른 자리의 칸**을 잰다. 칸을 못 받으면 옛 길로 간다.
+   ⚠️ 제목·지은이도 「내 곡 올리기」에서 눌렀을 때만 그 칸에서 가져온다.
+      전에는 어디서 누르든 그 칸의 보기 글(「새벽 세 시의 고백 · @달토끼」)이
+      검사증에 찍혔다 — 남의 이름이 박힌 검사증이 나갈 뻔했다.
+   ⚠️ 악보는 늘 「나도 작곡가」에서 만든 것이다. 올린 곡에서 악보를 뽑는 길은 아직 없다.
+      그래서 「내 곡 올리기」에서 열면 악보를 **꺼 두고**, 켜면 어디서 온 악보인지 적는다. */
+function 열기(어디, 가사칸){
   만들기팝();
-  담은것.가사 = 가사모으기(어디);
+  var 올리기에서 = !!(가사칸 && 가사칸.id && 가사칸.id.indexOf('up-')===0);
+  담은것.가사 = 가사모으기(어디, 가사칸);
   담은것.미디 = 지금가락();
-  담은것.제목 = (document.getElementById('up-t')||{}).value || 'JURAN 작품';
-  담은것.지은이 = (document.getElementById('up-by')||{}).value || '';
+  담은것.올리기에서 = 올리기에서;
+  담은것.제목 = 올리기에서 ? ((document.getElementById('up-t')||{}).value || 'JURAN 작품') : 'JURAN 작품';
+  담은것.지은이 = 올리기에서 ? ((document.getElementById('up-by')||{}).value || '') : '';
   켜기('가사', 어디!=='악보');
-  켜기('악보', 어디!=='가사');
+  켜기('악보', 어디!=='가사' && !올리기에서);
   /* 없는 것을 켜 두면 「잴 수 없음」만 뜬다. 없으면 꺼 두고, 단추에 까닭을 적는다. */
   var 가b=팝.querySelector('.jc-sw[data-k="가사"]'), 악b=팝.querySelector('.jc-sw[data-k="악보"]');
   if(!담은것.미디){ if(어디!=='악보') 켜기('악보',false); 악b.innerHTML='🎼 악보 <span style="font-weight:400;opacity:.75">· 아직 없음</span>'; }
-  else 악b.innerHTML='🎼 악보 <span style="font-weight:400;opacity:.75">· 음 '+담은것.미디.length+'개</span>';
+  else 악b.innerHTML='🎼 악보 <span style="font-weight:400;opacity:.75">· '+(올리기에서?'작곡실 곡 · ':'')+'음 '+담은것.미디.length+'개</span>';
   if(!담은것.가사){ if(어디!=='가사') 켜기('가사',false); 가b.innerHTML='✍️ 가사 <span style="font-weight:400;opacity:.75">· 아직 없음</span>'; }
   else 가b.innerHTML='✍️ 가사 <span style="font-weight:400;opacity:.75">· '+담은것.가사.replace(/\s/g,'').length+'자</span>';
   팝.querySelector('#jc-out').innerHTML='';
@@ -411,7 +439,8 @@ function 열기(어디){
   팝.hidden=false; document.body.style.overflow='hidden';
   if(어디!=='고르기') 돌리기();
 }
-function 가사모으기(어디){
+function 가사모으기(어디, 가사칸){
+  if(가사칸 && 'value' in 가사칸) return 가사칸.value||'';
   var a=document.getElementById('cgo-vvip-lyrics');
   var b=document.getElementById('up-ly');
   var c=document.getElementById('jc-ly');
@@ -456,7 +485,7 @@ function 그리기(R){
   var h='';
   if(R.악보){
     var a=R.악보;
-    h+='<div class="sec">🎼 곡</div>';
+    h+='<div class="sec">🎼 곡 <span style="font-weight:400;opacity:.8">— 「나도 작곡가」에서 만든 악보</span></div>';
     if(a.탈){ h+='<div class="row"><b>잴 수 없음</b><span>'+a.탈+'</span></div>'; }
     else{
       h+='<div class="row"><b>가장 닮은 곡</b><span>'+세빛(a.닮음,잣대.닮음노랑,잣대.닮음빨강)+
@@ -465,6 +494,12 @@ function 그리기(R){
       h+='<div class="row"><b>연달아 같은 토막</b><span>'+세빛(a.같은토막,잣대.토막노랑,잣대.토막빨강)+
          ' <b style="color:#e6f4ef">'+a.같은토막+'음</b><br>'+
          '<span style="color:#7fae9f;font-size:11.5px">씨앗끼리도 가운데가 7음, 열에 아홉은 16음 아래입니다</span></span></div>';
+      if(a.자리){
+        h+='<div class="over"><div class="ovh">🎼 악보 겹쳐 보기 <span>— 빨간 음 '+a.같은토막+'개가 똑같이 오르내립니다</span></div>'+
+           '<canvas id="jc-over" style="width:100%;height:196px;display:block"></canvas>'+
+           '<div class="ovn">위는 <b>내 곡</b> '+(a.자리.내시작+1)+'~'+(a.자리.내시작+a.자리.음수)+'번째 음, 아래는 씨앗 「'+그글(a.닮은곡)+'」입니다. '+
+           '씨앗은 조를 옮겨 내 곡 높이에 맞춰 그렸습니다. 음 길이는 견주지 않아 고르게 늘어놓았습니다.</div></div>';
+      }
       h+='<div class="row"><b>흔한 정도</b><span>ⓘ <b style="color:#e6f4ef">'+a.흔함+'%</b><br>'+
          '<span style="color:#7fae9f;font-size:11.5px">가락 토막 가운데 흔히 쓰이는 것의 몫. 흔하면 겹치기 쉽지만, '+
          '<b style="color:#9ac7b8">흔한 가락은 아무도 가질 수 없습니다.</b></span></span></div>';
@@ -493,6 +528,80 @@ function 그리기(R){
       '<b style="color:#9ac7b8">안 견준 것 : 세상에 나와 있는 곡들.</b> 그 목록은 우리에게 없습니다. '+
       '그래서 이 검사는 「안전하다」고 말하지 않습니다. 잰 값만 적습니다.</div>';
   팝.querySelector('#jc-out').innerHTML=h;
+  if(R.악보 && R.악보.자리){ try{ 겹치기그리기(document.getElementById('jc-over'), R.악보); }catch(e){} }
+}
+function 그글(t){ return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ═══ 악보 겹치기 (판 560) ═══════════════════════════════════════════════
+   파트너 — 「주파수 그림은 널렸고 아무도 못 읽는다. 악보 겹치기는 읽힌다.」
+   위 줄은 내 곡, 아래 줄은 가장 닮은 씨앗. 같은 차례로 오르내리는 토막을
+   **같은 칸**에 세우고 빨갛게 칠한다. 보는 사람이 「아, 진짜 똑같네」 하고 스스로 안다.
+   ⚠️ 씨앗은 「뛴 폭」만 갖고 있다. 첫 음은 내 곡의 같은 자리 음에 맞춰 세운다.
+      그래서 빨간 음은 위아래가 **같은 높이**에 선다 — 조를 옮겨도 같은 가락이라는 뜻.
+   ⚠️ 음 길이는 견주지 않으니 그림도 고르게 늘어놓는다. 아는 척하지 않는다.
+   ⚠️ 한 번 그리고 끝. 고리를 돌지 않는다. */
+var 계단={0:0,1:0,2:1,3:1,4:2,5:3,6:3,7:4,8:4,9:5,10:5,11:6}, 검은건반={1:1,3:1,6:1,8:1,10:1};
+function 겹치기그리기(cv, a){
+  if(!cv||!a||!a.자리) return;
+  var 내=a.미디, z=a.자리, 줄=a.씨줄||'';
+  /* 씨앗 음 높이 — 뛴 폭을 쌓고, 같은 토막 첫 음을 내 곡에 맞춘다 */
+  var 씨=[0]; for(var k=0;k<줄.length;k++) 씨.push(씨[k]+(줄.charCodeAt(k)-60));
+  var 맞춤=내[z.내시작]-씨[z.씨시작];
+  for(var k2=0;k2<씨.length;k2++) 씨[k2]+=맞춤;
+  /* 보여 줄 칸 — 같은 토막 앞뒤로 넉넉히, 그러나 폰에서 읽힐 만큼만 */
+  var 칸수최대=24, 곁=Math.max(2,Math.min(5,Math.floor((칸수최대-z.음수)/2)));
+  var c0=Math.max(0,z.내시작-곁), c1=Math.min(내.length,z.내시작+z.음수+곁);
+  if(c1-c0>칸수최대){ c0=z.내시작; c1=Math.min(내.length,z.내시작+칸수최대); }
+  var 칸=c1-c0, 씨밀림=z.씨시작-z.내시작;
+  /* 높이를 보기 좋게 — 두 줄을 **똑같이** 옥타브째 옮긴다 */
+  var 합=0,수=0;
+  for(var c=c0;c<c1;c++){ 합+=내[c]; 수++; var j=c+씨밀림; if(j>=0&&j<씨.length){ 합+=씨[j]; 수++; } }
+  var 옮김=수? 12*Math.round((71-합/수)/12) : 0;
+
+  var W=cv.clientWidth||460, H=196, r=Math.min(window.devicePixelRatio||1,3);
+  cv.width=Math.round(W*r); cv.height=Math.round(H*r);
+  var g=cv.getContext('2d'); g.setTransform(r,0,0,r,0,0); g.clearRect(0,0,W,H);
+  var 왼=46, 오=10, 칸폭=(W-왼-오)/Math.max(1,칸), 간=6.5;
+  var 줄들=[{이름:'내 곡', 밑:66, 음:function(c){ return 내[c]; }},
+           {이름:'씨앗', 밑:160, 음:function(c){ var j=c+씨밀림; return (j>=0&&j<씨.length)?씨[j]:null; }}];
+  function 같은칸(c){ return c>=z.내시작 && c<z.내시작+z.음수; }
+  /* 빨간 띠 — 두 줄을 꿰뚫는다 */
+  var x빨0=왼+(z.내시작-c0)*칸폭, x빨1=Math.min(W-오, 왼+(z.내시작+z.음수-c0)*칸폭);
+  g.fillStyle='rgba(248,113,113,.13)'; g.fillRect(x빨0,8,x빨1-x빨0,H-16);
+  g.strokeStyle='rgba(248,113,113,.55)'; g.lineWidth=1; g.strokeRect(x빨0+.5,8.5,x빨1-x빨0-1,H-17);
+  줄들.forEach(function(오선){
+    var 밑=오선.밑;
+    g.strokeStyle='rgba(159,216,200,.32)'; g.lineWidth=1;
+    for(var l=0;l<5;l++){ var y=Math.round(밑-l*간)+.5; g.beginPath(); g.moveTo(왼-6,y); g.lineTo(W-오,y); g.stroke(); }
+    g.fillStyle='#7fae9f'; g.font='700 11px system-ui,sans-serif'; g.textAlign='left';
+    g.fillText(오선.이름, 2, 밑-간*1.6);
+    for(var c=c0;c<c1;c++){
+      var m=오선.음(c); if(m==null) continue;
+      m+=옮김;
+      var 단=(Math.floor(m/12)-1)*7+계단[((m%12)+12)%12];
+      var y=밑-(단-30)*(간/2), x=왼+(c-c0+0.5)*칸폭;
+      var 빨=같은칸(c);
+      /* 덧줄 */
+      g.strokeStyle='rgba(159,216,200,.45)'; g.lineWidth=1;
+      for(var d=28; d>=단; d-=2){ var yy=Math.round(밑-(d-30)*(간/2))+.5; g.beginPath(); g.moveTo(x-6,yy); g.lineTo(x+6,yy); g.stroke(); }
+      for(var u=40; u<=단; u+=2){ var yu=Math.round(밑-(u-30)*(간/2))+.5; g.beginPath(); g.moveTo(x-6,yu); g.lineTo(x+6,yu); g.stroke(); }
+      /* 음표 머리 */
+      g.save(); g.translate(x,y); g.rotate(-0.33);
+      g.beginPath(); g.ellipse(0,0,4.3,3.1,0,0,Math.PI*2);
+      g.fillStyle=빨?'#f87171':'#d7ece5'; g.fill(); g.restore();
+      /* 기둥 */
+      g.fillStyle=빨?'#f87171':'#d7ece5';
+      var 위로=단<34; g.fillRect(위로?x+3.4:x-4.2, 위로?y-20:y, 1.1, 20);
+      /* 올림표 — 칸이 좁으면 작게, 아주 좁으면 생략(음표 머리끼리 부딪친다) */
+      if(검은건반[((m%12)+12)%12] && 칸폭>=10){ g.font='600 '+(칸폭<16?8:10)+'px system-ui,sans-serif'; g.textAlign='right'; g.fillText('#', x-4.6, y+3); }
+    }
+  });
+  /* 같은 칸끼리 위아래를 잇는다 — 「여기가 겹친다」 */
+  g.strokeStyle='rgba(248,113,113,.5)'; g.lineWidth=1; g.setLineDash([2,3]);
+  for(var c3=Math.max(c0,z.내시작); c3<Math.min(c1,z.내시작+z.음수); c3++){
+    var xx=왼+(c3-c0+0.5)*칸폭; g.beginPath(); g.moveTo(xx,82); g.lineTo(xx,112); g.stroke();
+  }
+  g.setLineDash([]);
 }
 function 날짜글(d){
   function p(n){ return (n<10?'0':'')+n; }
@@ -598,16 +707,16 @@ function 띠붙이기(){
   띠꾸미기();
   /* ① 나도 작곡가 — VVIP 가사 */
   var ly=document.getElementById('cgo-vvip-lyrics');
-  if(ly && 한번만(ly,'jc')) ly.parentNode.insertBefore(띠만들기('이 가사 검사받기', function(){ 열기('가사'); }), ly.nextSibling);
+  if(ly && 한번만(ly,'jc')) ly.parentNode.insertBefore(띠만들기('이 가사 검사받기', function(){ 열기('가사', ly); }), ly.nextSibling);
   /* ② 나도 작곡가 — 악보 */
   var sw=document.getElementById('cgo-groove-score-wrap');
-  if(sw && 한번만(sw,'jc')) sw.parentNode.insertBefore(띠만들기('이 악보 검사받기', function(){ 열기('악보'); }), sw);
+  if(sw && 한번만(sw,'jc')) sw.parentNode.insertBefore(띠만들기('이 악보 검사받기', function(){ 열기('악보', document.getElementById('cgo-vvip-lyrics')); }), sw);
   /* ③ 내 곡 올리기 — 가사 */
   var up=document.getElementById('up-ly');
-  if(up && 한번만(up,'jc')) up.parentNode.insertBefore(띠만들기('이 가사 검사받기', function(){ 열기('가사'); }), up.nextSibling);
+  if(up && 한번만(up,'jc')) up.parentNode.insertBefore(띠만들기('이 가사 검사받기', function(){ 열기('가사', up); }), up.nextSibling);
   /* ④ 내 곡 올리기 — 곡 파일 */
   var inf=document.getElementById('up-info');
-  if(inf && 한번만(inf,'jc')) inf.parentNode.insertBefore(띠만들기('이 곡 검사받기 (가사·악보)', function(){ 열기('고르기'); }), inf.nextSibling);
+  if(inf && 한번만(inf,'jc')) inf.parentNode.insertBefore(띠만들기('이 곡 검사받기 — 지금은 가사만 (곡에서 악보 뽑기는 준비 중)', function(){ 열기('고르기', document.getElementById('up-ly')); }), inf.nextSibling);
 }
 
 /* ──────────────────────────── 검사기 페이지 채우기 ── */
@@ -637,7 +746,7 @@ function 검사기페이지(){
        '<p class="hint" style="margin-top:6px">ⓘ 이 그림은 <b>소리의 생김새</b>입니다. 저작권 판정에는 쓰지 않습니다.</p></div>'+
    '</div>'+
    '<div class="end"><button id="jc-run" style="width:100%">🔍 가사·악보 검사하기</button></div>';
-  document.getElementById('jc-run').onclick=function(){ 열기('고르기'); };
+  document.getElementById('jc-run').onclick=function(){ 열기('고르기', document.getElementById('jc-ly')); };
   document.getElementById('jc-cmp').onclick=곡견주기;
   var n=document.getElementById('jc-scnote');
   if(지금가락()) n.innerHTML='「나도 작곡가」에서 만든 악보를 <b>가져왔습니다</b> — 음 '+지금가락().length+'개.';
