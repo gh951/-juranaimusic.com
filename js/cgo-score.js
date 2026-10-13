@@ -3046,10 +3046,23 @@ try{
       try{ console.log('%c[cgo-514] 마디 시각표 '+_barT514.length+'칸 — 음표로 박은 못 '+
                        _있는514.length+'개, 메운 칸 '+(_barT514.length-_있는514.length)+'개',
                        'color:#059669'); }catch(_){}
+      /* JURAN : 이 글을 개발자 창에만 두지 않고 화면에도 띄운다.
+         파트너님이 눈으로 읽고 「시각이 왔나 안 왔나」를 알려 주실 수 있게. */
+      try{ window._cgo못보고514={맞음:true, 칸:_barT514.length, 못:_있는514.length,
+                                 메움:_barT514.length-_있는514.length,
+                                 첫초:(_barT514.length?Math.round(_barT514[0]*100)/100:null)}; }catch(_){}
     }
   }
 }catch(_e514b){ _맞음514=false; _barT514=[]; }
-if(!_맞음514){ try{ console.log('%c[cgo-514] 시각표를 못 만들었다 — 악보 빠르기 '+_bpm372+' 로 간다','color:#b45309'); }catch(_){} }
+if(!_맞음514){ try{ console.log('%c[cgo-514] 시각표를 못 만들었다 — 악보 빠르기 '+_bpm372+' 로 간다','color:#b45309'); }catch(_){}
+  /* JURAN : 왜 못 만들었는지까지 적어 둔다. 음표가 아예 없는 것과,
+     음표는 있는데 시각(start_sec)이 안 온 것은 고칠 데가 다르다. */
+  try{
+    var _ev보=window._cgoMelodyEvents||[], _초있=0;
+    for(var _z=0;_z<_ev보.length;_z++) if(typeof _ev보[_z].start_sec==='number') _초있++;
+    window._cgo못보고514={맞음:false, 음표:_ev보.length, 시각있는것:_초있, 빠르기:_bpm372};
+  }catch(_){ window._cgo못보고514={맞음:false, 음표:-1, 시각있는것:-1, 빠르기:_bpm372}; }
+}
 
 /* 마디 k 가 시작하는 시각. 표에 빈 칸이 없으므로 그냥 꺼내 쓴다. */
 function _마디시각514(k){
@@ -3398,8 +3411,45 @@ try{ if(!_au372.paused) _자기514(); }catch(e){}
          이제 곡 틀만 만들어 주고 **원본 손에 넘긴다.** */
       if (typeof CGO원본==='function') CGO원본();
       else renderGrooveAsScore(song, 뿌리이름, bpm, mod, [0]);
+      시각쪽지();
     }catch(e){ try{ console.error('[JURAN 악보]', e); }catch(_){} }
   };
+
+  /* ───── 시각 쪽지 ─────────────────────────────────────────────
+     마디 시각표가 만들어졌는지를 악보 위에 한 줄로 적는다.
+     개발자 창을 못 여는 사람도 눈으로 읽을 수 있어야 하기 때문이다.
+     그림은 건드리지 않는다 — 악보 위에 글 한 줄만 붙인다. */
+  function 시각쪽지(){
+    try{
+      var wrap=document.getElementById('cgo-groove-score-wrap'); if(!wrap) return;
+      var 쪽=document.getElementById('juran-시각쪽지');
+      if(!쪽){
+        쪽=document.createElement('div'); 쪽.id='juran-시각쪽지';
+        /* ⚠️ 비치는 바탕(rgba)을 쓰면 **어두운 꾸밈에서 글자가 안 보인다.**
+           재 보니 진초록 글자가 거의 까만 바탕에 얹혀 읽히지 않았다.
+           그래서 쪽지가 **제 바탕을 스스로 깐다** — 밝든 어둡든 똑같이 읽힌다.
+           scroll-margin-top : 위에 붙어 다니는 띠에 가려지지 않게 자리를 비운다. */
+        쪽.style.cssText='font-size:12px;line-height:1.55;padding:8px 11px;margin:0 0 7px;'+
+          'border-radius:9px;word-break:keep-all;scroll-margin-top:150px;border:1px solid';
+        wrap.parentNode.insertBefore(쪽, wrap);
+      }
+      function 칠(바탕,글,테){ 쪽.style.background=바탕; 쪽.style.color=글; 쪽.style.borderColor=테; }
+      var b=window._cgo못보고514;
+      if(!b){ 쪽.textContent='⏳ 아직 악보 시각을 재지 않았습니다.';
+              칠('#1e293b','#cbd5e1','#475569'); return; }
+      if(b.맞음){
+        쪽.innerHTML='✅ <b>소리 시각이 왔습니다.</b> 마디 시각표 '+b.칸+'칸 · '+
+          '노래로 못 박은 마디 '+b.못+'개 · 이어 메운 마디 '+b.메움+'개'+
+          (b.첫초!=null ? ' · 첫 마디 <b>'+b.첫초+'초</b>' : '');
+        칠('#064e3b','#d1fae5','#10b981');
+      } else {
+        쪽.innerHTML='⚠️ <b>소리 시각이 안 왔습니다.</b> 음표 '+b.음표+'개 가운데 '+
+          '시각이 든 것 <b>'+b.시각있는것+'개</b> — 악보 빠르기 '+b.빠르기+'으로 짐작해 따라갑니다.';
+        칠('#7c2d12','#ffedd5','#f97316');
+      }
+    }catch(_){}
+  }
+  window._juran시각쪽지=시각쪽지;
   /* ⚠️ CGO 악보는 **그릴 때의 폭**으로 한 번 그리고 끝이다. 글자를 키우거나 창을
      바꾸면 그린 그림과 자리가 안 맞는다. 폭이 8% 넘게 달라졌을 때만 다시 그린다.
      (고리를 돌지 않는다 — 바뀔 때 한 번이다.) */
