@@ -1,0 +1,1 @@
+window['JURAN밭정보']={"판":"field-3","곡수":13671,"k":8,"w":8,"조각곡수":500,"조각수":28,"출처":"Lakh MIDI Dataset v0.1 · Colin Raffel · CC-BY 4.0 · clean_midi.tar.gz","만든때":"2026-10-13T14:17:16.911Z","그물":"같은 음 접은 줄 (field-3) — 조각은 field-2 그대로"};

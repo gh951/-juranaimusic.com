@@ -27,10 +27,6 @@
        드럼만 바꿈 48 · 아주 다른 곡 2.5      → 같은 음원과 다른 음원이 260배 벌어진다
        지문 뜨는 데 폰에서 1.5~4초 (음 따기는 15~40분이다)
 
-   【판 558】 누른 자리의 가사를 잰다 · 검사증 제목은 「내 곡 올리기」에서만 가져온다
-   【판 560】 악보 겹치기 그림 — 닮은 씨앗과 같은 토막을 같은 칸에 세워 빨갛게 칠한다
-   【판 561】 지문 별자리 그림 — 「같은 음원」 판정이 기댄 봉우리 짝을 금색 선으로 보여 준다
-
    끄기 : window.JC끔 = true
    ══════════════════════════════════════════════════════════════════════════ */
 (function(){
@@ -173,21 +169,17 @@ function 지금가락(){
   }catch(e){}
   return null;
 }
-/* 연달아 똑같은 토막이 몇 음인가 — 그리고 **어디인가** (판 560)
-   음 수 = 뛴 폭 수 + 1. 뛴 폭이 9개 같으면 음 10개가 같은 차례로 오르내린다. */
-function 같은토막찾기(a,b){
-  if(!a.length||!b.length) return {음수:0};
-  var 앞=new Int32Array(b.length+1), 이번=new Int32Array(b.length+1), 최대=0, ai=0, bi=0;
+/* 연달아 똑같은 토막이 몇 음인가 */
+function 가장긴같은토막(a,b){
+  if(!a.length||!b.length) return 0;
+  var 앞=new Int32Array(b.length+1), 이번=new Int32Array(b.length+1), 최대=0;
   for(var i=1;i<=a.length;i++){
-    for(var t=1;t<=b.length;t++){
-      이번[t]=(a.charCodeAt(i-1)===b.charCodeAt(t-1))?앞[t-1]+1:0;
-      if(이번[t]>최대){ 최대=이번[t]; ai=i-최대; bi=t-최대; }
-    }
+    for(var t=1;t<=b.length;t++) 이번[t]=(a.charCodeAt(i-1)===b.charCodeAt(t-1))?앞[t-1]+1:0;
+    for(var q=1;q<=b.length;q++) if(이번[q]>최대) 최대=이번[q];
     var tmp=앞; 앞=이번; 이번=tmp; 이번.fill(0);
   }
-  return 최대? {음수:최대+1, 내시작:ai, 씨시작:bi} : {음수:0};
+  return 최대? 최대+1 : 0;
 }
-function 가장긴같은토막(a,b){ return 같은토막찾기(a,b).음수; }
 function 토막모음(v,N){ var s=Object.create(null),n=0; for(var i=0;i+N<=v.length;i++){ var k=v.substr(i,N); if(!s[k]){s[k]=1;n++;} } return {s:s,n:n}; }
 function 악보검사(미디들){
   var S=씨앗준비();
@@ -208,12 +200,7 @@ function 악보검사(미디들){
   }
   결과.닮음 = Math.round(제일.닮음*100);
   결과.닮은곡 = 제일.번호>=0 ? S.제목[제일.번호] : '';
-  var 자리 = 제일.번호>=0 ? 같은토막찾기(v, S.가락[제일.번호]) : {음수:0};
-  결과.같은토막 = 자리.음수;
-  /* 겹치기 그림에 쓸 것 (판 560) */
-  결과.자리 = 자리.음수>=3 ? 자리 : null;
-  결과.씨줄 = 제일.번호>=0 ? S.가락[제일.번호] : '';
-  결과.미디 = 미디들.slice();
+  결과.같은토막 = 제일.번호>=0 ? 가장긴같은토막(v, S.가락[제일.번호]) : 0;
   /* 흔한 정도 — 내 3음 토막 가운데 씨앗에 10번 넘게 나오는 것이 몇 % */
   var 모두=0, 흔한것=0;
   for(var k=0;k+3<=v.length;k++){ 모두++; if((S.흔함[v.substr(k,3)]||0)>=10) 흔한것++; }
@@ -285,41 +272,25 @@ function 지문뜨기(x, 알림){
             통[key].push(P[i2].f);
           }
         }
-        /* 판 561 : 봉우리 자리(때·높이)도 돌려준다 — 별자리 그림에 쓴다 */
-        var 점=new Int32Array(P.length*2);
-        for(var i3=0;i3<P.length;i3++){ 점[i3*2]=P[i3].f; 점[i3*2+1]=P[i3].k; }
-        끝({통:통, 알수:알수, 그림:그림, 점:점, 길이:f});
+        끝({통:통, 알수:알수, 그림:그림});
       }
     }
     한토막();
   });
 }
 function 지문맞춰보기(A,B){
-  var 몰림=Object.create(null), 겹=0, 최대=0, 어긋=0;
+  var 몰림=Object.create(null), 겹=0, 최대=0;
   for(var key in A.통){
     var tb=B.통[key]; if(!tb) continue;
     var ta=A.통[key];
     for(var i=0;i<ta.length;i++) for(var j=0;j<tb.length;j++){
       겹++; var d=tb[j]-ta[i];
-      var c=(몰림[d]=(몰림[d]||0)+1); if(c>최대){ 최대=c; 어긋=d; }
+      var c=(몰림[d]=(몰림[d]||0)+1); if(c>최대) 최대=c;
     }
   }
   var 작은쪽=Math.min(A.알수,B.알수)||1;
   var 점수=Math.round(1000*최대/작은쪽)/10;
-  /* 판 561 : 그 어긋남에 「한 줄로 선」 짝을 모은다 — 판정이 기댄 바로 그 짝들이다.
-     열쇠 = (첫 봉우리 높이 × 4096 + 둘째 봉우리 높이) × 64 + 사이 간격 */
-  var 짝=[];
-  if(최대>0){
-    for(var key2 in A.통){
-      var tb2=B.통[key2]; if(!tb2) continue;
-      var ta2=A.통[key2], kn=+key2, dt=kn%64, k2=Math.floor(kn/64)%4096, k1=Math.floor(kn/64/4096);
-      for(var i2=0;i2<ta2.length;i2++) for(var j2=0;j2<tb2.length;j2++){
-        if(tb2[j2]-ta2[i2]!==어긋) continue;
-        짝.push(ta2[i2], k1, ta2[i2]+dt, k2);
-      }
-    }
-  }
-  return {겹친알:겹, 한줄로선것:최대, 점수:점수, 어긋남:어긋, 짝:짝,
+  return {겹친알:겹, 한줄로선것:최대, 점수:점수,
           판정: 점수>=8 ? '같은 음원' : (점수>=2.5 ? '가까움' : '다른 음원'),
           빛: 점수>=8 ? '🔴' : (점수>=2.5 ? '🟡' : '🟢')};
 }
@@ -339,61 +310,6 @@ function 파일을소리로(file, 알림){
     };
     fr.readAsArrayBuffer(file);
   });
-}
-
-/* ─────────────────────────────────────────── ⑥-1 지문 별자리 (판 561) ──
-   파트너 — 「주파수 비교 같은 것을 넣으면 일반인들은 기술력이 뛰어나게 본다」
-   그런데 「소리 생김새」는 판정에 못 쓴다. 이 그림은 다르다 —
-   **판정이 실제로 기댄 근거**를 그대로 보여 준다. 폼도 나고 거짓도 없다.
-     · 점 하나 = 소리가 툭 튀어나온 자리 (때 × 높이). 샤잠이 듣는 그 점이다.
-     · 금색 선 = 두 곡에서 **같은 간격으로 짝지어 선** 봉우리. 판정은 이 선의 수로 한다.
-     · 둘째 곡은 맞은 어긋남만큼 옮겨 그린다. 같은 음원이면 선이 곧게 위아래로 선다.
-   ⚠️ 한 번 그리고 끝. 고리를 돌지 않는다. 점이 수만 개여도 한 번이면 0.05초 안팎이다. */
-function 별자리그리기(cv, A, B, r){
-  if(!cv||!A||!B||!A.점||!B.점) return 0;
-  var W=cv.clientWidth||340, H=210, px=Math.min(window.devicePixelRatio||1,3);
-  cv.width=Math.round(W*px); cv.height=Math.round(H*px);
-  var g=cv.getContext('2d'); g.setTransform(px,0,0,px,0,0);
-  g.fillStyle='#07120f'; g.fillRect(0,0,W,H);
-  var d=r.어긋남||0;
-  /* 가로 = 때. 첫째 곡의 때로 맞추고, 둘째 곡은 어긋남만큼 당겨 그린다 */
-  var x0=Math.min(0,-d), x1=Math.max(A.길이||1,(B.길이||1)-d), 폭=Math.max(1,x1-x0);
-  var 왼=8, 오=8, 판=W-왼-오;
-  function X(f){ return 왼+(f-x0)/폭*판; }
-  /* 세로 = 높이. 낮은 소리가 몰려 있어 제곱근으로 편다 */
-  var 위띠={위:22,밑:92}, 아래띠={위:122,밑:192};
-  function Y(띠,k){ return 띠.밑-Math.sqrt(Math.min(512,Math.max(0,k))/512)*(띠.밑-띠.위); }
-  function 점찍기(P,띠,옮김,색){
-    g.fillStyle=색;
-    for(var i=0;i<P.length;i+=2){ var x=X(P[i]-옮김); if(x<왼||x>W-오) continue; g.fillRect(x,Y(띠,P[i+1]),1.1,1.1); }
-  }
-  점찍기(A.점,위띠,0,'rgba(52,211,153,.42)');
-  점찍기(B.점,아래띠,d,'rgba(251,191,36,.40)');
-  /* 금색 선 — 너무 많으면 고르게 솎는다 (그림만 솎는다. 판정 숫자는 그대로) */
-  /* 선이 빽빽하면 금색 벽이 되어 아무것도 안 읽힌다 — 그림에는 240줄까지만 */
-  var 짝=r.짝||[], 수=짝.length/4, 걸음=Math.max(1,Math.ceil(수/240));
-  g.lineWidth=0.6; g.strokeStyle='rgba(252,211,77,.30)';
-  g.beginPath();
-  for(var n=0;n<수;n+=걸음){
-    var f=짝[n*4], k=짝[n*4+1];
-    var xa=X(f); g.moveTo(xa,Y(위띠,k)); g.lineTo(xa,Y(아래띠,k));
-  }
-  g.stroke();
-  g.fillStyle='#fde68a'; g.shadowColor='rgba(252,211,77,.85)'; g.shadowBlur=3;
-  for(var m=0;m<수;m+=걸음){
-    var fa=짝[m*4], ka=짝[m*4+1], fb=짝[m*4+2], kb=짝[m*4+3];
-    g.fillRect(X(fa)-.8,Y(위띠,ka)-.8,1.6,1.6); g.fillRect(X(fb)-.8,Y(위띠,kb)-.8,1.6,1.6);
-    g.fillRect(X(fa)-.8,Y(아래띠,ka)-.8,1.6,1.6); g.fillRect(X(fb)-.8,Y(아래띠,kb)-.8,1.6,1.6);
-  }
-  g.shadowBlur=0;
-  function 이름표(글,x,y,색){ g.font='700 10.5px system-ui,sans-serif'; g.textAlign='left';
-    var w=g.measureText(글).width+10; g.fillStyle='rgba(7,18,15,.85)'; g.fillRect(x-2,y-11,w,15);
-    g.fillStyle=색; g.fillText(글,x+3,y); }
-  이름표('첫째 곡', 왼, 14, 'rgba(110,231,183,.95)');
-  이름표('둘째 곡', 왼, 114, 'rgba(252,211,77,.95)');
-  g.textAlign='right'; g.fillStyle='rgba(230,244,239,.55)';
-  g.fillText('높은 소리 ↑', W-오, 14); g.fillText('때 →', W-오, H-6);
-  return 수;
 }
 
 /* ──────────────────────────────────────────── ⑥ 생김새 그림 ── */
@@ -460,12 +376,7 @@ function 만들기팝(){
     'background:#0f241e;border:1px solid #1d3a32;margin-bottom:7px;font-size:13px;line-height:1.5}'+
     '#jc-out .row b{min-width:76px;color:#9fd8c8;font-weight:700}'+
     '#jc-out .sec{font-size:12px;color:#7fae9f;margin:12px 0 7px;font-weight:700}'+
-    '#jc-out .note{font-size:11px;color:#6f9b8d;line-height:1.6;margin-top:9px}'+
-    '#jc-out .over{padding:10px 11px;border-radius:10px;background:#0a1d18;border:1px solid #3b2a2a;margin-bottom:7px}'+
-    '#jc-out .ovh{font-size:12.5px;font-weight:800;color:#fca5a5;margin-bottom:6px}'+
-    '#jc-out .ovh span{font-weight:600;color:#e6c0c0}'+
-    '#jc-out .ovn{font-size:11px;color:#7fae9f;line-height:1.6;margin-top:6px}'+
-    '#jc-out .ovn b{color:#d7ece5}';
+    '#jc-out .note{font-size:11px;color:#6f9b8d;line-height:1.6;margin-top:9px}';
   document.head.appendChild(st);
   o.addEventListener('click',function(e){ if(e.target===o) 닫기(); });
   o.querySelector('#jc-x').onclick=닫기;
@@ -566,12 +477,6 @@ function 그리기(R){
       h+='<div class="row"><b>연달아 같은 토막</b><span>'+세빛(a.같은토막,잣대.토막노랑,잣대.토막빨강)+
          ' <b style="color:#e6f4ef">'+a.같은토막+'음</b><br>'+
          '<span style="color:#7fae9f;font-size:11.5px">씨앗끼리도 가운데가 7음, 열에 아홉은 16음 아래입니다</span></span></div>';
-      if(a.자리){
-        h+='<div class="over"><div class="ovh">🎼 악보 겹쳐 보기 <span>— 빨간 음 '+a.같은토막+'개가 똑같이 오르내립니다</span></div>'+
-           '<canvas id="jc-over" style="width:100%;height:196px;display:block"></canvas>'+
-           '<div class="ovn">위는 <b>내 곡</b> '+(a.자리.내시작+1)+'~'+(a.자리.내시작+a.자리.음수)+'번째 음, 아래는 씨앗 「'+그글(a.닮은곡)+'」입니다. '+
-           '씨앗은 조를 옮겨 내 곡 높이에 맞춰 그렸습니다. 음 길이는 견주지 않아 고르게 늘어놓았습니다.</div></div>';
-      }
       h+='<div class="row"><b>흔한 정도</b><span>ⓘ <b style="color:#e6f4ef">'+a.흔함+'%</b><br>'+
          '<span style="color:#7fae9f;font-size:11.5px">가락 토막 가운데 흔히 쓰이는 것의 몫. 흔하면 겹치기 쉽지만, '+
          '<b style="color:#9ac7b8">흔한 가락은 아무도 가질 수 없습니다.</b></span></span></div>';
@@ -600,80 +505,6 @@ function 그리기(R){
       '<b style="color:#9ac7b8">안 견준 것 : 세상에 나와 있는 곡들.</b> 그 목록은 우리에게 없습니다. '+
       '그래서 이 검사는 「안전하다」고 말하지 않습니다. 잰 값만 적습니다.</div>';
   팝.querySelector('#jc-out').innerHTML=h;
-  if(R.악보 && R.악보.자리){ try{ 겹치기그리기(document.getElementById('jc-over'), R.악보); }catch(e){} }
-}
-function 그글(t){ return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
-/* ═══ 악보 겹치기 (판 560) ═══════════════════════════════════════════════
-   파트너 — 「주파수 그림은 널렸고 아무도 못 읽는다. 악보 겹치기는 읽힌다.」
-   위 줄은 내 곡, 아래 줄은 가장 닮은 씨앗. 같은 차례로 오르내리는 토막을
-   **같은 칸**에 세우고 빨갛게 칠한다. 보는 사람이 「아, 진짜 똑같네」 하고 스스로 안다.
-   ⚠️ 씨앗은 「뛴 폭」만 갖고 있다. 첫 음은 내 곡의 같은 자리 음에 맞춰 세운다.
-      그래서 빨간 음은 위아래가 **같은 높이**에 선다 — 조를 옮겨도 같은 가락이라는 뜻.
-   ⚠️ 음 길이는 견주지 않으니 그림도 고르게 늘어놓는다. 아는 척하지 않는다.
-   ⚠️ 한 번 그리고 끝. 고리를 돌지 않는다. */
-var 계단={0:0,1:0,2:1,3:1,4:2,5:3,6:3,7:4,8:4,9:5,10:5,11:6}, 검은건반={1:1,3:1,6:1,8:1,10:1};
-function 겹치기그리기(cv, a){
-  if(!cv||!a||!a.자리) return;
-  var 내=a.미디, z=a.자리, 줄=a.씨줄||'';
-  /* 씨앗 음 높이 — 뛴 폭을 쌓고, 같은 토막 첫 음을 내 곡에 맞춘다 */
-  var 씨=[0]; for(var k=0;k<줄.length;k++) 씨.push(씨[k]+(줄.charCodeAt(k)-60));
-  var 맞춤=내[z.내시작]-씨[z.씨시작];
-  for(var k2=0;k2<씨.length;k2++) 씨[k2]+=맞춤;
-  /* 보여 줄 칸 — 같은 토막 앞뒤로 넉넉히, 그러나 폰에서 읽힐 만큼만 */
-  var 칸수최대=24, 곁=Math.max(2,Math.min(5,Math.floor((칸수최대-z.음수)/2)));
-  var c0=Math.max(0,z.내시작-곁), c1=Math.min(내.length,z.내시작+z.음수+곁);
-  if(c1-c0>칸수최대){ c0=z.내시작; c1=Math.min(내.length,z.내시작+칸수최대); }
-  var 칸=c1-c0, 씨밀림=z.씨시작-z.내시작;
-  /* 높이를 보기 좋게 — 두 줄을 **똑같이** 옥타브째 옮긴다 */
-  var 합=0,수=0;
-  for(var c=c0;c<c1;c++){ 합+=내[c]; 수++; var j=c+씨밀림; if(j>=0&&j<씨.length){ 합+=씨[j]; 수++; } }
-  var 옮김=수? 12*Math.round((71-합/수)/12) : 0;
-
-  var W=cv.clientWidth||460, H=196, r=Math.min(window.devicePixelRatio||1,3);
-  cv.width=Math.round(W*r); cv.height=Math.round(H*r);
-  var g=cv.getContext('2d'); g.setTransform(r,0,0,r,0,0); g.clearRect(0,0,W,H);
-  var 왼=46, 오=10, 칸폭=(W-왼-오)/Math.max(1,칸), 간=6.5;
-  var 줄들=[{이름:'내 곡', 밑:66, 음:function(c){ return 내[c]; }},
-           {이름:'씨앗', 밑:160, 음:function(c){ var j=c+씨밀림; return (j>=0&&j<씨.length)?씨[j]:null; }}];
-  function 같은칸(c){ return c>=z.내시작 && c<z.내시작+z.음수; }
-  /* 빨간 띠 — 두 줄을 꿰뚫는다 */
-  var x빨0=왼+(z.내시작-c0)*칸폭, x빨1=Math.min(W-오, 왼+(z.내시작+z.음수-c0)*칸폭);
-  g.fillStyle='rgba(248,113,113,.13)'; g.fillRect(x빨0,8,x빨1-x빨0,H-16);
-  g.strokeStyle='rgba(248,113,113,.55)'; g.lineWidth=1; g.strokeRect(x빨0+.5,8.5,x빨1-x빨0-1,H-17);
-  줄들.forEach(function(오선){
-    var 밑=오선.밑;
-    g.strokeStyle='rgba(159,216,200,.32)'; g.lineWidth=1;
-    for(var l=0;l<5;l++){ var y=Math.round(밑-l*간)+.5; g.beginPath(); g.moveTo(왼-6,y); g.lineTo(W-오,y); g.stroke(); }
-    g.fillStyle='#7fae9f'; g.font='700 11px system-ui,sans-serif'; g.textAlign='left';
-    g.fillText(오선.이름, 2, 밑-간*1.6);
-    for(var c=c0;c<c1;c++){
-      var m=오선.음(c); if(m==null) continue;
-      m+=옮김;
-      var 단=(Math.floor(m/12)-1)*7+계단[((m%12)+12)%12];
-      var y=밑-(단-30)*(간/2), x=왼+(c-c0+0.5)*칸폭;
-      var 빨=같은칸(c);
-      /* 덧줄 */
-      g.strokeStyle='rgba(159,216,200,.45)'; g.lineWidth=1;
-      for(var d=28; d>=단; d-=2){ var yy=Math.round(밑-(d-30)*(간/2))+.5; g.beginPath(); g.moveTo(x-6,yy); g.lineTo(x+6,yy); g.stroke(); }
-      for(var u=40; u<=단; u+=2){ var yu=Math.round(밑-(u-30)*(간/2))+.5; g.beginPath(); g.moveTo(x-6,yu); g.lineTo(x+6,yu); g.stroke(); }
-      /* 음표 머리 */
-      g.save(); g.translate(x,y); g.rotate(-0.33);
-      g.beginPath(); g.ellipse(0,0,4.3,3.1,0,0,Math.PI*2);
-      g.fillStyle=빨?'#f87171':'#d7ece5'; g.fill(); g.restore();
-      /* 기둥 */
-      g.fillStyle=빨?'#f87171':'#d7ece5';
-      var 위로=단<34; g.fillRect(위로?x+3.4:x-4.2, 위로?y-20:y, 1.1, 20);
-      /* 올림표 — 칸이 좁으면 작게, 아주 좁으면 생략(음표 머리끼리 부딪친다) */
-      if(검은건반[((m%12)+12)%12] && 칸폭>=10){ g.font='600 '+(칸폭<16?8:10)+'px system-ui,sans-serif'; g.textAlign='right'; g.fillText('#', x-4.6, y+3); }
-    }
-  });
-  /* 같은 칸끼리 위아래를 잇는다 — 「여기가 겹친다」 */
-  g.strokeStyle='rgba(248,113,113,.5)'; g.lineWidth=1; g.setLineDash([2,3]);
-  for(var c3=Math.max(c0,z.내시작); c3<Math.min(c1,z.내시작+z.음수); c3++){
-    var xx=왼+(c3-c0+0.5)*칸폭; g.beginPath(); g.moveTo(xx,82); g.lineTo(xx,112); g.stroke();
-  }
-  g.setLineDash([]);
 }
 function 날짜글(d){
   function p(n){ return (n<10?'0':'')+n; }
@@ -812,9 +643,6 @@ function 검사기페이지(){
      '<button id="jc-cmp" style="width:100%;margin-top:11px;padding:12px;border:0;border-radius:12px;'+
        'font-weight:800;cursor:pointer;background:linear-gradient(135deg,#10b981,#059669);color:#04221a">두 곡 견주기</button>'+
      '<div id="jc-cmpout" style="margin-top:11px"></div>'+
-     '<div id="jc-starbox" style="margin-top:12px;display:none"><div style="font-size:12px;font-weight:800;color:var(--fg);margin-bottom:5px">✨ 지문 별자리 <span style="font-weight:600;color:var(--muted)">— 판정의 근거</span></div>'+
-       '<canvas id="jc-star" style="width:100%;height:210px;border-radius:10px;background:#07120f;display:block"></canvas>'+
-       '<p class="hint" id="jc-starnote" style="margin-top:6px"></p></div>'+
      /* 빈 까만 칸이 먼저 보이면 고장 난 줄 안다. 견주고 나서 보여 준다. */
      '<div id="jc-wavebox" style="margin-top:12px;display:none"><div style="font-size:12px;color:var(--muted);margin-bottom:5px">소리 생김새</div>'+
        '<canvas id="jc-wave" style="width:100%;height:96px;border-radius:10px;background:#0b1512"></canvas>'+
@@ -844,17 +672,6 @@ function 곡견주기(){
               ' · 한 줄로 선 지문 '+r.한줄로선것+'알 · 곡 길이 '+Math.round(a.초)+'초 / '+Math.round(b.초)+'초</div>'+
               '<div style="font-size:11px;color:var(--faint);margin-top:7px">8점을 넘으면 같은 음원, 2.5점 아래면 다른 음원으로 봅니다. '+
               '다만 <b>같은 곡을 다른 사람이 다시 부른 것</b>은 이 길로 못 잡습니다.</div></div>';
-            var sb=document.getElementById('jc-starbox');
-            if(sb){ sb.style.display='block';
-              var 선=0; try{ 선=별자리그리기(document.getElementById('jc-star'), A, B, r); }catch(e){}
-              var sn=document.getElementById('jc-starnote');
-              if(sn) sn.innerHTML='점 하나는 소리가 툭 튀어나온 자리입니다(때 × 높이). '+
-                '<b style="color:#d97706">금색 선</b>은 두 곡에서 <b>같은 간격으로 짝지어 선</b> 봉우리 '+
-                '<b>'+선.toLocaleString()+'쌍</b>입니다. '+
-                (r.판정==='같은 음원' ? '선이 곧게 빽빽이 서면 같은 녹음입니다 — 이 짝이 판정의 근거입니다.'
-                 : (r.판정==='가까움' ? '선이 드문드문 섭니다 — 일부만 같은 녹음일 수 있습니다.'
-                 : '선이 거의 없습니다 — 짝이 맞는 봉우리가 드뭅니다. 다른 녹음입니다.'));
-            }
             var wb=document.getElementById('jc-wavebox'); if(wb) wb.style.display='block';
             생김새그리기(document.getElementById('jc-wave'), [그림1, B.그림], ['첫째 곡','둘째 곡']);
           });
