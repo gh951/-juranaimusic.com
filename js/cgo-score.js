@@ -2937,7 +2937,7 @@ redraw();
     if (쌓>0) 마디.push(이번);
     return 마디.map(function(w){
       var 모두=w.reduce(function(a,b){return a+b;},0);
-      if (모두<=0) return [0,단조?'min7':'maj7',박자];
+      if (모두<=0) return [0,단조?'min7':'maj7',1];
       var 제일=null, 높=-1;
       for (var k=0;k<후보.length;k++){
         var r=(으뜸+후보[k][0])%12, 꼴=후보[k][1], s=0;
@@ -2947,7 +2947,9 @@ redraw();
         if (꼴==='dim') s*=0.55;
         if (s>높){ 높=s; 제일=후보[k]; }
       }
-      return 제일 ? [제일[0], 제일[1], 박자] : [0,단조?'min7':'maj7',박자];
+      /* ⚠️ 셋째 값은 「몇 박」이 아니라 **「몇 마디」** 다. 4 를 넣었더니 마디가
+         네 배로 늘어 뒤쪽 180마디가 텅 빈 오선으로 그려졌다. 한 마디에 하나다. */
+      return 제일 ? [제일[0], 제일[1], 1] : [0,단조?'min7':'maj7',1];
     });
   }
 
@@ -3005,6 +3007,38 @@ redraw();
       renderGrooveAsScore(song, 뿌리이름, bpm, mod, [0]);
     }catch(e){ try{ console.error('[JURAN 악보]', e); }catch(_){} }
   };
+  /* ⚠️ CGO 악보는 **그릴 때의 폭**으로 한 번 그리고 끝이다. 그래서 글자를 키우거나
+     창을 바꾸면 그린 그림과 자리가 안 맞는다. 폭이 8% 넘게 달라졌을 때만 다시 그린다.
+     (고리를 돌지 않는다 — 바뀔 때 한 번이다.) */
+  var 지난폭=0, 늦=null;
+  function 폭보기(){
+    try{
+      var m=window._cgoMusicMod; if(!m||!m.root) return;
+      var w=m.root.querySelector('#cgo-groove-score-wrap');
+      if(!w || !w.querySelector('svg')) return;
+      var 이번=w.offsetWidth||0;
+      if(!이번) return;
+      if(지난폭 && Math.abs(이번-지난폭)/지난폭 < 0.08){ 지난폭=이번; return; }
+      지난폭=이번;
+      window._cgoGenerateScoreOnly368();
+    }catch(e){}
+  }
+  window.addEventListener('resize',function(){
+    if(늦) clearTimeout(늦);
+    늦=setTimeout(폭보기,260);
+  });
+  try{
+    if(window.ResizeObserver){
+      var ro=new ResizeObserver(function(){ if(늦) clearTimeout(늦); 늦=setTimeout(폭보기,260); });
+      var 붙이기=function(){
+        var m=window._cgoMusicMod;
+        var w=m&&m.root&&m.root.querySelector('#cgo-groove-score-wrap');
+        if(w){ try{ ro.observe(w); }catch(e){} } else setTimeout(붙이기,1500);
+      };
+      setTimeout(붙이기,1500);
+    }
+  }catch(e){}
+
   try{ window.renderGrooveAsScore = renderGrooveAsScore; }catch(e){}
   try{ console.log('[JURAN] CGO 악보 편집기 실림'); }catch(e){}
 })();
