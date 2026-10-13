@@ -1,3 +1,23 @@
+/* ════════════════════════════════════════════════════════════════════════
+   CGO 악보 편집기 — 원본 그대로 + JURAN 이음매              (2026-10-13 · 2판)
+   ------------------------------------------------------------------------
+   【무엇이 들어 있나】
+     renderGrooveAsScore          128.5KB  악보 그리기·고치기·연주·저장 (CGO 원본)
+     _cgoGenerateScoreOnly368      15.2KB  소리 따라가기 (CGO 원본)
+       · 소리판(cgo-vvip-audio)에 timeupdate·pause·ended 걸이를 단다
+       · 마디마다 몇 초인지 시각표를 만든다
+       · 음표에 불을 켜는 자명종(_자기514)을 맞춘다
+       · cgo-552 에서 고친 「보라 점 여러 개」 흠까지 같이 들어 있다
+     NOTES · noteToIdx · CHORD_INTERVALS · buildChordNotes   0.6KB
+     이음매                          2KB   JURAN 값으로 곡 틀을 만들어 넘긴다
+   【안 가져온 것】
+     SONG_DB 2.96MB — 곡 2,995개가 든 통. 원본은 곡 틀이 없을 때만 이 통을 뒤진다.
+     우리가 먼저 만들어 놓으니 그 길로 안 간다. 빈 통만 놓아 둔다.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* 곡 통 — 원본이 이름을 부르기만 하므로 빈 것으로 놓아 둔다 */
+var SONG_DB = [];
+
 var NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 
 var noteToIdx = function(n){
@@ -2893,6 +2913,370 @@ redraw();
 };
 
 
+window._cgoGenerateScoreOnly368 = function(){
+try{
+var _mod = window._cgoMusicMod;
+if(!_mod) return;
+_mod.selected = _mod.selected || {};
+if(!_mod.selected.key) _mod.selected.key = 'C Major';
+if(!_mod.tempoBpm) _mod.tempoBpm = 120;
+var _k369 = _mod.selected.key || 'C Major';
+var _b369 = _mod.tempoBpm || 120;
+var _pick369 = window._cgoCurrentPick;
+if(!_pick369 && SONG_DB && SONG_DB.length){
+var _bestI=0, _bestD=9999;
+for(var i=0;i<SONG_DB.length;i++){
+var _br=SONG_DB[i].bpm||[100,130];
+var _d=Math.abs((_br[0]+_br[1])/2-_b369);
+if(_d<_bestD){_bestD=_d;_bestI=i;}
+}
+_pick369=SONG_DB[_bestI];
+window._cgoCurrentPick=_pick369;
+}
+if(!_pick369) return;
+if(!window._cgoMelodyEvents || !window._cgoMelodyEvents.length){
+try{ if(typeof _mod._buildNoteSequence==='function') _mod._buildNoteSequence(); }catch(_bns411){ console.error('[cgo-411] _buildNoteSequence fallback:',_bns411); window._cgoMelodyEvents=null; } // cgo-411: 예외 시 null로 정리 → renderGrooveAsScore 내부 SONG_DB struct+barChords 폴백 보장
+}
+if(!window._cgoMelodyEvents || !window._cgoMelodyEvents.length){ // cgo-411: 멜로디 이벤트 여전히 없으면 _cgoMelodyNames도 정리
+if(!window._cgoMelodyNames || !window._cgoMelodyNames.length) window._cgoMelodyEvents=null; // 완전 폴백 모드: SONG_DB struct 의존
+}
+var _rn369=_k369.split(/\s/)[0]||'C';
+var _sw369=_mod.root&&_mod.root.querySelector('#cgo-groove-score-wrap');
+if(_sw369){
+_sw369.style.display='block';
+renderGrooveAsScore(_pick369,_rn369,_b369,_mod,[0]);
+}
+try{
+var _au372=document.getElementById('cgo-vvip-audio');
+if(_au372 && _sw369){
+if(window._cgoScoreSyncFn372){ try{_au372.removeEventListener('timeupdate',window._cgoScoreSyncFn372);}catch(e){} }
+if(window._cgoScoreEndFn372){ try{_au372.removeEventListener('pause',window._cgoScoreEndFn372);_au372.removeEventListener('ended',window._cgoScoreEndFn372);}catch(e){} }
+/* ═══ cgo-552 (2026-10-11) : 보라 점이 **여러 개** 뜨던 것 ═══
+   파트너 — "수노 악보에 저 개인 음표가 여러 개 뜨는 오류"
+   【잰 것】 악보를 세 번 그렸더니 play 걸이 3개 · 보라 점 3개 · 멈춘 뒤에도 2개가 남았다.
+   【까닭】 악보를 그릴 때마다 소리판에 걸이를 새로 단다. 그런데 **떼내는 줄이
+       timeupdate · pause · ended 세 개에만 있고 play · seeked 두 개에는 없었다.**
+       그래서 옛 자명종(_자기514)이 하나도 안 죽고 각자 제 점을 그리며 계속 돈다.
+       게다가 옛것들은 **옛 마디 시각표**를 들고 있어서 지금 악보의 엉뚱한 음표에
+       불을 켠다 — 화면 아래쪽에 혼자 떨어져 있던 점이 그것이다.
+       멈춰도 안 꺼지는 까닭도 같다. 옛것의 pause 걸이는 위에서 떼냈으니
+       제 점을 지울 길이 없다.
+   【고치는 것 — 세 겹】
+     ㉠ play · seeked 걸이도 떼낸다 (안 떼내던 두 개)
+     ㉡ 세대 번호를 둔다. 옛 자명종은 깨어나는 **그 순간 스스로 죽는다.**
+        걸이를 못 떼낸 경우(다른 길로 걸린 것)까지 막는다.
+     ㉢ 불을 켜기 전에 같은 표가 붙은 동그라미를 **전부** 쓸어 낸다.
+        ㉠㉡ 을 빠져나온 것이 있어도 화면에는 하나만 남는다.
+   ⚠️ 새 고리를 돌리지 않는다. 깨는 횟수는 그대로다 — 특허 기능과 무관하다. */
+if(window._cgo자기걸이552){ try{ _au372.removeEventListener('play',window._cgo자기걸이552);
+  _au372.removeEventListener('seeked',window._cgo자기걸이552); }catch(e){} }
+var _세대552 = (window._cgo악보세대552 = (window._cgo악보세대552||0) + 1);
+var _bpm372=_b369;
+var _beatSec372=60.0/_bpm372;
+var _bpb372=4;
+var _barSecFallback373=_bpb372*_beatSec372;
+/* ═══ cgo-514 (2026-10-09) : 마디 띠가 밀리고 멈추던 것을 고친 자리 ═══
+   파트너 말 — "처음만 정확하고 갈수록 어디가 어딘줄 모르겠어여"
+                "마디도 잘 안 맞는 것 같은데요"
+
+   ⚠️ 내가 이 자리에서 **한 번 틀렸다** (같은 날, 고치기 전에 시험하다 잡았다).
+      처음엔 "음표 길이를 더해서 마디를 세는 게 범인"이라 보고, 음표들의
+      진짜 시각에 **곧은 선 하나**(최소제곱)를 그어 대신하려 했다. 재 보니
+      더 나빴다 — 끝마디 어긋남 0.07초 → 2.87초.
+      왜냐면 **악보가 바로 그 더하기로 그려져 있기 때문**이다. 음표가 어느 마디에
+      그려지는지는 길이를 더한 값이 정한다. 그러니 "몇 번째 마디냐"의 기준이
+      그 더하기다. 거기에 곧은 선을 억지로 맞추면 그림과 어긋난다.
+      → 교훈 : 고치기 전에 **무엇이 정답인지**를 먼저 정해야 한다.
+
+   【진짜 범인 — 빈 마디에서 띠가 멈춘다】
+     마디 시각표는 **그 마디에 음표가 있을 때만** 채워졌다. 음표가 없는 마디
+     (쉼표·간주·노래 안 하는 데)는 빈 칸으로 남았고, 띠를 찾는 코드는 표를
+     뒤에서부터 훑어 **빈 칸을 건너뛰고 앞 마디에 머물렀다.**
+     우리 음표는 '노래 목소리'에서만 딴 것이라 전주·간주가 통째로 빈다.
+     그래서 앞에서는 맞다가 뒤로 갈수록 제자리를 못 찾는다.
+
+   【지금 하는 것】
+     ① 음표가 있는 마디 → 그 음표의 **진짜 소리 시각**에 못을 박는다 (전과 같다)
+     ② 음표가 없는 마디 → 양옆 못 사이를 **곧게 이어** 채운다 (빈 칸을 없앤다)
+     ③ 앞뒤 끝 → 가장 가까운 두 못의 기울기로 늘린다
+     ④ 시각이 거꾸로 가면 바로잡는다 (음표 시각이 뒤집힌 데가 있다)
+     표에 빈 칸이 없으므로 띠는 멈추지 않는다. 그리고 못이 **마디마다** 박혀
+     있으므로 한 군데가 틀려도 **그 마디에서 끝난다 — 뒤로 안 번진다.** */
+var _barT514=[], _맞음514=false;
+try{
+  var _ev514=window._cgoMelodyEvents;
+  var _총마디514=0;
+  try{ var _p514b=window._cgo악보판; if(_p514b&&_p514b.totBars) _총마디514=_p514b.totBars; }catch(_){}
+  if(_ev514 && _ev514.length){
+    var _못514=[], _acc514=0;
+    for(var _mi514=0;_mi514<_ev514.length;_mi514++){
+      var _e514=_ev514[_mi514];
+      var _bi514=Math.floor(_acc514/_bpb372), _박안514=_acc514-_bi514*_bpb372;
+      /* 그 음표가 셋째 박에 있으면 마디 첫 박은 두 박 앞이다 (cgo-508 에서 고친 것).
+         여기 쓰는 박 길이는 '마디 안' 보정이라 많아야 세 박 — 빠르기가 1% 틀려도 0.02초다. */
+      if(typeof _e514.start_sec==='number' && _못514[_bi514]===undefined)
+        _못514[_bi514]=_e514.start_sec-_박안514*_beatSec372;
+      _acc514+=(_e514.dur||0);
+    }
+    var _끝마디514=Math.max(_못514.length, Math.ceil(_acc514/_bpb372), _총마디514);
+    var _있는514=[];
+    for(var _q514=0;_q514<_못514.length;_q514++) if(_못514[_q514]!==undefined) _있는514.push(_q514);
+    if(_있는514.length>=2){
+      /* ② 못과 못 사이를 곧게 잇는다 */
+      for(var _g514=0;_g514<_있는514.length-1;_g514++){
+        var _i0=_있는514[_g514], _i1=_있는514[_g514+1];
+        if(_i1-_i0<=1) continue;
+        var _기514=(_못514[_i1]-_못514[_i0])/(_i1-_i0);
+        for(var _f514=_i0+1;_f514<_i1;_f514++) _못514[_f514]=_못514[_i0]+_기514*(_f514-_i0);
+      }
+      /* ③ 앞뒤 끝은 가장 가까운 두 못의 기울기로 늘린다 */
+      var _첫514=_있는514[0], _끝못514=_있는514[_있는514.length-1];
+      var _앞기514=(_못514[_있는514[1]]-_못514[_첫514])/(_있는514[1]-_첫514);
+      var _뒤기514=(_못514[_끝못514]-_못514[_있는514[_있는514.length-2]])/
+                   (_끝못514-_있는514[_있는514.length-2]);
+      if(!(_앞기514>0.1)) _앞기514=_barSecFallback373;
+      if(!(_뒤기514>0.1)) _뒤기514=_barSecFallback373;
+      for(var _f2514=_첫514-1;_f2514>=0;_f2514--) _못514[_f2514]=_못514[_f2514+1]-_앞기514;
+      for(var _f3514=_끝못514+1;_f3514<_끝마디514;_f3514++) _못514[_f3514]=_못514[_f3514-1]+_뒤기514;
+      /* ④ 거꾸로 가는 자리 바로잡기 */
+      for(var _f4514=1;_f4514<_끝마디514;_f4514++)
+        if(!(_못514[_f4514]>_못514[_f4514-1])) _못514[_f4514]=_못514[_f4514-1]+0.05;
+      _barT514=_못514.slice(0,_끝마디514);
+      _맞음514=_barT514.length>1;
+      try{ console.log('%c[cgo-514] 마디 시각표 '+_barT514.length+'칸 — 음표로 박은 못 '+
+                       _있는514.length+'개, 메운 칸 '+(_barT514.length-_있는514.length)+'개',
+                       'color:#059669'); }catch(_){}
+    }
+  }
+}catch(_e514b){ _맞음514=false; _barT514=[]; }
+if(!_맞음514){ try{ console.log('%c[cgo-514] 시각표를 못 만들었다 — 악보 빠르기 '+_bpm372+' 로 간다','color:#b45309'); }catch(_){} }
+
+/* 마디 k 가 시작하는 시각. 표에 빈 칸이 없으므로 그냥 꺼내 쓴다. */
+function _마디시각514(k){
+  if(!_맞음514) return k*_barSecFallback373;
+  if(k<0) return _barT514[0];
+  if(k>=_barT514.length) return _barT514[_barT514.length-1];
+  return _barT514[k];
+}
+/* 음표 하나가 울리는 시각 = 그 마디 시작 + 마디 안 몇 박째 × 그 마디의 한 박 */
+function _음표시각514(n){
+  var k=Math.floor(n.b/_bpb372), 박안=n.b-k*_bpb372;
+  var 시=_마디시각514(k), 한박=(_마디시각514(k+1)-시)/_bpb372;
+  if(!(한박>0.01)) 한박=_beatSec372;
+  return 시+박안*한박;
+}
+/* cgo-505: 여기서 숫자를 또 정하면 그린 쪽과 어긋난다. 그린 쪽이 적어 둔 것을
+   그때그때 읽는다. 화면을 돌리거나 악보를 다시 그려도 저절로 따라간다. */
+function _판505(){
+  var p=window._cgo악보판;
+  if(p&&p.BAR_W) return p;
+  /* 적어 둔 것이 없을 때도 '그리는 쪽과 같은 규칙'으로 셈한다.
+     여기서 4 로 고정하면 cgo-502 의 흠이 그대로 되살아난다. */
+  var LG=10,S=36,LY=22, _화=0;
+  try{ _화=window.innerWidth||document.documentElement.clientWidth||0; }catch(e){}
+  var B=(_화&&_화<=480)?1:((_화&&_화<=900)?2:4);
+  var w=Math.max(340,_sw369.offsetWidth||_sw369.clientWidth||380);
+  return {BPR:B,LM:52,ST:S,LGAP:LG,LYRICS_H:LY,RH:S+4*LG+34+LY,
+          cW:w,BAR_W:Math.max(72,Math.floor((w-58)/B)),음표:[]};
+}
+var _prevBar372=-1;
+window._cgoScoreSyncFn372=function(){
+if(_au372.paused) return;
+var _t372=_au372.currentTime||0;
+/* cgo-514: 표를 **뒤에서부터 한 칸씩 훑던 것**을 가운데를 짚어 가는 찾기로 바꿨다.
+   전에는 빈 칸을 만나면 건너뛰어 앞 마디에 머물렀다 — 그게 띠가 멈추던 이유다.
+   이제 표에 빈 칸이 없고, 76마디짜리도 일곱 번이면 찾는다. */
+var _bar372=0;
+if(_맞음514){
+  var _lo372=0,_hi372=_barT514.length-1;
+  while(_lo372<=_hi372){ var _md372=(_lo372+_hi372)>>1;
+    if(_barT514[_md372]<=_t372){ _bar372=_md372; _lo372=_md372+1; } else _hi372=_md372-1; }
+} else {
+  _bar372=Math.floor(_t372/_barSecFallback373);
+}
+if(!(_bar372>=0)) _bar372=0;
+/* cgo-514 그물 : 브라우저가 자명종을 떨어뜨렸으면(탭을 숨겼다 돌아왔다든가)
+   여기서 다시 맞춘다. 1초에 네 번, 이진 탐색 한 번이라 값이 없다. */
+if(_음표불514 && !_잠514){ try{ _자기514(); }catch(e){} }
+if(_bar372===_prevBar372) return;
+_prevBar372=_bar372;
+try{
+var _oldHl=_sw369.querySelector('#cgo-sc-sync372');
+if(_oldHl) _oldHl.parentNode.removeChild(_oldHl);
+var _svg372=_sw369.querySelector('svg');
+if(!_svg372) return;
+var _svgNS372='http://www.w3.org/2000/svg';
+var _판=_판505();
+var _row372=Math.floor(_bar372/_판.BPR);
+var _bx372=_판.LM+(_bar372%_판.BPR)*_판.BAR_W;
+var _sTopH372=_row372*_판.RH+8+_판.ST;
+var _r372=document.createElementNS(_svgNS372,'rect');
+_r372.id='cgo-sc-sync372';
+_r372.setAttribute('x',_bx372+1);
+_r372.setAttribute('y',_sTopH372-14);
+_r372.setAttribute('width',_판.BAR_W-2);
+_r372.setAttribute('height',4*_판.LGAP+28);
+_r372.setAttribute('rx','4');
+/* cgo-514: .14 → .22 로 올렸다. cgo-505 때는 "음표 불이 주인공이라 옅게" 였는데
+   cgo-512 가 음표 불을 지워서 **주인공이 사라진 채 조연만 옅게** 남아 있었다.
+   음표 불을 되살리니 둘이 겹친다 — 띠는 자리를 알려 주고(옅게),
+   불은 지금 소리를 짚는다(진하게). 그래서 .28 이 아니라 .22 다. */
+_r372.setAttribute('fill','rgba(251,191,36,.22)');
+_r372.style.pointerEvents='none';
+_svg372.insertBefore(_r372,_svg372.childNodes[1]||null);
+var _hlTop372=_row372*_판.RH;
+var _wrapH372=_sw369.clientHeight||300;
+var _sT372=_sw369.scrollTop||0;
+if(_hlTop372<_sT372 || _hlTop372+_판.RH>_sT372+_wrapH372){
+_sw369.scrollTo({top:Math.max(0,_hlTop372-40),behavior:'smooth'});
+}
+}catch(e){}
+};
+/* ─────────────────────────────────────────────────────────────────────
+   cgo-505 : 음표 하나하나에 반투명 흑색을 찍는다.
+   마디(2.8초)에 찍으면 악보를 못 읽는 사람은 그 안 어디가 지금 소리인지
+   알 수가 없다. 음표에 찍으면 들리는 소리와 점 하나가 1대1로 묶인다.
+   소리를 분석하지 않는다 — 재생 시각만 보고 그린다. 계산 값이 0이다.
+   timeupdate 는 1초에 네 번쯤만 와서 음표에는 너무 성기다. 그래서
+   requestAnimationFrame 으로 돌린다 (멈춰 있으면 돌지 않는다).
+   ───────────────────────────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════════
+   cgo-512 : 음표 하나씩 불 켜기를 **통째로 지웠다**.
+
+   왜 지웠나 — 파트너 지시: *"악보 정확도와 상관 없으면 통째로 빼는것이 아니라 전체 삭제해주세요"*
+
+   내가 cgo-505 에 넣고 508·509·511 로 세 번 고쳤지만, 폰에서 계속 말썽이었다.
+     · 1초에 60번 도는 고리가 메인 스레드를 먹어 **특허 제4분할(content-visibility)이
+       그릴 틈을 못 얻었다** → 스크롤할 때 작은 흰 박스가 뜨고 앱이 멈췄다
+     · cgo-511 에서 133배 가볍게 했지만, 악보 정확도와는 아무 상관이 없는 기능이다
+   **없는 편이 낫다.** 다시 넣고 싶으면 cgo-505 를 보라 — 다만 특허 기능과
+   메인 스레드를 다투지 않을 방법을 먼저 찾아야 한다.
+
+   남긴 것 (둘 다 진짜 버그 고침이고 무게가 0이다) —
+     · `_판505()` : 그린 쪽이 적어 둔 한 줄 마디 수를 읽는다.
+       cgo-502 에서 폰 1마디로 바꾸면서 불 켜는 쪽을 4마디로 둬서, 폰에서
+       둘째 마디부터 띠가 엉뚱한 줄에 켜졌다. 그 고침이다.
+     · 마디 띠 기준점 : '그 마디 첫 음표의 시각'이 아니라 '마디 첫 박의 시각'을 쓴다.
+   ════════════════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════════════════
+   cgo-514 (2026-10-09) : 음표 하나씩 불 켜기를 **자다 깨는 방식**으로 되살렸다.
+
+   【cgo-505~511 이 왜 앱을 멈췄나】
+     1초에 60번 도는 고리(requestAnimationFrame)를 돌려 "지금 어느 음표냐"를
+     **계속 물었다.** 메인 스레드가 꽉 차서 특허 제4분할(content-visibility)이
+     그릴 틈을 못 얻었고, 스크롤하면 흰 박스가 뜨고 앱이 멈췄다.
+     cgo-512 에서 통째로 지웠다. 지운 판단은 옳았다.
+
+   【지금 하는 것 — 묻지 않고 예약한다】
+     음표가 울릴 시각은 **이미 안다** (위에서 만든 마디 시각표에서 꺼낸다).
+     그러니 물을 필요가 없다. 다음 음표 시각에 자명종을 하나 맞추고 **잔다.**
+       깨어나는 횟수 = 음표 수 ÷ 곡 길이 ≒ 1초에 두세 번
+       (지금 마디 띠를 돌리는 timeupdate 가 1초에 네 번이다. 그보다 적다.)
+     깰 때마다 지금 시각으로 다시 셈하므로, 브라우저가 자명종을 늦게 울려도
+     **스스로 제자리를 찾는다.** 밀리지 않는다.
+
+   【안전 울타리】
+     · 음표 자리가 없으면 → 불만 안 켜진다. 마디 띠는 그대로 돈다.
+     · `_음표불514 = false` 한 줄로 끌 수 있다.
+     · 멈추면 자명종을 끈다. 안 보이는 데서 도는 것이 없다.
+   ════════════════════════════════════════════════════════════════════ */
+var _음표불514 = true;          /* ⚠️ 말썽이면 이 한 줄을 false 로 */
+var _불el514 = null, _잠514 = 0, _불idx514 = -1;
+
+function _음표들514(){
+  try{ var p=window._cgo악보판; return (p && p.음표 && p.음표.length) ? p.음표 : null; }
+  catch(e){ return null; }
+}
+/* ⚠️ cgo-514 : 여기 _음표시각514 를 **또** 만들어 뒀다가 지웠다. 같은 이름을 두 번
+   만들면 뒤엣것이 이긴다 — 위에서 제대로 만든 것이 조용히 죽는다.
+   쓰는 것은 위(마디 시각표를 읽는 쪽) 하나뿐이다. */
+function _불끄기514(){
+  /* cgo-552 ㉢ : 내 것만 지우지 않는다. 같은 표가 붙은 것을 **전부** 쓸어 낸다.
+     옛 자명종이 남긴 동그라미는 내 손에 없어서, 내 것만 지우면 화면에 그대로 남는다. */
+  try{ var _svg552=_sw369.querySelector('svg');
+       if(_svg552){ var _ds552=_svg552.querySelectorAll('#cgo-nt-lit514');
+         for(var _di552=0;_di552<_ds552.length;_di552++)
+           if(_ds552[_di552].parentNode) _ds552[_di552].parentNode.removeChild(_ds552[_di552]); } }catch(e){}
+  try{ if(_불el514 && _불el514.parentNode) _불el514.parentNode.removeChild(_불el514); }catch(e){}
+  _불el514 = null; _불idx514 = -1;
+}
+function _불켜기514(i){
+  var L = _음표들514(); if(!L || !L[i]) return;
+  var _svg = _sw369.querySelector('svg'); if(!_svg) return;
+  _불끄기514();
+  try{
+    var c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.id = 'cgo-nt-lit514';
+    c.setAttribute('cx', L[i].x); c.setAttribute('cy', L[i].y); c.setAttribute('r', 9);
+    c.setAttribute('fill','rgba(124,58,237,.34)');
+    c.style.pointerEvents = 'none';
+    _svg.appendChild(c);                       /* 맨 뒤 — 음표를 가리지 않는다 */
+    _불el514 = c; _불idx514 = i;
+  }catch(e){ _불el514 = null; _불idx514 = -1; }
+}
+/* 깨어났다 → 지금 울리는 음표에 불을 켜고 → 다음 음표 시각에 자명종을 맞추고 → 잔다 */
+var _도는중514 = false;
+function _자기514(){
+  if(_도는중514) return;        /* 띠 쪽에서 나를 부르고 내가 띠를 부르니, 맞물리지 않게 */
+  _도는중514 = true;
+  try{ _자기속514(); } finally { _도는중514 = false; }
+}
+function _자기속514(){
+  try{ if(_잠514) clearTimeout(_잠514); }catch(e){}
+  _잠514 = 0;
+  /* cgo-552 ㉡ : 나보다 새 악보가 그려졌으면 나는 **옛것**이다.
+     깨어난 김에 내 점을 지우고 죽는다. 다시는 자명종을 안 맞춘다. */
+  if(_세대552 !== window._cgo악보세대552){ try{ _불끄기514(); }catch(e){} return; }
+  if(!_음표불514) return;
+  var L = _음표들514(); if(!L) return;
+  if(!_au372 || _au372.paused) return;
+  if(_불el514 && _불el514.isConnected === false){ _불el514 = null; _불idx514 = -1; }  /* 악보를 다시 그렸다 */
+  var t = _au372.currentTime || 0;
+  var lo = 0, hi = L.length - 1, nx = -1;      /* 지금보다 나중에 오는 첫 음표 */
+  while(lo <= hi){
+    var md = (lo + hi) >> 1;
+    if(_음표시각514(L[md]) > t + 0.012){ nx = md; hi = md - 1; } else { lo = md + 1; }
+  }
+  var cur = (nx < 0) ? (L.length - 1) : (nx - 1);
+  if(cur >= 0){
+    /* 이 음표가 몇 초짜리인가 — 그 마디의 한 박으로 잰다 (마디마다 빠르기가 조금씩 다르다) */
+    var _k끝514 = Math.floor(L[cur].b/_bpb372);
+    var _한박끝514 = (_마디시각514(_k끝514+1)-_마디시각514(_k끝514))/_bpb372;
+    if(!(_한박끝514>0.01)) _한박끝514=_beatSec372;
+    var 끝 = _음표시각514(L[cur]) + _한박끝514 * (L[cur].d || 0.5);
+    if(t < 끝 + 0.15){ if(cur !== _불idx514) _불켜기514(cur); }
+    else _불끄기514();
+  } else _불끄기514();
+  /* cgo-514 : 깬 김에 **마디 띠도 같이 손본다**.
+     띠는 timeupdate 로 도는데 그게 1초에 네 번뿐이라 최대 0.25초 늦게 켜졌다.
+     음표 불은 음표마다 깨니(1초에 두세 번) 그 길에 얹으면 **깨는 횟수를 안 늘리고**
+     띠가 음표 경계에서 바로 따라간다. 공짜다. */
+  try{ if(typeof window._cgoScoreSyncFn372==='function') window._cgoScoreSyncFn372(); }catch(e){}
+  if(nx < 0) return;                            /* 남은 음표가 없다 — 다시 안 깬다 */
+  _잠514 = setTimeout(_자기514, Math.max(8, (_음표시각514(L[nx]) - t) * 1000));
+}
+window._cgoScoreEndFn372=function(){
+_prevBar372=-1;
+try{ if(_잠514) clearTimeout(_잠514); }catch(e){}
+_잠514=0; _불끄기514();
+try{var _oldHl=_sw369.querySelector('#cgo-sc-sync372');if(_oldHl)_oldHl.parentNode.removeChild(_oldHl);}catch(e){}
+};
+_au372.addEventListener('timeupdate',window._cgoScoreSyncFn372);
+_au372.addEventListener('pause',window._cgoScoreEndFn372);
+_au372.addEventListener('ended',window._cgoScoreEndFn372);
+/* cgo-514: 틀거나 자리를 옮기면 자명종을 다시 맞춘다
+   cgo-552 ㉠ : 다음에 악보를 다시 그릴 때 **떼낼 수 있게** 창문에 적어 둔다.
+   이걸 안 적어 둬서 지금까지 옛 걸이가 하나도 안 떨어졌다. */
+try{ window._cgo자기걸이552 = _자기514; }catch(_){}
+_au372.addEventListener('play', _자기514);
+_au372.addEventListener('seeked', _자기514);
+try{ if(!_au372.paused) _자기514(); }catch(e){}
+}
+}catch(ex372){console.error('[cgo-372] score sync:',ex372);}
+}catch(ex){console.error('[cgo-369] VVIP 악보:',ex);}
+};
+
+
 /* ════════════════════════════════════════════════════════════════════════
    이음매 — JURAN 쪽 값을 CGO 악보가 알아듣는 꼴로 만들어 넘긴다
    ------------------------------------------------------------------------
@@ -2953,6 +3337,9 @@ redraw();
     });
   }
 
+  /* CGO 원본을 잡아 둔다 — 아래에서 곡 틀만 만들어 주고 그 손에 넘긴다 */
+  var CGO원본 = window._cgoGenerateScoreOnly368;
+
   window._cgoGenerateScoreOnly368 = function(){
     try{
       var mod=window._cgoMusicMod; if(!mod) return;
@@ -3004,11 +3391,17 @@ redraw();
                  key:(단조?'min':'maj'), title:'JURAN 곡', struct:struct };
       window._cgoCurrentPick=song;
       if (wrap) wrap.style.display='block';
-      renderGrooveAsScore(song, 뿌리이름, bpm, mod, [0]);
+      /* ⚠️ 여기서 직접 그리면 **소리 따라가기가 빠진다.**
+         CGO 원본 손 안에 소리판 걸이(timeupdate·pause·ended)·마디 시각표·
+         음표 불 켜는 자명종이 들어 있다. 내가 2KB 짜리로 갈아 끼웠다가
+         수노 노래가 흘러도 악보가 가만히 있는 흠을 냈다.
+         이제 곡 틀만 만들어 주고 **원본 손에 넘긴다.** */
+      if (typeof CGO원본==='function') CGO원본();
+      else renderGrooveAsScore(song, 뿌리이름, bpm, mod, [0]);
     }catch(e){ try{ console.error('[JURAN 악보]', e); }catch(_){} }
   };
-  /* ⚠️ CGO 악보는 **그릴 때의 폭**으로 한 번 그리고 끝이다. 그래서 글자를 키우거나
-     창을 바꾸면 그린 그림과 자리가 안 맞는다. 폭이 8% 넘게 달라졌을 때만 다시 그린다.
+  /* ⚠️ CGO 악보는 **그릴 때의 폭**으로 한 번 그리고 끝이다. 글자를 키우거나 창을
+     바꾸면 그린 그림과 자리가 안 맞는다. 폭이 8% 넘게 달라졌을 때만 다시 그린다.
      (고리를 돌지 않는다 — 바뀔 때 한 번이다.) */
   var 지난폭=0, 늦=null;
   function 폭보기(){
@@ -3016,17 +3409,13 @@ redraw();
       var m=window._cgoMusicMod; if(!m||!m.root) return;
       var w=m.root.querySelector('#cgo-groove-score-wrap');
       if(!w || !w.querySelector('svg')) return;
-      var 이번=w.offsetWidth||0;
-      if(!이번) return;
+      var 이번=w.offsetWidth||0; if(!이번) return;
       if(지난폭 && Math.abs(이번-지난폭)/지난폭 < 0.08){ 지난폭=이번; return; }
       지난폭=이번;
       window._cgoGenerateScoreOnly368();
     }catch(e){}
   }
-  window.addEventListener('resize',function(){
-    if(늦) clearTimeout(늦);
-    늦=setTimeout(폭보기,260);
-  });
+  window.addEventListener('resize',function(){ if(늦) clearTimeout(늦); 늦=setTimeout(폭보기,260); });
   try{
     if(window.ResizeObserver){
       var ro=new ResizeObserver(function(){ if(늦) clearTimeout(늦); 늦=setTimeout(폭보기,260); });
