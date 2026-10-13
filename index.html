@@ -2060,7 +2060,7 @@ window.JK=JK;
   var 내집   = 'js/';
   var 화면줄 = [{주소:내집+'juran-words.js', 꼭:false, 이름:'말 사전'},
                 {주소:내집+'cgo-music.js',   꼭:true,  이름:'작곡 엔진'},
-                {주소:내집+'juran-score.js', 꼭:false, 이름:'악보 판'}];
+                {주소:내집+'cgo-score.js',   꼭:false, 이름:'악보 편집기'}];
   var 소리줄 = [{주소:내집+'Tone.js',          꼭:false, 이름:'드럼'},
                 {주소:소리집+'cgo-sound.js',  꼭:false, 이름:'악기 소리'},
                 {주소:소리집+'cgo-sound2.js', 꼭:false, 이름:'악기 소리 2'}];
@@ -2200,7 +2200,13 @@ window.JK=JK;
         /* ⚠️ 재우기를 여기서 바로 부르면 안 된다. 뒤따라오는 다듬기가 그림 고리를
            **다시 켜기 때문**이다. 재 보니 홈에서 1초에 60번이 돌고 있었다.
            그래서 다듬기가 다 끝난 뒤에 재운다. */
-        setTimeout(function(){ 다듬기(); 재우기(true); }, 650);
+        /* ⚠️ 미리 짓는 중에 손님이 들어와 버릴 수 있다. 그때 재우면 **보고 있는 화면을
+           도로 떼어 낸다.** 그래서 지금 그 화면을 보고 있지 않을 때만 재운다. */
+        setTimeout(function(){
+          다듬기();
+          var v=document.getElementById('v-make');
+          if(!v || v.hidden) 재우기(true);
+        }, 650);
       }catch(e){ try{ console.warn('[JM] 미리 짓기 걸림', e); }catch(_){} }
     },
     열기:async function(){
