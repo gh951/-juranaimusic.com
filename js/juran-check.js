@@ -31,6 +31,8 @@
    【판 560】 악보 겹치기 그림 — 닮은 씨앗과 같은 토막을 같은 칸에 세워 빨갛게 칠한다
    【판 561】 지문 별자리 그림 — 「같은 음원」 판정이 기댄 봉우리 짝을 금색 선으로 보여 준다
    【판 563】 공개 곡 밭(js/field · Lakh MIDI 13,671곡)과 견주기 — 불은 여기서 켠다.
+   【판 564】 닮은 공개 곡을 **다섯**까지 이름 그대로 보여 준다 (파트너 — 「공정하려면 닮았으면 닮았다고」)
+             📏 읽는 법 한 줄 · 검사증은 금빛 PDF · 파일마다 판 번호를 붙여 폰이 옛 파일을 안 쥔다
              씨앗은 참고로만(재 보니 진짜 노래도 짧은 씨앗을 대개 품고 있다).
 
    끄기 : window.JC끔 = true
@@ -70,6 +72,9 @@ function 작품지문(글){
 
 /* ─────────────────────────────────────────────────────────── ② 씨앗 ── */
 var 씨 = null, 씨가는중 = null;
+/* 판 564 : 파일 주소에 판 번호를 붙인다 — 폰이 옛 파일을 쥐고 안 놓는 일을 막는다.
+   판 번호는 index.html 이 window.JURAN판 에 적는다. */
+function 판표(){ return '?v='+encodeURIComponent(window.JURAN판||'564'); }
 /* 씨앗 통은 161KB 다. 검사를 누르기 전에는 **안 받는다.**
    보이지 않는 것은 살리지 않는다 — 우리 특허와 같은 생각이다. */
 function 씨앗불러오기(){
@@ -77,7 +82,7 @@ function 씨앗불러오기(){
   if(씨가는중) return 씨가는중;
   씨가는중 = new Promise(function(ok){
     var s=document.createElement('script');
-    s.src='js/juran-seed.js'; s.async=false;
+    s.src='js/juran-seed.js'+판표(); s.async=false;
     s.onload=function(){ ok(true); };
     s.onerror=function(){ 씨가는중=null; ok(false); };
     document.head.appendChild(s);
@@ -247,12 +252,16 @@ function 악보검사(미디들){
 var 밭집='js/field/', 밭=null, 밭가는중=null, 밭조각={}, 밭나눔={};
 function 글받기(src){ return new Promise(function(ok){ var s=document.createElement('script'); s.src=src; s.async=true;
   s.onload=function(){ ok(true); }; s.onerror=function(){ ok(false); }; document.head.appendChild(s); }); }
+/* info.js 는 작다(0.4KB). 한 시간마다 새로 묻는다 — 밭을 넓히면 바로 알아채게.
+   net.bin · 조각은 크다. 밭의 「만든때」가 바뀔 때만 새로 받는다. */
+function 정보주소(){ return 밭집+'info.js?h='+Math.floor(Date.now()/36e5); }
+function 밭표(){ var j=window['JURAN밭정보']; return '?v='+encodeURIComponent((j&&(j.만든때||j.판))||'1'); }
 function 밭불러오기(){
   if(밭) return Promise.resolve(밭);
   if(밭가는중) return 밭가는중;
-  밭가는중 = (window['JURAN밭정보']? Promise.resolve(true) : 글받기(밭집+'info.js')).then(function(ok){
+  밭가는중 = (window['JURAN밭정보']? Promise.resolve(true) : 글받기(정보주소())).then(function(ok){
     var 정보=window['JURAN밭정보']; if(!ok||!정보) return null;
-    return fetch(밭집+'net.bin').then(function(r){ if(!r.ok) throw new Error('net'); return r.arrayBuffer(); }).then(function(buf){
+    return fetch(밭집+'net.bin'+밭표()).then(function(r){ if(!r.ok) throw new Error('net'); return r.arrayBuffer(); }).then(function(buf){
       var d=new Uint8Array(buf), dv=new DataView(buf);
       if(d[0]!==74||d[1]!==78||d[2]!==69||d[3]!==84) return null;
       var n=dv.getUint32(12,true), H=new Uint32Array(n), S=new Uint32Array(n), p=16, 앞=0, i, v, m, b;
@@ -278,7 +287,7 @@ function 밭후보(v, 수){
 }
 function 밭조각받기(c){
   if(window['JURAN밭'] && window['JURAN밭'][c]!=null) return Promise.resolve(true);
-  if(!밭조각[c]) 밭조각[c]=글받기(밭집+'f'+('00'+c).slice(-3)+'.js');
+  if(!밭조각[c]) 밭조각[c]=글받기(밭집+'f'+('00'+c).slice(-3)+'.js'+밭표());
   return 밭조각[c];
 }
 function 밭곡(id){
@@ -325,7 +334,7 @@ function 밭검사(미디들){
         본이름[열쇠]=r; 결과.push(r);
       });
       결과.sort(function(x,y){ return y.같은토막-x.같은토막; });
-      return {곡수:B.곡수, 판:B.정보.판, 목록:결과.slice(0,3)};
+      return {곡수:B.곡수, 판:B.정보.판, 목록:결과.slice(0,5)};
     });
   });
 }
@@ -551,7 +560,7 @@ function 만들기팝(){
       '<div id="jc-out" style="margin-top:13px"></div>'+
       '<div id="jc-foot" style="margin-top:13px;display:none;gap:8px;flex-wrap:wrap">'+
         '<button id="jc-cert" style="flex:1;min-width:150px;padding:11px;border:1px solid #2a5a4c;border-radius:11px;'+
-          'background:#0f241e;color:#9fe8d2;font-weight:700;cursor:pointer">⬇ 검사증 받기</button>'+
+          'background:linear-gradient(135deg,#3a2a08,#5c4310);color:#f3dc8c;border-color:#8a6a1f;font-weight:700;cursor:pointer">⬇ 검사증 받기 (PDF)</button>'+
         '<button id="jc-close2" style="flex:1;min-width:120px;padding:11px;border:1px solid #2a5a4c;border-radius:11px;'+
           'background:#0f241e;color:#9fd8c8;cursor:pointer">닫기</button>'+
       '</div>'+
@@ -692,10 +701,11 @@ function 그리기(R){
       else if(W.목록){
         if(!W.목록.length) h+='<div class="row"><b>가장 긴 곳</b><span>🟢 눈에 띄게 겹치는 공개 곡이 없습니다</span></div>';
         W.목록.forEach(function(x,i){
-          h+='<div class="row"><b>'+(i===0?'가장 닮은 곡':'그다음')+'</b><span>'+세빛(x.같은토막,잣대.세상노랑,잣대.세상빨강)+
+          h+='<div class="row"><b>'+(i===0?'가장 닮은 곡':(i+1)+'번째')+'</b><span>'+세빛(x.같은토막,잣대.세상노랑,잣대.세상빨강)+
              ' <b style="color:#e6f4ef">'+x.같은토막+'음</b> 연달아 똑같이 — 「'+그글(x.곡명)+'」'+(x.가수?' · '+그글(x.가수):'')+'</span></div>';
         });
-        h+='<div class="note" style="margin:-2px 0 8px">공개 곡끼리도 가운데가 14음, 열에 아홉은 21음 아래입니다. 같은 음이 이어지면 하나로 셉니다.</div>';
+        h+='<div class="note" style="margin:-2px 0 8px">📏 <b style="color:#9ac7b8">읽는 법</b> — 서로 관계없는 공개 곡끼리도 <b style="color:#e6f4ef">보통 14음</b>은 겹칩니다. '+
+           '🟡 22음부터 · 🔴 30음부터입니다. 같은 음이 이어지면 하나로 셉니다. 판단은 보시는 분이 하십니다.</div>';
         var 첫=W.목록[0];
         if(첫 && 첫.자리){
           h+='<div class="over"><div class="ovh">🎼 악보 겹쳐 보기 <span>— 빨간 음 '+첫.같은토막+'개가 똑같이 오르내립니다</span></div>'+
@@ -827,80 +837,210 @@ function 날짜글(d){
 /* ───────────────────────────────────────────── ⑧ 검사증 ── */
 function 검사증(){
   var R=담은것.결과; if(!R) return;
-  var W=1000, H=1400, r=2;
+  /* 판 564 : 금빛 검사증 · PDF
+     ① 먼저 아무 데도 안 보이는 작은 판에 한 번 그려 길이를 잰다
+     ② 그 길이로 진짜 판을 만들어 다시 그린다 (다섯 곡 · 겹쳐 보기 그림이 들어가면 길어진다)
+     ③ 그 그림 한 장을 PDF 한 쪽에 넣는다 — 바깥 꾸러미 없이 PDF 를 손으로 짠다.
+        한글 글꼴을 PDF 에 심지 않아도 되도록 글은 그림으로 들어간다. */
+  var W=1000, 끝=검사증그림(document.createElement('canvas').getContext('2d'), W, 1414, R);
+  var H=Math.max(1414, 끝+250), r=2;
   var cv=document.createElement('canvas'); cv.width=W*r; cv.height=H*r;
   var g=cv.getContext('2d'); g.setTransform(r,0,0,r,0,0);
-  g.fillStyle='#ffffff'; g.fillRect(0,0,W,H);
-  g.fillStyle='#064e3b'; g.fillRect(0,0,W,170);
-  g.fillStyle='#d1fae5'; g.font='800 44px system-ui,sans-serif';
-  g.fillText('JURAN 저작권 1차 검사증', 60, 86);
-  g.fillStyle='#86efac'; g.font='400 21px system-ui,sans-serif';
-  g.fillText('juranaimusic.com · 누구나 작곡가가 되는 가장 공정한 무대', 60, 126);
-
-  var y=236;
-  function 칸(k,v,굵){
-    g.fillStyle='#64748b'; g.font='400 21px system-ui,sans-serif'; g.fillText(k, 60, y);
-    g.fillStyle='#0f172a'; g.font=(굵?'700 ':'400 ')+'25px system-ui,sans-serif';
-    g.fillText(String(v), 320, y); y+=48;
+  검사증그림(g, W, H, R);
+  var 이름='JURAN_검사증_'+String(담은것.제목||'곡').replace(/[^\w가-힣]+/g,'_');
+  function 내려주기(b, 끝말){
+    var u=URL.createObjectURL(b), a=document.createElement('a');
+    a.href=u; a.download=이름+끝말;
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ try{a.remove();}catch(e){} URL.revokeObjectURL(u); },4000);
   }
-  function 줄긋기(){ g.strokeStyle='#e2e8f0'; g.lineWidth=1; g.beginPath(); g.moveTo(60,y-24); g.lineTo(W-60,y-24); g.stroke(); y+=12; }
-  function 제목글(t){ g.fillStyle='#059669'; g.font='800 27px system-ui,sans-serif'; g.fillText(t,60,y); y+=46; }
+  try{ 내려주기(PDF짜기(cv, '저작권 예측 분석 검사증 — '+(담은것.제목||'')), '.pdf'); }
+  catch(e){ cv.toBlob(function(b){ if(b) 내려주기(b,'.png'); },'image/png'); }
+}
+function 금빛(g, x0, x1){
+  var t=g.createLinearGradient(x0,0,x1,0);
+  t.addColorStop(0,'#8a6a1f'); t.addColorStop(.28,'#e8c766'); t.addColorStop(.5,'#b8892b');
+  t.addColorStop(.72,'#f3dc8c'); t.addColorStop(1,'#9c7724'); return t;
+}
+/* 긴 글을 폭에 맞춰 접어 쓴다 — 다음 줄 y 를 돌려준다 */
+function 감싸기(g, t, x, y, 폭, 줄높이, 글꼴, 색){
+  g.font=글꼴; g.fillStyle=색;
+  var 줄='', 낱=String(t).split(' ');
+  for(var i=0;i<낱.length;i++){
+    var 새=줄?줄+' '+낱[i]:낱[i];
+    if(g.measureText(새).width>폭 && 줄){ g.fillText(줄, x, y); y+=줄높이; 줄=낱[i]; } else 줄=새;
+  }
+  if(줄){ g.fillText(줄, x, y); y+=줄높이; }
+  return y;
+}
+function 줄임(g, t, 폭){
+  t=String(t||''); if(g.measureText(t).width<=폭) return t;
+  while(t.length>1 && g.measureText(t+'…').width>폭) t=t.slice(0,-1);
+  return t+'…';
+}
+function 검사증그림(g, W, H, R){
+  var 글꼴='system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif';
+  /* 바탕 · 테두리 */
+  g.fillStyle='#fdf8ec'; g.fillRect(0,0,W,H);
+  g.save(); g.globalAlpha=.045; g.fillStyle='#8a6a1f'; g.font='900 150px '+글꼴;
+  g.translate(W/2,H/2); g.rotate(-0.5); g.textAlign='center'; g.fillText('JURAN MUSIC',0,40); g.restore();
+  g.strokeStyle=금빛(g,0,W); g.lineWidth=6; g.strokeRect(22,22,W-44,H-44);
+  g.lineWidth=1.2; g.strokeRect(36,36,W-72,H-72);
+  /* 머리 띠 */
+  var 띠=g.createLinearGradient(0,40,0,236); 띠.addColorStop(0,'#1d160a'); 띠.addColorStop(1,'#2e230f');
+  g.fillStyle=띠; g.fillRect(40,40,W-80,196);
+  g.fillStyle=금빛(g,40,W-40); g.fillRect(40,232,W-80,4);
+  g.textAlign='left';
+  g.fillStyle=금빛(g,80,520); g.font='800 58px '+글꼴; g.fillText('JURAN MUSIC', 80, 118);
+  g.fillStyle='#f3dc8c'; g.font='700 31px '+글꼴; g.fillText('저작권 예측 분석 검사증', 80, 168);
+  g.fillStyle='#b8963e'; g.font='600 15px '+글꼴; g.fillText('MUSIC COPYRIGHT PRE-CHECK REPORT', 82, 204);
+  g.textAlign='right'; g.fillStyle='#d9bd72'; g.font='500 16px ui-monospace,Menlo,monospace';
+  g.fillText('No. '+String(R.지문||'').split('-')[0].toUpperCase(), W-80, 118);
+  g.fillStyle='#b8963e'; g.font='400 15px '+글꼴; g.fillText('juranaimusic.com', W-80, 146);
+  g.textAlign='left';
+
+  var y=290;
+  /* 판 564 (파트너 글) — 맨 앞 한 줄 */
+  y=감싸기(g, '본 검사증은 플랫폼 내 표준 분석 시스템을 통해 산출된 가사 및 악보 데이터의 1차 유사도 검사 결과를 증명합니다.',
+           80, y, W-160, 27, '400 18px '+글꼴, '#5c4a20')+22;
+  function 칸(k,v,굵){
+    g.fillStyle='#8a7a5a'; g.font='400 19px '+글꼴; g.fillText(k, 80, y);
+    g.fillStyle='#1c1608'; g.font=(굵?'700 ':'400 ')+'22px '+글꼴; g.fillText(줄임(g,v,W-380), 300, y); y+=42;
+  }
+  function 제목글(t, 곁){
+    y+=14;
+    g.fillStyle=금빛(g,80,W-80); g.fillRect(80,y-34,W-160,1.5);
+    g.fillStyle='#7a5a14'; g.font='800 24px '+글꼴; g.fillText(t, 80, y);
+    if(곁){ var w=g.measureText(t).width; g.fillStyle='#a08850'; g.font='400 17px '+글꼴; g.fillText(곁, 92+w, y); }
+    y+=44;
+  }
+  function 불(v){ return v>=잣대.세상빨강? '#dc2626' : (v>=잣대.세상노랑? '#eab308' : '#16a34a'); }
 
   칸('작품 이름', 담은것.제목, true);
   if(담은것.지은이) 칸('지은이', 담은것.지은이);
   칸('잰 때', 날짜글(R.때), true);
-  줄긋기();
+
   if(R.악보 && !R.악보.탈){
-    제목글('🎼 곡');
-    var 세=R.세상||{}, 첫=세.목록&&세.목록[0];
-    if(세.목록) 칸('가장 닮은 공개 곡', 첫? (첫.같은토막+'음 연달아  「'+첫.곡명+'」'+(첫.가수?' · '+첫.가수:'')).slice(0,46) : '눈에 띄게 겹치는 곡 없음');
-    else 칸('공개 곡', '못 견줌 (밭을 못 불러옴)');
-    칸('우리 씨앗 (참고)', R.악보.같은토막+'음 / 씨앗 '+R.악보.씨앗음수+'음');
-    칸('흔한 정도', R.악보.흔함+'%');
-    칸('제 되풀이', R.악보.되풀이+'%  (음 '+R.악보.음수+'개)');
-    줄긋기();
+    var 세=R.세상||{};
+    제목글('공개 곡과 견주기', 세.곡수? '— '+세.곡수.toLocaleString()+'곡 가운데 가장 닮은 곳' : '');
+    if(!세.목록){ 칸('공개 곡', '못 견줌 (밭을 못 불러옴)'); }
+    else if(!세.목록.length){ 칸('공개 곡', '눈에 띄게 겹치는 곳이 없음'); }
+    else 세.목록.forEach(function(x,i){
+      g.fillStyle='#b8963e'; g.font='700 18px '+글꼴; g.fillText(String(i+1), 84, y);
+      g.beginPath(); g.arc(122, y-6, 8, 0, Math.PI*2); g.fillStyle=불(x.같은토막); g.fill();
+      g.fillStyle='#1c1608'; g.font='800 22px '+글꼴; g.fillText(x.같은토막+'음', 142, y);
+      g.fillStyle='#8a7a5a'; g.font='400 16px '+글꼴; g.fillText('연달아 똑같이', 202, y);
+      g.fillStyle='#1c1608'; g.font=(i===0?'700 ':'400 ')+'21px '+글꼴;
+      g.fillText(줄임(g,'「'+x.곡명+'」'+(x.가수?' · '+x.가수:''), W-80-310), 310, y);
+      y+=40;
+    });
+    /* 읽는 법 */
+    g.fillStyle='#6b5a34'; g.font='400 17px '+글꼴;
+    g.fillText('읽는 법 — 서로 관계없는 공개 곡끼리도 보통 14음은 겹칩니다.', 84, y+4); y+=28;
+    var lx=84; [['#16a34a','21음 아래'],['#eab308','22음부터'],['#dc2626','30음부터']].forEach(function(p){
+      g.beginPath(); g.arc(lx+7, y-2, 7, 0, Math.PI*2); g.fillStyle=p[0]; g.fill();
+      g.fillStyle='#6b5a34'; g.fillText(p[1], lx+20, y+4); lx+=40+g.measureText(p[1]).width;
+    });
+    g.fillText('· 같은 음이 이어지면 하나로 셉니다.', lx, y+4); y+=40;
+    /* 겹쳐 보기 그림 — 팝업에 그려진 것을 그대로 옮긴다 */
+    var ov=document.getElementById('jc-over');
+    if(ov && ov.width>0 && ov.height>0 && 세.목록 && 세.목록[0]){
+      var pw=W-160, ph=Math.round(pw*ov.height/ov.width);
+      if(ph>260){ ph=260; }
+      g.fillStyle='#0b1512'; g.fillRect(80, y-8, pw, ph+46);
+      g.strokeStyle='#b8963e'; g.lineWidth=1; g.strokeRect(80.5, y-7.5, pw-1, ph+45);
+      g.fillStyle='#f3dc8c'; g.font='700 16px '+글꼴;
+      g.fillText(줄임(g,'악보 겹쳐 보기 — 위: 내 곡 · 아래: 「'+세.목록[0].곡명+'」 · 빨간 음 '+세.목록[0].같은토막+'개가 똑같이 오르내림', pw-30), 96, y+16);
+      try{ g.drawImage(ov, 80, y+30, pw, ph); }catch(e){}
+      y+=ph+64;
+    }
+    var a=R.악보;
+    칸('우리 씨앗 (참고)', a.같은토막+'음 / 씨앗 '+a.씨앗음수+'음  ·  「'+a.닮은곡+'」');
+    칸('흔한 정도 · 되풀이', a.흔함+'%  ·  제 되풀이 '+a.되풀이+'%  (음 '+a.음수+'개)');
   }
   if(R.가사 && !R.가사.탈 && R.가사.글자수){
-    제목글('✍️ 가사');
-    칸('금기어', R.가사.금기.length? (R.가사.금기.length+'곳') : '없음');
-    칸('실명', R.가사.실명.length? (R.가사.실명.length+'곳') : '없음');
-    칸('줄 되풀이', R.가사.되풀이+'%  ('+R.가사.줄수+'줄 '+R.가사.글자수+'자)');
-    줄긋기();
+    var L=R.가사;
+    제목글('가사');
+    칸('금기어 · 실명', (L.금기.length? L.금기.length+'곳':'없음')+'  ·  '+(L.실명.length? L.실명.length+'곳':'없음'));
+    칸('줄 되풀이', L.되풀이+'%  ('+L.줄수+'줄 '+L.글자수+'자)');
   }
-  제목글('🔒 작품 지문');
-  g.fillStyle='#0f172a'; g.font='500 23px ui-monospace,Menlo,monospace';
-  var 지=R.지문.split('-');
-  g.fillText(지.slice(0,2).join('-'), 60, y); y+=36;
-  g.fillText(지.slice(2).join('-'), 60, y); y+=50;
-  g.fillStyle='#475569'; g.font='400 19px system-ui,sans-serif';
-  g.fillText('같은 작품을 다시 넣으면 같은 번호가 나옵니다. 한 글자만 달라도 다른 번호가 됩니다.', 60, y); y+=56;
+  제목글('작품 지문');
+  g.fillStyle='#1c1608'; g.font='500 19px ui-monospace,Menlo,monospace';
+  g.fillText(줄임(g,R.지문,W-160), 80, y); y+=30;
+  g.fillStyle='#8a7a5a'; g.font='400 16px '+글꼴;
+  g.fillText('같은 작품을 다시 넣으면 같은 번호가 나옵니다. 한 글자만 달라도 다른 번호가 됩니다.', 80, y); y+=50;
 
-  /* 판 563 : 팝업과 같은 말(견준글)을 쓰고, 긴 줄은 접는다 */
-  g.font='400 20px system-ui,sans-serif';
-  var 접은=[]; 견준글(R,false).replace('이 검사는','이 종이는').split('\n').forEach(function(t){
-    var 줄='', 낱=t.split(' ');
-    낱.forEach(function(w){ var 새=줄?줄+' '+w:w; if(g.measureText(새).width>W-160&&줄){ 접은.push(줄); 줄=w; } else 줄=새; });
-    if(줄) 접은.push(줄);
-  });
-  var 칸높이=70+접은.length*32;
-  g.fillStyle='#fef3c7'; g.fillRect(50, y-26, W-100, 칸높이);
-  g.strokeStyle='#fcd34d'; g.strokeRect(50, y-26, W-100, 칸높이);
-  g.fillStyle='#92400e'; g.font='700 22px system-ui,sans-serif';
-  g.fillText('이 검사증이 말하는 것', 74, y+8); y+=46;
-  g.font='400 20px system-ui,sans-serif'; g.fillStyle='#78350f';
-  접은.forEach(function(t){ g.fillText(t, 74, y); y+=32; });
+  /* 판 564 (파트너 글) — 대조 범위 · 한계 · 고지 세 마디. 숫자는 그때그때 실제 값을 쓴다 */
+  var 밭수=(R.세상&&R.세상.곡수)||0, 씨수=(씨앗준비()?씨앗준비().곡수.toLocaleString():'—');
+  var 마디=[
+    ['1. 검증 및 대조 데이터 범위 (Reference Data)', [
+      '· 공개 참조 음원 : '+(밭수? 밭수.toLocaleString()+'곡 (Lakh MIDI · Colin Raffel · CC-BY 4.0 기준)' : '이번 검사에서 불러오지 못함'),
+      '· 자체 씨앗 음원 : '+씨수+'곡',
+      '· 식별 필터링 : 등록 아티스트 실명 DB 및 지정 금기어 목록']],
+    ['2. 검사 한계 및 제외 범위 (Limitation of Test)', [
+      '· 본 검사 시스템의 데이터베이스는 서양 고전 및 과거 명곡 데이터를 두껍게 구축하고 있습니다.',
+      '· K-Pop 전반 및 2010년대 이후의 현대 대중음악은 분석 범위에서 대다수 제외되어 있으므로 이용에 유의하시기 바랍니다.']],
+    ['3. 최종 고지사항 (Disclaimer)', [
+      '본 검사증은 구축된 데이터베이스 내에서의 정량적 비교 측정값만을 기록한 리포트입니다. 분석 범위 외의 유통 음원과의 일치 여부까지 판단하는 것은 아니므로, 본 결과가 외부 저작권 분쟁에 대한 완전한 면책권이나 안전성을 보장하지 않음을 밝힙니다.']]
+  ];
+  /* 먼저 빈 판에 재서 상자 높이를 안다 */
+  var 잴=document.createElement('canvas').getContext('2d');
+  function 마디그리기(gg, y0){
+    var yy=y0;
+    마디.forEach(function(m,i){
+      if(i) yy+=14;
+      gg.fillStyle='#7a5a14'; gg.font='800 19px '+글꼴; gg.fillText(m[0], 102, yy); yy+=32;
+      m[1].forEach(function(t){ yy=감싸기(gg, t, 112, yy, W-250, 27, '400 17px '+글꼴, '#3d3015'); });
+    });
+    return yy;
+  }
+  var 상자높이=마디그리기(잴, 0)+44;
+  g.fillStyle='#f7ecd0'; g.fillRect(80, y-30, W-160, 상자높이);
+  g.strokeStyle='#d9b860'; g.lineWidth=1; g.strokeRect(80.5, y-29.5, W-161, 상자높이-1);
+  y=마디그리기(g, y+6)+14;
+  var 끝=y+10;
 
-  y=H-70;
-  g.fillStyle='#94a3b8'; g.font='400 18px system-ui,sans-serif';
-  g.fillText('JURAN · 무료 저작권 1차 검사 · 더 정확한 검사증이 필요하면 바깥 검사 기관으로 이어 드립니다.', 60, y);
-
-  cv.toBlob(function(b){
-    if(!b) return;
-    var u=URL.createObjectURL(b), a=document.createElement('a');
-    a.href=u; a.download='JURAN_검사증_'+담은것.제목.replace(/[^\w가-힣]+/g,'_')+'.png';
-    document.body.appendChild(a); a.click();
-    setTimeout(function(){ try{a.remove();}catch(e){} URL.revokeObjectURL(u); },1500);
-  },'image/png');
+  /* 도장 · 꼬리 — 늘 맨 아래 */
+  var sx=W-170, sy=H-165;
+  g.save(); g.translate(sx,sy); g.rotate(-0.18);
+  g.strokeStyle=금빛(g,-80,80); g.lineWidth=4; g.beginPath(); g.arc(0,0,74,0,Math.PI*2); g.stroke();
+  g.lineWidth=1.5; g.beginPath(); g.arc(0,0,64,0,Math.PI*2); g.stroke();
+  g.textAlign='center'; g.fillStyle='#8a6a1f';
+  g.font='900 26px '+글꼴; g.fillText('JURAN',0,-8);
+  g.font='700 14px '+글꼴; g.fillText('MUSIC',0,12);
+  g.font='700 13px '+글꼴; g.fillText('분석 완료',0,32);
+  var d=R.때; g.font='500 11px ui-monospace,Menlo,monospace';
+  g.fillText(d.getFullYear()+'.'+(d.getMonth()+1)+'.'+d.getDate(),0,49);
+  g.restore(); g.textAlign='left';
+  g.fillStyle='#a08850'; g.font='400 15px '+글꼴;
+  g.fillStyle=금빛(g,80,520); g.font='800 19px '+글꼴; g.fillText('JURAN AI MUSIC ANALYTICS ENGINE', 80, H-112);
+  g.fillStyle='#a08850'; g.font='400 15px '+글꼴;
+  g.fillText('juranaimusic.com · 누구나 작곡가가 되는 가장 공정한 무대', 80, H-84);
+  return 끝;
+}
+/* PDF 한 쪽을 손으로 짠다 — 그림(JPEG) 하나를 쪽 가득 붙인다.
+   쪽 너비는 A4(595.28pt), 높이는 그림 비율대로. */
+function PDF짜기(cv, 제목){
+  var 주소=cv.toDataURL('image/jpeg', 0.92), 베=atob(주소.split(',')[1]);
+  var 그림=new Uint8Array(베.length); for(var i=0;i<베.length;i++) 그림[i]=베.charCodeAt(i);
+  var pw=595.28, ph=+(pw*cv.height/cv.width).toFixed(2);
+  var 제목16='FEFF'; for(var k=0;k<제목.length;k++) 제목16+=('000'+제목.charCodeAt(k).toString(16)).slice(-4).toUpperCase();
+  var 조각=[], 길이=0, 자리=[];
+  function 붙(x){ if(typeof x==='string'){ var b=new Uint8Array(x.length); for(var j=0;j<x.length;j++) b[j]=x.charCodeAt(j)&255; x=b; } 조각.push(x); 길이+=x.length; }
+  function 몸(n){ 자리[n]=길이; 붙(n+' 0 obj\n'); }
+  var 그리기글='q '+pw+' 0 0 '+ph+' 0 0 cm /Im0 Do Q\n';
+  붙('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+  몸(1); 붙('<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+  몸(2); 붙('<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n');
+  몸(3); 붙('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+pw+' '+ph+'] /Resources << /XObject << /Im0 4 0 R >> /ProcSet [/PDF /ImageC] >> /Contents 5 0 R >>\nendobj\n');
+  몸(4); 붙('<< /Type /XObject /Subtype /Image /Width '+cv.width+' /Height '+cv.height+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+그림.length+' >>\nstream\n');
+  붙(그림); 붙('\nendstream\nendobj\n');
+  몸(5); 붙('<< /Length '+그리기글.length+' >>\nstream\n'+그리기글+'endstream\nendobj\n');
+  몸(6); 붙('<< /Title <'+제목16+'> /Producer (JURAN MUSIC) /Creator (juranaimusic.com) >>\nendobj\n');
+  var 표자리=길이, 표='xref\n0 7\n0000000000 65535 f \n';
+  for(var n=1;n<=6;n++) 표+=('000000000'+자리[n]).slice(-10)+' 00000 n \n';
+  붙(표+'trailer\n<< /Size 7 /Root 1 0 R /Info 6 0 R >>\nstartxref\n'+표자리+'\n%%EOF\n');
+  return new Blob(조각, {type:'application/pdf'});
 }
 
 /* ───────────────────────────────── ⑨ 카드 붙이기 ── */
@@ -975,7 +1115,7 @@ function 검사기페이지(){
   document.getElementById('jc-run').onclick=function(){ 열기('고르기', document.getElementById('jc-ly')); };
   document.getElementById('jc-cmp').onclick=곡견주기;
   /* 판 563 : 페이지 아래 「세상 곡과는 안 견준다」 글을 밭이 있으면 고쳐 쓴다 */
-  (window['JURAN밭정보']? Promise.resolve(true) : 글받기(밭집+'info.js')).then(function(){
+  (window['JURAN밭정보']? Promise.resolve(true) : 글받기(정보주소())).then(function(){
     var 정보=window['JURAN밭정보'], p=document.querySelector('#v-check-body + p.hint');
     if(정보 && p) p.innerHTML='견주는 것은 <b>공개 곡 '+정보.곡수.toLocaleString()+'곡</b>(Lakh MIDI · Colin Raffel · CC-BY 4.0)과 '+
       '<b>JURAN 씨앗 · 실명 목록 · 금기어 목록</b>입니다. <b>K팝과 2010년대 뒤 노래는 이 밭에 거의 없습니다</b> — 계속 늘리고 있습니다. '+
