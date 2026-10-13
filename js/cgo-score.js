@@ -807,38 +807,153 @@ function _드럼533(시작마디, 끝마디){
   return out;
 }
 
-/* 드럼 한 알 — 계산으로 만든다 */
+/* ═══════════════════════════════════════════════════════════════════════
+   JURAN · 드럼 3판 — **가운데 소리를 채운다**
+   ───────────────────────────────────────────────────────────────────────
+   【파트너 귀】 "주가 피아노 소리지만 드럼 소리의 역할이 거의 없는 것 같은데요"
+
+   【재 보니 크기 문제가 아니었다】
+     드럼만 / 악기만 을 따로 뽑아 재니 둘의 세기가 **똑같았다(0dB 차이).**
+     작아서 안 들린 게 아니었다. 드럼을 8dB 올려 보니 이렇게 나왔다 —
+        30~150Hz  +2dB      ← 올라간 데는 여기뿐
+       150Hz~6kHz  0 또는 마이너스
+        6~16kHz   +1.8dB
+     옛 드럼은 **아주 낮은 데와 아주 높은 데에만** 있었다. 그런데
+       · 사람 귀가 가장 잘 듣는 곳은 그 가운데다
+       · **폰 스피커는 150Hz 아래를 아예 못 낸다** — 킥 몸통이 통째로 사라진다
+       · 그 가운데는 피아노와 기타가 꽉 채우고 있다
+     없는 자리에서는 아무리 키워도 안 들린다.
+
+   【채운 것】 (드럼만 따로, 같은 크기로 맞춘 뒤 잰 값)
+       1.2~3kHz +4.0dB · 3~6kHz +5.5dB · 6~16kHz +3.1dB
+     · 킥   : 밑소리 말고 **92~145Hz 의 「퍽」**을 한 겹 더. 치는 소리를
+              2.6kHz → 3.1kHz 로 옮기고 두 배 세게.
+     · 스네어: 북 몸통 1.7배 · **680Hz 의 「탁」** 새로 넣음 ·
+              철사 소리 띠를 두 배 넓히고(Q 0.55→0.28) 1.5배 세게 · 「착」 5.6kHz
+     · 하이햇: 4.2kHz 부터 내도록 내려 가운데도 조금 맡게
+
+   끄기 : window._cgo드럼3판 = false  (그러면 옛 소리로 돌아간다)
+   ═══════════════════════════════════════════════════════════════════════ */
+function _잡음555(ctx,초){
+  var n=Math.max(1,Math.floor(ctx.sampleRate*초));
+  var b=ctx.createBuffer(1,n,ctx.sampleRate), d=b.getChannelData(0);
+  for(var i=0;i<n;i++) d[i]=Math.random()*2-1;
+  var s=ctx.createBufferSource(); s.buffer=b; return s;
+}
+function _때555(ctx,양){
+  var w=ctx.createWaveShaper(), n=1024, c=new Float32Array(n), k=양||2.2;
+  for(var i=0;i<n;i++){ var x=i*2/n-1; c[i]=Math.tanh(x*k)/Math.tanh(k); }
+  w.curve=c; w.oversample='2x'; return w;
+}
 function _드럼소리533(ctx,dest,종,t,세기){
   try{
     var v=Math.max(0.05,Math.min(1.2,세기||0.7));
-    var g=ctx.createGain(); g.connect(dest);
     var ss=[];
+    var 새 = (window._cgo드럼3판 !== false);
     if(종==='kick'){
-      var o=ctx.createOscillator(); o.type='sine';
-      o.frequency.setValueAtTime(150,t);
-      o.frequency.exponentialRampToValueAtTime(45,t+0.09);
-      g.gain.setValueAtTime(v*1.25,t);
-      g.gain.exponentialRampToValueAtTime(0.001,t+0.32);
-      o.connect(g); o.start(t); o.stop(t+0.36); ss.push(o);
-    } else {
-      var 길=(종==='snare')?0.20:((종==='ohat')?0.17:0.055);
-      var n=Math.max(1,Math.floor(ctx.sampleRate*길));
-      var buf=ctx.createBuffer(1,n,ctx.sampleRate), d0=buf.getChannelData(0);
-      for(var i=0;i<n;i++) d0[i]=(Math.random()*2-1)*Math.pow(1-i/n, (종==='snare')?2.2:3.6);
-      var src=ctx.createBufferSource(); src.buffer=buf;
-      var hp=ctx.createBiquadFilter();
-      hp.type=(종==='snare')?'bandpass':'highpass';
-      hp.frequency.value=(종==='snare')?1900:7200;
-      hp.Q.value=(종==='snare')?0.8:0.7;
-      g.gain.setValueAtTime(v*((종==='snare')?0.85:0.34),t);
-      g.gain.exponentialRampToValueAtTime(0.001,t+길+0.03);
-      src.connect(hp); hp.connect(g); src.start(t); src.stop(t+길+0.05); ss.push(src);
-      if(종==='snare'){                      /* 몸통 소리를 얹어야 스네어가 된다 */
-        var o2=ctx.createOscillator(); o2.type='triangle'; o2.frequency.value=195;
-        var g2=ctx.createGain(); g2.gain.setValueAtTime(v*0.38,t);
-        g2.gain.exponentialRampToValueAtTime(0.001,t+0.11);
-        o2.connect(g2); g2.connect(dest); o2.start(t); o2.stop(t+0.14); ss.push(o2);
+      if(새){
+        /* ㉠ 밑 — 좋은 스피커에서 몸집이 된다 */
+        var o=ctx.createOscillator(); o.type='sine';
+        o.frequency.setValueAtTime(175,t);
+        o.frequency.exponentialRampToValueAtTime(55,t+0.040);
+        o.frequency.exponentialRampToValueAtTime(43,t+0.26);
+        var g=ctx.createGain();
+        g.gain.setValueAtTime(v*1.05,t);
+        g.gain.exponentialRampToValueAtTime(v*0.45,t+0.07);
+        g.gain.exponentialRampToValueAtTime(0.001,t+0.34);
+        var sh=_때555(ctx,2.6); o.connect(sh); sh.connect(g); g.connect(dest);
+        o.start(t); o.stop(t+0.38); ss.push(o);
+        /* ㉡ 가운데 「퍽」 — 폰 스피커가 실제로 내 주는 자리 */
+        var o2=ctx.createOscillator(); o2.type='triangle';
+        o2.frequency.setValueAtTime(145,t);
+        o2.frequency.exponentialRampToValueAtTime(92,t+0.055);
+        var g2=ctx.createGain();
+        g2.gain.setValueAtTime(v*0.72,t);
+        g2.gain.exponentialRampToValueAtTime(0.001,t+0.16);
+        var sh2=_때555(ctx,1.8); o2.connect(sh2); sh2.connect(g2); g2.connect(dest);
+        o2.start(t); o2.stop(t+0.20); ss.push(o2);
+        /* ㉢ 치는 소리 */
+        var c3=_잡음555(ctx,0.012), cf=ctx.createBiquadFilter();
+        cf.type='bandpass'; cf.frequency.value=3100; cf.Q.value=0.85;
+        var cg=ctx.createGain();
+        cg.gain.setValueAtTime(v*0.80,t);
+        cg.gain.exponentialRampToValueAtTime(0.001,t+0.022);
+        c3.connect(cf); cf.connect(cg); cg.connect(dest); c3.start(t); c3.stop(t+0.03); ss.push(c3);
+        return ss;
       }
+      var go=ctx.createGain(); go.connect(dest);
+      var oo=ctx.createOscillator(); oo.type='sine';
+      oo.frequency.setValueAtTime(150,t);
+      oo.frequency.exponentialRampToValueAtTime(45,t+0.09);
+      go.gain.setValueAtTime(v*1.25,t);
+      go.gain.exponentialRampToValueAtTime(0.001,t+0.32);
+      oo.connect(go); oo.start(t); oo.stop(t+0.36); ss.push(oo);
+      return ss;
+    }
+    if(종==='snare' && 새){
+      /* ㉠ 북 몸통 — 여기가 「통」 소리다 */
+      [[190,0.52,0.11],[338,0.34,0.08]].forEach(function(a){
+        var o=ctx.createOscillator(); o.type='triangle';
+        o.frequency.setValueAtTime(a[0],t);
+        o.frequency.exponentialRampToValueAtTime(a[0]*0.84,t+a[2]);
+        var g=ctx.createGain();
+        g.gain.setValueAtTime(v*a[1],t);
+        g.gain.exponentialRampToValueAtTime(0.001,t+a[2]+0.03);
+        o.connect(g); g.connect(dest); o.start(t); o.stop(t+a[2]+0.06); ss.push(o);
+      });
+      /* ㉡ 680Hz 의 「탁」 — 피아노 사이를 뚫고 나오는 자리 */
+      var nb=_잡음555(ctx,0.09), fb=ctx.createBiquadFilter();
+      fb.type='bandpass'; fb.frequency.value=680; fb.Q.value=1.0;
+      var gb=ctx.createGain();
+      gb.gain.setValueAtTime(v*0.55,t); gb.gain.exponentialRampToValueAtTime(0.001,t+0.075);
+      nb.connect(fb); fb.connect(gb); gb.connect(dest); nb.start(t); nb.stop(t+0.10); ss.push(nb);
+      /* ㉢ 철사 — 띠를 넓게, 더 크게 */
+      var n1=_잡음555(ctx,0.24), f1=ctx.createBiquadFilter();
+      f1.type='bandpass'; f1.frequency.value=2100; f1.Q.value=0.28;
+      var g1=ctx.createGain();
+      g1.gain.setValueAtTime(v*0.95,t); g1.gain.exponentialRampToValueAtTime(0.001,t+0.19);
+      n1.connect(f1); f1.connect(g1); g1.connect(dest); n1.start(t); n1.stop(t+0.26); ss.push(n1);
+      /* ㉣ 「착」 */
+      var n2=_잡음555(ctx,0.05), f2=ctx.createBiquadFilter();
+      f2.type='bandpass'; f2.frequency.value=5600; f2.Q.value=0.5;
+      var g3=ctx.createGain();
+      g3.gain.setValueAtTime(v*0.78,t); g3.gain.exponentialRampToValueAtTime(0.001,t+0.04);
+      n2.connect(f2); f2.connect(g3); g3.connect(dest); n2.start(t); n2.stop(t+0.055); ss.push(n2);
+      return ss;
+    }
+    if(새){                                   /* 하이햇 — 가운데도 조금 맡는다 */
+      var 열림=(종==='ohat'), L=열림?0.30:0.046;
+      var gh=ctx.createGain();
+      gh.gain.setValueAtTime(v*(열림?0.30:0.28),t);
+      gh.gain.exponentialRampToValueAtTime(0.001,t+L);
+      var bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=9000; bp.Q.value=0.5;
+      var hp2=ctx.createBiquadFilter(); hp2.type='highpass'; hp2.frequency.value=4200;
+      bp.connect(hp2); hp2.connect(gh); gh.connect(dest);
+      [2,3,4.16,5.43,6.79,8.21].forEach(function(r){
+        var o=ctx.createOscillator(); o.type='square'; o.frequency.value=40*r;
+        o.connect(bp); o.start(t); o.stop(t+L+0.03); ss.push(o);
+      });
+      return ss;
+    }
+    /* ── 옛 소리 (window._cgo드럼3판 = false 일 때) ── */
+    var g0=ctx.createGain(); g0.connect(dest);
+    var 길=(종==='snare')?0.20:((종==='ohat')?0.17:0.055);
+    var n0=Math.max(1,Math.floor(ctx.sampleRate*길));
+    var buf=ctx.createBuffer(1,n0,ctx.sampleRate), d0=buf.getChannelData(0);
+    for(var i=0;i<n0;i++) d0[i]=(Math.random()*2-1)*Math.pow(1-i/n0, (종==='snare')?2.2:3.6);
+    var src=ctx.createBufferSource(); src.buffer=buf;
+    var hp=ctx.createBiquadFilter();
+    hp.type=(종==='snare')?'bandpass':'highpass';
+    hp.frequency.value=(종==='snare')?1900:7200;
+    hp.Q.value=(종==='snare')?0.8:0.7;
+    g0.gain.setValueAtTime(v*((종==='snare')?0.85:0.34),t);
+    g0.gain.exponentialRampToValueAtTime(0.001,t+길+0.03);
+    src.connect(hp); hp.connect(g0); src.start(t); src.stop(t+길+0.05); ss.push(src);
+    if(종==='snare'){
+      var o2b=ctx.createOscillator(); o2b.type='triangle'; o2b.frequency.value=195;
+      var g2b=ctx.createGain(); g2b.gain.setValueAtTime(v*0.38,t);
+      g2b.gain.exponentialRampToValueAtTime(0.001,t+0.11);
+      o2b.connect(g2b); g2b.connect(dest); o2b.start(t); o2b.stop(t+0.14); ss.push(o2b);
     }
     return ss;
   }catch(e){ return []; }
@@ -946,7 +1061,15 @@ var _값550 = window._cgo편곡값550 = (window._cgo편곡값550 || {
   현악:   { 크기:0.40, 울림:0.39 },
   브라스: { 크기:0.30, 울림:0.39 },
   대선율: { 크기:0.28, 울림:0.39 },
-  드럼:   { 크기:0.40, 울림:0.20 }
+  /* cgo-556 : 드럼 0.40 → 0.72.
+     파트너 — "주가 피아노 소리지만 드럼 소리의 역할이 거의 없는 것 같은데요"
+     0.40 은 **옛 드럼**에 맞춰 잡은 값이다. 옛 드럼은 아주 낮은 데가 부풀어
+     있어서 더 올리면 뭉갰다. 가운데를 채운 지금 소리는 그렇지 않다.
+     앱을 실제로 녹음해 재니 0.40 에서는 새 소리가 거의 안 드러났고
+     (1.2~6kHz 변화 −0.5~+0.3dB), 0.72 에서 제자리를 찾았다.
+     ⚠️ 전체 크기는 안 커진다 — 녹음해 재니 옛것보다 +0.5dB 였다.
+     손님이 바꾸고 싶으면 편곡 손잡이(🥁)로 언제든 움직인다. */
+  드럼:   { 크기:0.72, 울림:0.20 }
 });
 var _처음값550 = JSON.parse(JSON.stringify(_값550));
 var _역할차례550 = ['가락','화음','베이스','깔개','현악','브라스','대선율','드럼'];
@@ -974,6 +1097,20 @@ function _버스548(ctx, ch, n, 기본){      /* 이름은 그대로 — 부르�
     if(typeof ctx.createStereoPanner !== 'function') return 기본;
     var 역 = _역할550(n);
     if(!ch._문550) ch._문550 = {};
+    /* ───── 비키기 문 (cgo-556) — **기본 꺼짐** ─────
+       파트너가 귀로 고른 것은 비키기 **없는** 쪽이다. 그래서 꺼 둔다.
+       ⚠️ 꺼져 있을 때는 문을 **아예 만들지 않는다.** 가만히 있는 문이라도
+          소리가 지나가면 길이 달라진다 — 안 고른 것은 길에서 치운다.
+       켜기 : window._cgo비키기556 = true */
+    var 비킴켜짐 = (window._cgo비키기556 === true);
+    if(비킴켜짐 && !ch._비킴){
+      ch._비킴 = ctx.createGain(); ch._비킴.gain.value = 1; ch._비킴.connect(기본);
+      if(ch.cv){ ch._비킴울 = ctx.createGain(); ch._비킴울.gain.value = 1; ch._비킴울.connect(ch.cv); }
+      ch._비킴끝 = 0;
+    }
+    var 드럼이냐 = (역 === '드럼');
+    var 나갈데 = (비킴켜짐 && !드럼이냐) ? ch._비킴 : 기본;
+    var 울데   = (비킴켜짐 && !드럼이냐) ? (ch._비킴울 || ch.cv) : ch.cv;
     var 문 = ch._문550[역];
     if(!문){
       var v = _값550[역] || { 크기:1, 울림:0 };
@@ -981,10 +1118,10 @@ function _버스548(ctx, ch, n, 기본){      /* 이름은 그대로 — 부르�
       var 크 = ctx.createGain(); 크.gain.value = v.크기;
       입.connect(크);
       var 자 = _자리548(n);
-      if(자){ var pn = ctx.createStereoPanner(); pn.pan.value = 자; 크.connect(pn); pn.connect(기본); }
-      else 크.connect(기본);
+      if(자){ var pn = ctx.createStereoPanner(); pn.pan.value = 자; 크.connect(pn); pn.connect(나갈데); }
+      else 크.connect(나갈데);
       var 울 = null;
-      if(ch.cv){ 울 = ctx.createGain(); 울.gain.value = v.울림; 입.connect(울); 울.connect(ch.cv); }
+      if(울데){ 울 = ctx.createGain(); 울.gain.value = v.울림; 입.connect(울); 울.connect(울데); }
       문 = ch._문550[역] = { 입:입, 크:크, 울:울 };
       /* 손잡이를 밀면 **지금 울리는 소리가 바로** 바뀌어야 귀로 맞출 수 있다 */
       try{ (window._cgo살아있는문550 = window._cgo살아있는문550 || []).push({ 역:역, 문:문 }); }catch(_){}
@@ -996,6 +1133,42 @@ function _버스548(ctx, ch, n, 기본){      /* 이름은 그대로 — 부르�
     }catch(_){}
     return 문.입;
   }catch(_){ return 기본; }
+}
+/* ═══════════════════════════════════════════════════════════════════════
+   JURAN · 비키기 (cgo-556) — 키우지 않고 자리를 만든다 · **기본 꺼짐**
+   ───────────────────────────────────────────────────────────────────────
+   사람 귀는 같은 때에 두 소리가 겹치면 **큰 쪽만 듣는다.** 그래서 드럼이
+   피아노에 가려진다. 킥·스네어가 칠 때 다른 악기를 0.14초 동안 아주 살짝
+   (−3.3dB) 내리면, 드럼을 **한 톨도 안 키우고** 또렷해진다.
+
+   【왜 꺼 두나】 앱을 실제로 녹음해 세 벌을 들려 드렸더니, 파트너가 고른 것은
+     **비키기 없는 쪽**이었다. 숫자로는 비키기가 맞는 길인데 귀가 아니라고 했다.
+     **사람 귀가 이긴다.** 지우지 않고 꺼 둔다 — 나중에 드럼이 바뀌면 다시 잴 수 있다.
+
+   ⚠️ 고리를 돌지 않는다. 음표를 예약할 때 **그 자리에서 한 번** 적어 둘 뿐이라
+      특허 기능(보이는 것만 살리기)과 메인 스레드를 다투지 않는다.
+   ⚠️ 이미 비켜 있는 동안 또 치면 겹쳐 적지 않는다 — 적는 차례가 엉키면
+      브라우저가 앞의 것을 잘라먹는다.
+   켜기 : window._cgo비키기556 = true    깊이 : window._cgo비킴깊이556 (0.2~1)
+   ═══════════════════════════════════════════════════════════════════════ */
+function _비키기556(ch, t){
+  try{
+    if(window._cgo비키기556 !== true) return;
+    if(!ch || !ch._비킴) return;
+    if((ch._비킴끝 || 0) > t) return;          /* 아직 비켜 있다 — 덧적지 않는다 */
+    var 깊 = window._cgo비킴깊이556;
+    if(typeof 깊 !== 'number' || !(깊 > 0.2) || !(깊 < 1)) 깊 = 0.68;
+    var 문들 = [ch._비킴, ch._비킴울];
+    for(var i=0;i<문들.length;i++){
+      var g = 문들[i]; if(!g) continue;
+      try{
+        g.gain.setValueAtTime(1, Math.max(0, t-0.004));
+        g.gain.linearRampToValueAtTime(깊, t+0.012);
+        g.gain.linearRampToValueAtTime(1,  t+0.14);
+      }catch(_){}
+    }
+    ch._비킴끝 = t + 0.14;
+  }catch(_){}
 }
 /* 손잡이가 움직이면 지금 울리는 문들에 바로 먹인다 */
 function _손잡이550(역, 무엇, 값){
@@ -1123,6 +1296,42 @@ function _악기풀기532(악기, 끝나면){
     return null;                       /* 푸는 동안은 옛 소리로 난다 */
   }catch(e){ return null; }
 }
+/* ═══════════════════════════════════════════════════════════════════════
+   JURAN · 여운 살리기 — 때리고 뜯는 악기는 손을 떼도 운다
+   ───────────────────────────────────────────────────────────────────────
+   【무엇이 잘못돼 있었나】
+     음표가 끝나면 0.24초 안에 소리를 꺼 버렸다. 활로 켜는 악기는 그게 맞다 —
+     활을 떼면 소리가 멈추니까. 그런데 **피아노·기타는 손을 떼도 줄이 운다.**
+
+   【재 본 것】 녹음이 저절로 작아져 −20dB 에 닿기까지
+       피아노 1.47초 · 통기타 1.68초 · 일렉기타 1.81초 · 비브라폰 1.33초
+     그런데 8분음표(0.375초)를 치면 녹음이 품은 소리 가운데
+       피아노 56% · 일렉기타 63% · 비브라폰 67% 만 나왔다.
+     16분음표면 피아노는 **38%** 다. 나머지는 잘려 나갔다.
+     답답하고 플라스틱 같은 소리가 나던 까닭이다.
+
+   【고친 것】 아래 표에 든 악기만, 음표가 끝난 **뒤부터** 제 길이대로 잦아들게 둔다.
+     표에 없는 악기(현악·관악·오르간·합창)는 **한 글자도 안 바뀐다.**
+
+   【크기】 소리가 커지지 않는다. 같은 가락으로 재니 고른세기가 그대로였고
+     (−20.7dB), 오히려 0.68dB 낮춰 맞춰야 했다. 안 들리던 꼬리가 들릴 뿐이다.
+
+   끄기 : window._cgo여운555 = false
+   ═══════════════════════════════════════════════════════════════════════ */
+var _여운555 = {
+  /* 때리는 것 */
+  piano:1.4, bright_acoustic_piano:1.4, electric_piano_1:1.2, electric_piano_2:1.2,
+  harpsichord:1.3, celesta:0.7, music_box:0.65, glockenspiel:0.36, vibraphone:1.3,
+  kalimba:0.2, steel_drums:0.5, timpani:0.24,
+  /* 뜯는 것 */
+  acoustic_guitar:1.6, acoustic_guitar_nylon:0.9, electric_guitar_clean:1.6,
+  electric_guitar_jazz:1.5, orchestral_harp:0.9, banjo:0.55, koto:0.48, sitar:0.95,
+  pizzicato_strings:0.3, acoustic_bass:0.6
+  /* ⚠️ 일부러 뺀 것 —
+       · 현악·관악·오르간·합창·색소폰 : 활·숨을 떼면 멈춘다. 여운을 주면 뭉갠다.
+       · 전기베이스·슬랩베이스 : 낮은 소리를 길게 끌면 아래가 흐려진다.
+       · distortion/overdriven 기타 : 녹음 자체가 끌리는 소리라 이미 길다. */
+};
 function _샘플532(ctx,dest,악기,hz,t,durSec,세기){
   try{
     if(window._cgo진짜악기532===false) return null;
@@ -1138,6 +1347,19 @@ function _샘플532(ctx,dest,악기,hz,t,durSec,세기){
     var g=ctx.createGain();
     var v=Math.max(0.05,Math.min(1.2,(세기||0.7)*1.15));
     var 끝=t+durSec;
+    var 여555 = (window._cgo여운555===false) ? 0 : (_여운555[악기]||0);
+    if(여555 > 0){
+      /* 음표가 끝나는 그 자리까지 제 크기로 가다가, 거기서부터 잦아든다.
+         녹음보다 길게 울 수는 없으니 멈추는 자리를 막아 둔다. */
+      var 남555 = (buf.duration / (src.playbackRate.value||1)) - durSec;
+      if(남555 < 0.05) 여555 = 0.05; else if(여555 > 남555) 여555 = 남555;
+      g.gain.setValueAtTime(v,t);
+      g.gain.setValueAtTime(v,Math.max(t+0.01,끝));
+      g.gain.exponentialRampToValueAtTime(0.0008, 끝+여555);
+      src.connect(g); g.connect(dest);
+      src.start(t); src.stop(끝+여555+0.05);
+      return [src];
+    }
     g.gain.setValueAtTime(v,t);
     g.gain.setValueAtTime(v,Math.max(t+0.01,끝-0.06));
     g.gain.exponentialRampToValueAtTime(0.0008, 끝+0.18);   /* 자연스럽게 놓는다 */
@@ -1384,8 +1606,11 @@ var now=ctx.currentTime;
 while(idx<list.length && base+(_absBeat(list[idx])-org)*bSec < now+1.5){
 var n=list[idx++];
 var _밑548=ch.inp;   /* cgo-550 : 반주 크기는 이제 겹마다 따로 쥔다 */
-var ss=_voice(ctx,_버스548(ctx,ch,n,_밑548),n.name,base+(_absBeat(n)-org)*bSec,(n.dur||1)*bSec,
+var _때556=base+(_absBeat(n)-org)*bSec;
+var ss=_voice(ctx,_버스548(ctx,ch,n,_밑548),n.name,_때556,(n.dur||1)*bSec,
                n._반?(n._베?베이스악기524:반주악기524):null, n);   /* cgo-531 : 음표를 넘긴다 · cgo-548 : 좌우 */
+/* cgo-556 : 킥·스네어가 칠 자리에 「비키기」를 그때 한 번 적어 둔다 */
+if(n._드==='kick' || n._드==='snare') _비키기556(ch, _때556);
 for(var k=0;k<ss.length;k++) PB.srcs.push(ss[k]);
 }
 if(mode==='all'){
