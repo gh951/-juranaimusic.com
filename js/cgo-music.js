@@ -11451,7 +11451,11 @@ const ctx = this.audioCtx;
 this.gainNode = ctx.createGain();
 this.gainNode.gain.setValueAtTime(0.001, ctx.currentTime);
 this.gainNode.gain.exponentialRampToValueAtTime(0.28, ctx.currentTime + 1.5);
-this.gainNode.connect(getSfBus() || ctx.destination);
+/* cgo-564 : 소리통(getSfBus)은 **다른 소리판**(sfAudioCtx)에 산다. 이 판(this.audioCtx)의 마디를
+   거기 꽂으면 브라우저가 「다른 소리판에는 못 꽂는다」며 막아 소리가 통째로 안 났다.
+   같은 판일 때만 소리통에 꽂고, 아니면 이 판의 스피커로 바로 낸다. */
+const _out564 = (function(){ const b = getSfBus(); return (b && b.context === ctx) ? b : ctx.destination; })();
+this.gainNode.connect(_out564);
 this.rhythmGain = ctx.createGain();
 this.rhythmGain.gain.setValueAtTime(1.0, ctx.currentTime);
 this.rhythmGain.connect(this.gainNode);
@@ -11524,7 +11528,7 @@ this.healOsc.type = 'sine';
 this.healOsc.frequency.setValueAtTime(hz < 50 ? 100 + hz : hz, ctx.currentTime);
 this.healGain.gain.setValueAtTime(hz < 50 ? 0.04 : 0.07, ctx.currentTime);
 this.healOsc.connect(this.healGain);
-this.healGain.connect(getSfBus() || ctx.destination);
+this.healGain.connect(_out564); // cgo-564 : 위와 같은 까닭
 this.healOsc.start();
 }
 if (this._pendingInstrGmList !== undefined && this._pendingInstrGmList !== null) {
