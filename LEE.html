@@ -110,6 +110,7 @@ tr.more>td{background:var(--card2);padding:12px 14px 14px}
   <button onclick="파일열기()">📂 juran.json 불러오기</button>
   <input type="file" id="f" accept=".json,application/json" hidden>
   <button class="pri only-direct" onclick="저장()">💾 저장 — 사이트에 바로 반영</button>
+  <button class="only-direct" onclick="location.href='./?편집'">✏️ 사이트 화면으로 고치기</button>
   <button class="pri only-dl" onclick="내려받기()">⬇ juran.json 내려받기</button>
 </header>
 <div id="savebox"></div>
@@ -280,6 +281,8 @@ function 표꺼내기(){
 }
 function 들이기(바로, 말){
   try{ sessionStorage.setItem('lee','1'); }catch(e){}
+  /* 판 L4 : 바로 저장이 되면 **사이트 편집 모드**로 간다. 표 화면은 「?표」로 들어왔을 때만. */
+  if(바로 && !/[?&]표|%ED%91%9C/.test(location.search)){ location.href='./?편집'; return; }
   $('gmsg').textContent=''; $('gate').hidden=true; $('main').hidden=false; 모드(바로, 말); 처음();
 }
 function 열기(){
@@ -306,7 +309,9 @@ $('pw').addEventListener('keydown',function(e){ if(e.key==='Enter') 열기(); })
 (function(){
   var 들어와있나=false;
   try{ 들어와있나=sessionStorage.getItem('lee')==='1'; }catch(e){}
-  if(들어와있나){ 서버표=표꺼내기(); $('main').hidden=false; 모드(!!서버표); 처음(); } else $('gate').hidden=false;
+  if(들어와있나){ 서버표=표꺼내기();
+    if(서버표 && !/[?&]표|%ED%91%9C/.test(location.search)){ location.href='./?편집'; return; }
+    $('main').hidden=false; 모드(!!서버표); 처음(); } else $('gate').hidden=false;
 })();
 
 /* ── 곡 표 ── */
