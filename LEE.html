@@ -289,7 +289,7 @@ function 열기(){
   var pw=$('pw').value;
   $('gmsg').textContent='확인하는 중…';
   fetch(서버+'/lee/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pw:pw}),
-                          signal:AbortSignal.timeout(25000)})
+                          signal:(window.AbortSignal&&AbortSignal.timeout?AbortSignal.timeout(25000):undefined)})
     .then(function(r){ return r.json().then(function(j){ return {c:r.status,j:j}; }); })
     .then(function(x){
       if(x.c===403||x.c===429){ $('gmsg').textContent=(x.j&&x.j.why)||'열쇠말이 다릅니다.'; return; }
@@ -309,9 +309,21 @@ $('pw').addEventListener('keydown',function(e){ if(e.key==='Enter') 열기(); })
 (function(){
   var 들어와있나=false;
   try{ 들어와있나=sessionStorage.getItem('lee')==='1'; }catch(e){}
+  /* 판 L5 (2026-10-15) : 전에 들어온 확인이 남아 있어도 **서버에 살아 있나 먼저 묻는다.**
+     R2 열쇠를 바꾸면 그 전 확인은 죽는데, 예전에는 묻지도 않고 편집 화면으로 보내서
+     「열쇠 시간이 지났습니다 → LEE 에서 다시 → 또 지났습니다」가 돌았다. */
+  function 문열기(말){ try{ sessionStorage.removeItem('lee'); }catch(e){} 표넣기(''); $('gate').hidden=false; if(말) $('gmsg').textContent=말; }
   if(들어와있나){ 서버표=표꺼내기();
-    if(서버표 && !/[?&]표|%ED%91%9C/.test(location.search)){ location.href='./?편집'; return; }
-    $('main').hidden=false; 모드(!!서버표); 처음(); } else $('gate').hidden=false;
+    if(!서버표){ $('main').hidden=false; 모드(false); 처음(); return; }
+    fetch(서버+'/lee/file?name=check',{method:'POST',headers:{'x-lee-token':서버표,'Content-Type':'application/octet-stream'},body:'',
+                                      signal:(window.AbortSignal&&AbortSignal.timeout?AbortSignal.timeout(20000):undefined)})
+      .then(function(r){ return r.status!==401; }).catch(function(){ return true; })
+      .then(function(산){
+        if(!산){ 문열기('🔑 서버 열쇠가 바뀌어서 한 번만 다시 넣어 주세요'); return; }
+        if(!/[?&]표|%ED%91%9C/.test(location.search)){ location.href='./?편집'; return; }
+        $('main').hidden=false; 모드(true); 처음();
+      });
+  } else $('gate').hidden=false;
 })();
 
 /* ── 곡 표 ── */

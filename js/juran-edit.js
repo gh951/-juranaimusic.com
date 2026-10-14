@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════════════
-   JURAN 편집 모드 — 판 577 (2026-10-14)
+   JURAN 편집 모드 — 판 581 (2026-10-15)
    파트너 — 「그냥 거기서 글씨 편집, 저장. 파일 올리고 거기서 저장하는 단순한 구조」
           「메인 카드에 파일과 이미지를 집어넣으려고 하는데 LEE 에는 없다」
 
@@ -43,7 +43,17 @@ function 깃발(c){ if(!c||c.length!==2) return '🌍'; try{ return String.fromC
 function 번호수(id){ var n=parseInt(String(id||'').replace(/\D/g,''),10); return isFinite(n)?n:0; }
 function 다음번호(){ var m=0; (원본.곡||[]).forEach(function(c){ m=Math.max(m,번호수(c.id)); }); var s=String(m+1); while(s.length<3) s='0'+s; return 's'+s; }
 function 곡찾기(k){ var r=null; (원본&&원본.곡||[]).forEach(function(c){ if(c.id===k) r=c; }); return r; }
-function 다시(){ try{ JN.다시그리기(원본); }catch(e){} }
+function 다시(){ try{ JN.다시그리기(원본); }catch(e){} 손글씨(); }
+/* 판 581 : 카드 단추에 지금 들어 있는 것을 보인다 — 「🎵 음악 ✅ 5:00」 */
+function 손글씨(){
+  [].forEach.call(document.querySelectorAll('.champion'), function(카드){
+    var 손=카드.querySelector('.주편-손'); if(!손) return;
+    var c=곡찾기(카드.dataset.k)||{};
+    var 음=손.querySelector('[data-w="음악"]'), 사=손.querySelector('[data-w="사진"]');
+    if(음) 음.textContent='🎵 음악'+(c.음악?(' ✅'+(c.길이?' '+분초(c.길이):'')+(새파일[c.id+'.mp3']?' (저장 전)':'')):'');
+    if(사) 사.textContent='🖼 사진'+(c.사진?(' ✅'+(새파일[c.id+'.jpg']?' (저장 전)':'')):'');
+  });
+}
 function 바꿨다(){ 바뀜++; 띠그리기(); }
 
 /* ── 모양 ── */
@@ -81,7 +91,9 @@ css.textContent=
 '#주편-창 .단추들 button{flex:1;min-height:44px;border-radius:12px;border:1px solid rgba(8,60,55,.2);background:#eef5f3;font:700 14px system-ui,sans-serif;cursor:pointer;color:#0d2b28}'+
 '#주편-창 .단추들 button.확인{background:#03897d;color:#fff;border-color:#03897d}'+
 '#주편-창 .단추들 button.지우기{flex:0 0 auto;color:#d6453f;background:#fff}'+
-'#주편-창 .풀이{font-size:12px;color:#5b7a74;margin-top:4px}';
+'#주편-창 .풀이{font-size:12px;color:#5b7a74;margin-top:4px}'+
+'body.주란편집 .champion .foot .v,body.주란편집 .rise .vt,body.주란편집 .item .votes{outline:2px dashed #ffcf5c;outline-offset:2px;border-radius:6px;cursor:pointer}'+
+'#주편-창 input.큰수{font:800 26px system-ui,sans-serif;text-align:center;padding:12px}';
 document.head.appendChild(css);
 document.body.classList.add('주란편집');
 
@@ -120,7 +132,8 @@ function 준비(j){
   if(!Array.isArray(원본.곡)) 원본.곡=[];
   원본.문구=원본.문구||{}; 원본.시즌=원본.시즌||{};
   원본.곡.forEach(function(c){ if(!c.id) c.id=다음번호(); });
-  다시(); 카드손달기();
+  다시(); 카드손달기(); 손글씨();
+  setInterval(손글씨, 3000);   /* 카드 곡이 저절로 바뀌어도 단추 글씨가 따라가게 */
 }
 (function 기다리기(n){
   var j=null; try{ j=JN.원본(); }catch(e){}
@@ -190,6 +203,10 @@ document.addEventListener('click', function(ev){
   var t=ev.target;
   if(t.closest('#주편-띠,#주편-막,.주편-손,.playc,a,button,select,input,textarea,[contenteditable="true"],[contenteditable="plaintext-only"]')) return;
   if(t.closest('.champion .top')) return;   /* 판 579 : 카드 이름은 그 자리에서 바로 쓴다 */
+  /* 판 581 : 표 숫자를 누르면 표만 고치는 작은 창 */
+  var 표칸=t.closest('.champion .foot .v,.rise .vt,.item .votes');
+  if(표칸){ var 임자=표칸.closest('.champion,.rise[data-k],.item[data-k]'); var c0=임자&&곡찾기(임자.dataset.k);
+    if(c0){ ev.preventDefault(); ev.stopPropagation(); 표창(c0); } return; }
   var 카드=t.closest('.champion');
   if(카드){ var c=곡찾기(카드.dataset.k); if(c){ ev.preventDefault(); 곡창(c); } return; }
   var 줄=t.closest('.rise[data-k],.item[data-k]');
@@ -198,39 +215,69 @@ document.addEventListener('click', function(ev){
 }, true);
 
 /* ── 파일 ── */
-function 파일고르기(accept, 손){
+function 파일고르기(accept, 손, 여럿){
   var i=document.createElement('input'); i.type='file'; i.accept=accept; i.style.display='none';
-  i.onchange=function(){ if(i.files&&i.files[0]) 손(i.files[0]); i.remove(); };
+  if(여럿) i.multiple=true;
+  i.onchange=function(){ [].forEach.call(i.files||[], function(f){ 손(f); }); i.remove(); };
   document.body.appendChild(i); i.click();
 }
 function 종류(f){
   var n=(f.name||'').toLowerCase(), t=f.type||'';
   if(/^image\//.test(t)||/\.(jpe?g|png|webp|gif|heic|avif)$/.test(n)) return '사진';
   if(/midi/.test(t)||/\.midi?$/.test(n)) return '악보';
+  if(/pdf/.test(t)||/\.pdf$/.test(n)) return '악보';
+  if(/musicxml/.test(t)||/\.(musicxml|xml)$/.test(n)) return '악보';
   if(/^audio\//.test(t)||/\.(mp3|wav|m4a|aac|flac|ogg)$/.test(n)) return '음악';
   return '';
 }
-async function 파일넣기(c, f, 알림){
+/* 판 580 : 악보는 **여러 개** — MIDI · PDF · MusicXML · 악보 사진. 곡마다 「악보들」 목록에 쌓인다.
+   파일 이름은 s021-1.pdf, s021-2.mid … 처럼 저절로. */
+function 악보번호(c){
+  var m=0;
+  (c.악보들||[]).forEach(function(x){ var k=String(x.키||x.주소||''), r=k.match(/-(\d+)\.\w+(\?|$)/); if(r) m=Math.max(m,+r[1]); });
+  Object.keys(새파일).forEach(function(k){ var r=k.match(new RegExp('^'+c.id+'-(\\d+)\\.')); if(r) m=Math.max(m,+r[1]); });
+  return m+1;
+}
+async function 악보넣기(c, f){
+  var n=(f.name||'').toLowerCase(), 머리=new Uint8Array(await f.slice(0,4096).arrayBuffer());
+  var 첫4=String.fromCharCode(머리[0],머리[1],머리[2],머리[3]), 끝, 종, 몸=f;
+  if(첫4==='MThd'){ 끝='mid'; 종='MIDI'; }
+  else if(첫4==='%PDF'){ 끝='pdf'; 종='PDF'; }
+  else if(/^image\//.test(f.type||'')||/\.(jpe?g|png|webp|gif|heic|avif)$/.test(n)){ 몸=await 사진만들기(f, 2400); 끝='jpg'; 종='악보 사진'; }
+  else {
+    var 글머리=new TextDecoder('utf-8').decode(머리);
+    if(/score-(partwise|timewise)/.test(글머리)){ 끝='musicxml'; 종='MusicXML'; }
+    else throw new Error((f.name||'이 파일')+' — 악보 파일이 아닙니다 (MIDI · PDF · MusicXML · 악보 사진)');
+  }
+  var 키=c.id+'-'+악보번호(c)+'.'+끝;
+  새파일[키]=몸;
+  c.악보들=c.악보들||[];
+  c.악보들.push({이름:f.name||키, 종류:종, 키:키, 주소:URL.createObjectURL(몸)});
+  return 종+' · '+(f.name||키);
+}
+async function 파일넣기(c, f, 알림, 쪽){
   알림=알림||function(x){ 띠그리기(x); };
-  var k=종류(f);
+  var k=(쪽==='악보')? '악보' : 종류(f);
+  /* 판 581 : ✅ 알림을 **맨 나중에** — 전에는 바로 뒤의 「바뀐 것 n곳」 이 ✅ 를 덮어서
+     음악을 넣어도 아무 일 없는 것처럼 보였다 (파트너 — 「메인 음악 올리는 것 안 되고」) */
+  var 끝말='';
   try{
     if(k==='음악'){
-      알림('🔧 음악 읽는 중… '+f.name);
+      알림('🔧 음악 읽는 중… '+f.name+' — 긴 곡은 1~2분 걸립니다');
       var r=await mp3만들기(f, 알림);
+      if(c.음악&&/^blob:/.test(c.음악)){ try{ URL.revokeObjectURL(c.음악); }catch(e){} }
       새파일[c.id+'.mp3']=r.blob; c.음악=URL.createObjectURL(r.blob); c.길이=Math.round(r.길이);
-      알림('✅ '+c.id+'.mp3 · '+크기(r.blob.size)+' · '+분초(r.길이)+(r.줄임?' (128k 로 줄임)':''));
+      끝말='✅ 음악 들어감 · 「'+(c.t||c.id)+'」 · '+분초(r.길이)+' · '+크기(r.blob.size)+(r.줄임?' (128k 로 줄임)':'')+' — 💾 저장을 누르면 올라갑니다';
     } else if(k==='사진'){
       알림('🔧 사진 줄이는 중…');
       var b=await 사진만들기(f);
       새파일[c.id+'.jpg']=b; c.사진=URL.createObjectURL(b);
-      알림('✅ '+c.id+'.jpg · '+크기(b.size));
+      끝말='✅ 사진 들어감 · 「'+(c.t||c.id)+'」 · '+크기(b.size)+' — 💾 저장을 누르면 올라갑니다';
     } else if(k==='악보'){
-      var h=new Uint8Array(await f.slice(0,4).arrayBuffer());
-      if(String.fromCharCode(h[0],h[1],h[2],h[3])!=='MThd') throw new Error('MIDI 파일이 아닙니다');
-      새파일[c.id+'.mid']=f; c.악보=URL.createObjectURL(f);
-      알림('✅ '+c.id+'.mid');
-    } else throw new Error('음악(mp3·wav)이나 그림 파일이 아닙니다');
+      끝말='✅ 악보 '+(await 악보넣기(c,f));
+    } else throw new Error((f.name||'이 파일')+' — 음악(mp3·wav·m4a)이나 그림 파일이 아닙니다');
     바꿨다(); 다시();
+    알림(끝말);
     return true;
   }catch(err){ 알림('⚠️ '+((err&&err.message)||err)); return false; }
 }
@@ -252,6 +299,7 @@ async function mp3만들기(file, 알림){
   try{ ac=new AC({sampleRate:44100}); }catch(e){ ac=new AC(); }
   var ab;
   try{ ab=await new Promise(function(ok,no){ var p=ac.decodeAudioData(buf.slice(0),ok,no); if(p&&p.then) p.then(ok,no); }); }
+  catch(e){ throw new Error((file.name||'이 음악')+' — 이 브라우저가 못 읽는 음악입니다. mp3 나 wav 로 넣어 주세요 (크롬이면 m4a 도 됩니다)'); }
   finally{ try{ ac.close(); }catch(e){} }
   var 길이=ab.duration, kbps=file.size*8/길이/1000;
   if((/mpeg|mp3/i.test(file.type)||/\.mp3$/i.test(file.name)) && kbps<=150) return {blob:file, 길이:길이, 줄임:false};
@@ -268,12 +316,13 @@ async function mp3만들기(file, 알림){
   return {blob:new Blob(parts,{type:'audio/mpeg'}), 길이:길이, 줄임:true};
 }
 /* 사진 → 긴 변 1280 jpg */
-function 사진만들기(file){
+function 사진만들기(file, 긴변){
+  긴변=긴변||1280;
   return new Promise(function(ok,no){
     var u=URL.createObjectURL(file), im=new Image();
     im.onload=function(){
       try{
-        var w=im.naturalWidth, h=im.naturalHeight, r=Math.min(1,1280/Math.max(w,h));
+        var w=im.naturalWidth, h=im.naturalHeight, r=Math.min(1,긴변/Math.max(w,h));
         var cv=document.createElement('canvas'); cv.width=Math.max(1,Math.round(w*r)); cv.height=Math.max(1,Math.round(h*r));
         var g=cv.getContext('2d'); g.fillStyle='#000'; g.fillRect(0,0,cv.width,cv.height); g.drawImage(im,0,0,cv.width,cv.height);
         cv.toBlob(function(b){ URL.revokeObjectURL(u); b?ok(b):no(new Error('사진을 못 만들었습니다')); },'image/jpeg',0.86);
@@ -313,7 +362,8 @@ function 곡창(c, 새로){
     '<label>🖼 사진 (카드 바탕)</label><div class="짐" id="e-img"><b>눌러서 고르기</b> 또는 여기에 끌어다 놓기 · jpg · png</div>'+
       '<div class="st" id="e-img-st"></div><img class="미리" id="e-img-p" hidden alt="">'+
     '<label>✍️ 가사</label><textarea id="e-gas" placeholder="[Verse 1]&#10;…">'+글(c.가사)+'</textarea>'+
-    '<label>🎼 악보 (선택 · 앱에서 받은 MIDI)</label><div class="짐" id="e-mid"><b>눌러서 고르기</b> · .mid</div><div class="st" id="e-mid-st"></div>'+
+    '<label>🎼 악보 — 여러 개 넣을 수 있습니다</label><div class="짐" id="e-mid"><b>눌러서 고르기</b> 또는 여러 개를 한꺼번에 끌어다 놓기<br>MIDI · PDF · MusicXML · 악보 사진</div>'+
+      '<div class="st" id="e-mid-st"></div><div id="e-mid-l"></div>'+
     '<div class="단추들">'+(새로?'':'<button type="button" class="지우기" id="e-del">🗑 지우기</button>')+
       '<button type="button" id="e-no">닫기</button><button type="button" class="확인" id="e-ok">확인</button></div>'+
     '<p class="풀이">「확인」은 화면에만 바꿉니다. 다 고치신 뒤 아래 <b>💾 저장</b>을 눌러야 사이트에 나옵니다.</p>');
@@ -324,19 +374,41 @@ function 곡창(c, 새로){
     var ist=w.querySelector('#e-img-st'), ip=w.querySelector('#e-img-p');
     if(c.사진){ ist.textContent=새파일[c.id+'.jpg']?'✅ 새 사진 · '+크기(새파일[c.id+'.jpg'].size):'🔗 들어 있음'; ip.src=c.사진; ip.hidden=false; }
     else { ist.textContent=''; ip.hidden=true; }
-    w.querySelector('#e-mid-st').textContent=c.악보?(새파일[c.id+'.mid']?'✅ 새 악보':'🔗 들어 있음'):'';
+    var 목록=w.querySelector('#e-mid-l'), 모음=[];
+    if(c.악보) 모음.push({이름:'MIDI (예전에 넣은 것)', 종류:'MIDI', 주소:c.악보, 옛:true});
+    (c.악보들||[]).forEach(function(x){ 모음.push(x); });
+    목록.innerHTML=모음.length? 모음.map(function(x,i){
+      return '<div style="display:flex;gap:8px;align-items:center;padding:7px 9px;margin-top:6px;border-radius:9px;background:#eef5f3;font-size:13px">'+
+        '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(x.키&&새파일[x.키]?'🆕 ':'🔗 ')+글(x.종류)+' · '+글(x.이름)+'</span>'+
+        '<button type="button" data-i="'+i+'" style="border:0;background:none;color:#d6453f;font-weight:700;cursor:pointer;font-size:13px">지우기</button></div>';
+    }).join('') : '';
+    [].forEach.call(목록.querySelectorAll('button[data-i]'), function(b){
+      b.onclick=function(){
+        var x=모음[+b.dataset.i]; if(!x) return;
+        if(x.옛) delete c.악보;
+        else { c.악보들=(c.악보들||[]).filter(function(y){ return y!==x; }); if(x.키) delete 새파일[x.키]; if(!c.악보들.length) delete c.악보들; }
+        바꿨다(); 그리기();
+      };
+    });
   }
-  function 짐(id, accept, stid){
-    var z=w.querySelector(id), st=w.querySelector(stid);
-    function 넣기(f){ 파일넣기(c,f,function(x){ st.className='st'+(/⚠️/.test(x)?' bad':''); st.textContent=x; }).then(function(ok){ if(ok) 그리기(); }); }
-    z.onclick=function(){ 파일고르기(accept, 넣기); };
+  function 짐(id, accept, stid, 쪽){
+    var z=w.querySelector(id), st=w.querySelector(stid), 여럿=(쪽==='악보');
+    function 넣기(f){
+      /* 악보는 여러 개라 알림을 쌓는다 — 하나가 틀려도 다른 것의 ✅ 에 묻히지 않게 */
+      return 파일넣기(c,f,function(x){
+        if(여럿){ if(/^✅|^⚠️/.test(x)){ st.className='st'+(/⚠️/.test(st.textContent+x)?' bad':''); st.textContent=(st.dataset.쌓임?st.textContent+'\n':'')+x; st.dataset.쌓임='1'; st.style.whiteSpace='pre-line'; } }
+        else { st.className='st'+(/⚠️/.test(x)?' bad':''); st.textContent=x; }
+      },쪽).then(function(ok){ if(ok) 그리기(); });
+    }
+    z.onclick=function(){ 파일고르기(accept, 넣기, 여럿); };
     z.addEventListener('dragover',function(e){ e.preventDefault(); z.classList.add('끌림'); });
     z.addEventListener('dragleave',function(){ z.classList.remove('끌림'); });
-    z.addEventListener('drop',function(e){ e.preventDefault(); z.classList.remove('끌림'); var f=e.dataTransfer.files&&e.dataTransfer.files[0]; if(f) 넣기(f); });
+    z.addEventListener('drop',function(e){ e.preventDefault(); z.classList.remove('끌림');
+      var fs=[].slice.call(e.dataTransfer.files||[]); (여럿?fs:fs.slice(0,1)).reduce(function(p,f){ return p.then(function(){ return 넣기(f); }); }, Promise.resolve()); });
   }
   짐('#e-mus','audio/*,.mp3,.wav,.m4a,.aac,.flac,.ogg','#e-mus-st');
   짐('#e-img','image/*','#e-img-st');
-  짐('#e-mid','.mid,.midi,audio/midi','#e-mid-st');
+  짐('#e-mid','.mid,.midi,audio/midi,.pdf,application/pdf,.musicxml,.xml,image/*','#e-mid-st','악보');
   그리기();
   w.querySelector('#e-no').onclick=function(){ 닫기(); };
   w.querySelector('#e-ok').onclick=function(){
@@ -359,6 +431,27 @@ function 곡창(c, 새로){
     바꿨다(); 다시(); 닫기();
   };
   setTimeout(function(){ var i=w.querySelector('#e-t'); if(i&&새로) i.focus(); },50);
+}
+
+/* ── 판 581 : 표 고치기 — 숫자만 크게 ──
+   파트너 — 「투표도 직접 수정하게」 */
+function 표창(c){
+  var w=창열기('<h3>🗳 표 고치기 <span style="font-weight:400;color:#93aba6;font-size:12px">'+글(c.t||c.id)+'</span></h3>'+
+    '<label>표 (숫자만)</label><input type="number" inputmode="numeric" min="0" class="큰수" id="v-n" value="'+(+c.표||0)+'">'+
+    '<p class="풀이">지금은 운영자가 정하는 숫자입니다. <b>손님 투표가 열리면 표는 손님 투표로만 오르게</b> 두세요 — 「공정한 무대」라는 말과 맞아야 합니다.</p>'+
+    '<div class="단추들"><button type="button" id="v-no">닫기</button><button type="button" class="확인" id="v-ok">확인</button></div>'+
+    '<p class="풀이">「확인」은 화면에만 바꿉니다. 아래 <b>💾 저장</b>을 눌러야 사이트에 나옵니다.</p>');
+  var 입=w.querySelector('#v-n');
+  function 확인(){
+    var n=parseInt(String(입.value).replace(/[^\d]/g,''),10);
+    if(!isFinite(n)||n<0){ alert('숫자를 넣어 주세요.'); return; }
+    c.표=n; c.전표=Math.min(+c.전표||0,n);
+    바꿨다(); 다시(); 닫기();
+  }
+  w.querySelector('#v-no').onclick=닫기;
+  w.querySelector('#v-ok').onclick=확인;
+  입.addEventListener('keydown',function(e){ if(e.key==='Enter') 확인(); });
+  setTimeout(function(){ 입.focus(); 입.select(); },50);
 }
 
 /* ── 판 578 : 챔피언 카드 이름 · 카드에 보일 곡 ── */
@@ -414,33 +507,93 @@ function 문구창(){
   };
 }
 
+/* ── 판 580 : 열쇠 시간이 지나면 그 자리에서 열쇠말만 다시 — 고친 것은 그대로 두고 이어서 저장 ──
+   (서버의 R2 열쇠를 바꾸면 그 전에 받은 표도 못 쓰게 된다. 그때도 여기서 풀린다) */
+function 다시들어오기(처음){
+  return new Promise(function(ok,no){
+    var w=창열기('<h3>🔑 열쇠말을 한 번 더</h3>'+
+      '<p class="풀이" style="font-size:13.5px;color:#0d2b28">'+(처음?'서버 열쇠가 바뀌어서, 들어올 때 받은 확인이 낡았습니다. <b>열쇠말을 한 번만 더</b> 넣어 주세요.':'들어온 지 오래됐거나 서버 열쇠가 바뀌어서 확인이 다시 필요합니다. <b>고치신 것은 그대로 있습니다.</b>')+'</p>'+
+      '<label>열쇠말</label><input type="password" id="r-pw" autocomplete="off">'+
+      '<div class="st bad" id="r-st"></div>'+
+      '<div class="단추들"><button type="button" id="r-no">그만두기</button><button type="button" class="확인" id="r-ok">'+(처음?'확인':'확인하고 이어서 저장')+'</button></div>');
+    var 입=w.querySelector('#r-pw'), 말=w.querySelector('#r-st');
+    function 확인(){
+      말.className='st'; 말.textContent='확인하는 중…';
+      fetch(서버+'/lee/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pw:입.value})})
+        .then(function(r){ return r.json().then(function(j){ return {c:r.status,j:j}; }); })
+        .then(function(x){
+          if(x.j&&x.j.ok&&x.j.token){
+            try{ sessionStorage.setItem('lee-t', x.j.exp+'|'+x.j.token); sessionStorage.setItem('lee','1'); }catch(e){}
+            닫기(); ok(x.j.token); return;
+          }
+          말.className='st bad'; 말.textContent=(x.j&&x.j.why)||'열쇠말이 다릅니다';
+        })
+        .catch(function(){ 말.className='st bad'; 말.textContent='서버에 닿지 못했습니다 — 인터넷을 확인해 주세요'; });
+    }
+    w.querySelector('#r-ok').onclick=확인;
+    입.addEventListener('keydown',function(e){ if(e.key==='Enter') 확인(); });
+    w.querySelector('#r-no').onclick=function(){ 닫기(); no(new Error(처음?'열쇠말은 저장할 때 다시 묻습니다':'저장을 그만두었습니다 — 고친 것은 이 화면에 그대로 있습니다')); };
+    setTimeout(function(){ 입.focus(); },50);
+  });
+}
+
+/* 판 581 : 들어오자마자 확인이 살아 있나 본다 — 낡았으면 **처음에** 열쇠말을 묻는다
+   (서버에 이름이 틀린 빈 파일을 보내 본다: 확인이 살아 있으면 400, 낡았으면 401. 아무것도 쓰지 않는다) */
+function 열쇠살았나(t){
+  if(!t) return Promise.resolve(false);
+  return fetch(서버+'/lee/file?name=check',{method:'POST',headers:{'x-lee-token':t,'Content-Type':'application/octet-stream'},body:''})
+    .then(function(r){ return r.status!==401; }).catch(function(){ return true; });
+}
+열쇠살았나(표()).then(function(산){
+  if(산) return;
+  띠그리기('🔑 열쇠말을 한 번 더 넣어 주세요');
+  다시들어오기(true).then(function(){ 띠그리기(); }, function(e){ 띠그리기('🔑 '+e.message); });
+});
+
 /* ── 💾 저장 ── */
 var 저장중=false;
 async function 저장(){
   if(저장중||!원본) return;
   var 열쇠=표();
-  if(!열쇠){ alert('열쇠 시간이 지났습니다. LEE 에서 열쇠말을 다시 넣어 주세요.'); location.href='LEE.html'; return; }
   저장중=true; var 단추=document.getElementById('주편-저장'); 단추.disabled=true;
+  /* 보내기 — 401 이면 열쇠말을 다시 받아 **한 번 더** 보낸다 */
+  async function 보내기(주소, 머리, 몸){
+    if(!열쇠) 열쇠=await 다시들어오기();
+    var h=Object.assign({'x-lee-token':열쇠}, 머리);
+    var r=await fetch(주소,{method:'POST',headers:h,body:몸});
+    if(r.status===401){ 열쇠=await 다시들어오기(); h['x-lee-token']=열쇠; r=await fetch(주소,{method:'POST',headers:h,body:몸}); }
+    var x={}; try{ x=await r.json(); }catch(e){}
+    return {r:r, x:x};
+  }
   try{
     var 이름들=Object.keys(새파일).sort();
     for(var i=0;i<이름들.length;i++){
       var n=이름들[i];
       띠그리기('⏫ 올리는 중 '+(i+1)+'/'+이름들.length+' · '+n);
-      var r=await fetch(서버+'/lee/file?name='+encodeURIComponent(n),{method:'POST',headers:{'x-lee-token':열쇠,'Content-Type':'application/octet-stream'},body:새파일[n]});
-      var x={}; try{ x=await r.json(); }catch(e){}
-      if(r.status===401) throw new Error('열쇠 시간이 지났습니다 — LEE 에서 다시 들어와 주세요 (고친 것은 이 화면에 그대로 있습니다)');
+      var 답=await 보내기(서버+'/lee/file?name='+encodeURIComponent(n), {'Content-Type':'application/octet-stream'}, 새파일[n]);
+      var r=답.r, x=답.x;
+      if(r.status===401) throw new Error('열쇠말 확인이 안 됐습니다 — 고친 것은 이 화면에 그대로 있습니다');
       if(!r.ok||!x.ok) throw new Error(n+' 을(를) 못 올렸습니다 — '+(x.why||('서버 '+r.status)));
-      var id=n.replace(/\.\w+$/,''), 끝=n.slice(id.length), c=곡찾기(id), 주소=음악집+n+'?v='+Date.now().toString(36);
-      if(c){ var 칸={'.mp3':'음악','.jpg':'사진','.mid':'악보'}[끝]; if(칸){ try{ if(/^blob:/.test(c[칸])) URL.revokeObjectURL(c[칸]); }catch(e){} c[칸]=주소; } }
+      var 주소=음악집+n+'?v='+Date.now().toString(36), 악=n.match(/^(s\d+)-\d+\./);
+      if(악){
+        var ca=곡찾기(악[1]);
+        (ca&&ca.악보들||[]).forEach(function(y){ if(y.키===n){ try{ URL.revokeObjectURL(y.주소); }catch(e){} y.주소=주소; } });
+      } else {
+        var id=n.replace(/\.\w+$/,''), 끝=n.slice(id.length), c=곡찾기(id);
+        if(c){ var 칸={'.mp3':'음악','.jpg':'사진','.mid':'악보'}[끝]; if(칸){ try{ if(/^blob:/.test(c[칸])) URL.revokeObjectURL(c[칸]); }catch(e){} c[칸]=주소; } }
+      }
       delete 새파일[n];
     }
     /* 아직 blob: 이 남은 칸은 저장하지 않는다 (올라가지 못한 것) */
     var 보낼=JSON.parse(JSON.stringify(원본));
-    보낼.곡.forEach(function(c){ ['음악','사진','악보'].forEach(function(k){ if(c[k]&&/^blob:/.test(c[k])) delete c[k]; }); });
+    보낼.곡.forEach(function(c){
+      ['음악','사진','악보'].forEach(function(k){ if(c[k]&&/^blob:/.test(c[k])) delete c[k]; });
+      if(c.악보들){ c.악보들=c.악보들.filter(function(y){ return y.주소&&!/^blob:/.test(y.주소); }).map(function(y){ return {이름:y.이름, 종류:y.종류, 주소:y.주소}; }); if(!c.악보들.length) delete c.악보들; }
+    });
     띠그리기('💾 목록 저장 중…');
-    var r2=await fetch(서버+'/lee/save',{method:'POST',headers:{'x-lee-token':열쇠,'Content-Type':'application/json'},body:JSON.stringify(보낼)});
-    var y={}; try{ y=await r2.json(); }catch(e){}
-    if(r2.status===401) throw new Error('열쇠 시간이 지났습니다 — LEE 에서 다시 들어와 주세요');
+    var 답2=await 보내기(서버+'/lee/save', {'Content-Type':'application/json'}, JSON.stringify(보낼));
+    var r2=답2.r, y=답2.x;
+    if(r2.status===401) throw new Error('열쇠말 확인이 안 됐습니다 — 고친 것은 이 화면에 그대로 있습니다');
     if(!r2.ok||!y.ok) throw new Error('목록을 못 썼습니다 — '+(y.why||('서버 '+r2.status)));
     바뀜=0; 다시();
     띠그리기('✅ 사이트에 반영됐습니다 — 곡 '+y.곡+'곡');
