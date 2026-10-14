@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <!-- 판 564 : 파일 주소 끝에 판 번호를 붙인다. 손님 폰이 옛 파일을 쥐고 안 놓는 일을 막는다.
      ⚠️ js 파일을 새로 올릴 때는 이 숫자와 맨 아래 juran-check.js?v= 숫자를 같이 올린다. -->
-<script>window.JURAN판='572';</script>
+<script>window.JURAN판='573';</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>html{color-scheme:light;word-break:keep-all;overflow-wrap:break-word;line-break:strict;hanging-punctuation:allow-end}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>JURAN</title>
@@ -1743,7 +1743,7 @@ window.JK=JK;
 (function(){
   var 소리집 = 'https://www.c-go-fuli.com/';
   var 내집   = 'js/';
-  var 판끝   = '?v='+(window.JURAN판||'572');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
+  var 판끝   = '?v='+(window.JURAN판||'573');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
   var 화면줄 = [{주소:내집+'juran-words.js'+판끝, 꼭:false, 이름:'말 사전'},
                 {주소:내집+'cgo-music.js'+판끝,   꼭:true,  이름:'작곡 엔진'},
                 {주소:내집+'cgo-score.js'+판끝,   꼭:false, 이름:'악보 편집기'}];
@@ -1891,7 +1891,13 @@ window.JK=JK;
     if(생성손약속) return 생성손약속;
     생성손약속=글하나(내집+'cgo-gen.js'+판끝).then(function(ok){
       var 됨=false;
+      /* 판 572 : 작곡 손 안에는 CGO 의 「악보만 그리기」(_cgoGenerateScoreOnly368)도 들어 있어서,
+         달리는 순간 JURAN 의 수노 악보 손(cgo-score.js — 수노 가락으로 마디를 짜고 시각 쪽지를 띄우는 것)을
+         덮어썼다. 파트너 — 「수노곡으로 음표 따라가기가 되었는데 어디를 만졌나」.
+         수노 길은 판 568 전 그대로 JURAN 손으로 되돌린다. AI 곡 길(onGenerate)은 CGO 그대로 둔다. */
+      var 주란악보손 = window._cgoGenerateScoreOnly368;
       try{ 됨 = ok && typeof window.CGO_GEN_설치568==='function' && window.CGO_GEN_설치568(); }catch(e){ try{ console.error('[JM] 작곡 손 달기 걸림', e); }catch(_){} }
+      if(됨 && typeof 주란악보손==='function') window._cgoGenerateScoreOnly368 = 주란악보손;
       if(!됨) 생성손약속=null;           /* 못 받았으면 다음에 다시 */
       return !!됨;
     });
@@ -2007,6 +2013,6 @@ window.JK=JK;
 
 <!-- 검사기 — 재는 손. 36KB. 씨앗 통(161KB)은 검사를 누를 때 받는다. -->
 <!-- 판 564 : ⚠️ 이 숫자는 머리(head)의 JURAN판 과 같이 올린다 -->
-<script src="js/juran-check.js?v=572" defer></script>
+<script src="js/juran-check.js?v=573" defer></script>
 </body>
 </html>
