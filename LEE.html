@@ -62,6 +62,30 @@ td.x button{min-height:30px;padding:0 9px;font-size:12px}
 .ok{color:var(--deep);font-weight:700}
 .gate{max-width:380px;margin:90px auto;text-align:center}
 .gate input{text-align:center;height:50px;font-size:17px;margin:14px 0}
+/* 판 L2 : 곡마다 음악 · 악보 · 가사 */
+td.j{width:120px}
+td.j button{min-height:32px;padding:0 9px;font-size:12px;white-space:nowrap}
+tr.more>td{background:var(--card2);padding:12px 14px 14px}
+.more .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;
+  position:sticky;left:14px;max-width:min(1030px,calc(100vw - 72px))}
+.more .cell{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.more .cell b{display:block;font-size:12.5px;margin-bottom:6px}
+.more .st{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5;word-break:break-all}
+.more .st.ok{color:var(--deep);font-weight:700}
+.more .st.bad{color:var(--red)}
+.more input[type=file]{padding:6px;font-size:12.5px}
+.more audio{width:100%;margin-top:6px;height:34px}
+.more textarea{min-height:150px;font-size:13.5px;line-height:1.55}
+.more .gaj{grid-column:1/-1}
+.bar2{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.howto ol{margin:6px 0 0;padding-left:20px}
+.mode{font:700 11.5px var(--s);padding:6px 11px;border-radius:999px;background:var(--goldsoft);color:var(--fg)}
+.mode.on{background:var(--soft);color:var(--deep)}
+#savebox{display:none;margin:0 0 14px;padding:11px 13px;border-radius:12px;border:1px solid var(--line);
+  background:var(--card);font-size:13px;line-height:1.6}
+#savebox.ok{border-color:rgba(3,137,125,.45)} #savebox.bad{border-color:rgba(214,69,63,.45);color:var(--red)}
+.only-dl{} body.direct .only-dl{display:none!important} body:not(.direct) .only-direct{display:none!important}
+.howto li{margin:3px 0}
 </style>
 </head>
 <body>
@@ -81,16 +105,34 @@ td.x button{min-height:30px;padding:0 9px;font-size:12px}
 <header>
   <h1>JURAN 관리</h1>
   <span class="tag">LEE</span>
+  <span class="mode" id="mode">확인 중…</span>
   <div class="sp"></div>
   <button onclick="파일열기()">📂 juran.json 불러오기</button>
   <input type="file" id="f" accept=".json,application/json" hidden>
-  <button class="pri" onclick="내려받기()">⬇ juran.json 내려받기</button>
+  <button class="pri only-direct" onclick="저장()">💾 저장 — 사이트에 바로 반영</button>
+  <button class="pri only-dl" onclick="내려받기()">⬇ juran.json 내려받기</button>
 </header>
+<div id="savebox"></div>
 
-<div class="warnbar" id="howto">
-  <b>쓰는 법</b> — 여기서 고치고 <b>⬇ juran.json 내려받기</b> 를 누르면 파일 하나가 떨어집니다.
-  그 파일만 깃허브 <code>juranaimusic.com</code> 저장소 맨 위에 올리면 사이트가 바뀝니다.
-  <b>index.html 은 손대지 않습니다.</b> (5KB쯤이라 10초면 올라갑니다)
+<div class="warnbar howto only-direct">
+  <b>쓰는 법</b> — 고치고, 곡 줄의 <b>「+ 자료」</b>에 음악 · 악보 · 가사를 넣고,
+  <b>💾 저장</b> 한 번이면 끝입니다. 몇 초 뒤 <a href="https://juranaimusic.com" target="_blank" rel="noopener">juranaimusic.com</a> 에 그대로 나옵니다.
+  깃허브도 R2 도 들어가실 필요가 없습니다.
+  <span class="note" style="display:block;margin-top:4px">음악은 128k 로 저절로 줄이고 이름(<code>s001.mp3</code>)도 저절로 붙습니다.
+  저장할 때마다 바로 전 목록을 서버가 따로 보관해 둡니다 — 실수해도 되돌릴 수 있습니다.</span>
+</div>
+<div class="warnbar howto only-dl" id="howto">
+  <b>쓰는 법 (내려받기 모드)</b> — 서버의 R2 열쇠가 아직 없어서 손으로 올리는 방식입니다. 차례를 지켜 주세요.
+  <ol>
+    <li>곡 줄 오른쪽 <b>「+ 자료」</b> 단추 → 음악 · 악보 · 가사를 넣습니다.
+        음악은 <b>128k 로 저절로 줄이고</b> 이름도 <code>s001.mp3</code> 처럼 저절로 붙습니다. 손으로 칠 것은 없습니다.</li>
+    <li><b>⬇ 새 파일 받기</b> → 받은 파일들을
+        <a href="https://dash.cloudflare.com/?to=/:account/r2/overview" target="_blank" rel="noopener">R2</a>
+        <code>juran-ai-music</code> 안의 <b><code>songs</code> 폴더</b>에 끌어다 놓습니다.</li>
+    <li><b>⬇ juran.json 내려받기</b> → 깃허브 <code>juranaimusic.com</code> 저장소 맨 위에 올립니다.
+        <b>index.html 은 손대지 않습니다.</b></li>
+  </ol>
+  <span class="note">2 → 3 순서입니다. 3 을 먼저 올리면 곡을 눌렀을 때 소리가 잠깐 안 나옵니다.</span>
 </div>
 
 <div class="box">
@@ -156,7 +198,7 @@ td.x button{min-height:30px;padding:0 9px;font-size:12px}
         <th class="w-g">장르</th><th class="w-c">나라</th>
         <th class="w-v">표</th><th class="w-v">전표</th><th class="w-s">점수</th>
         <th class="w-s">곡 닮음%</th><th class="w-s">가사 닮음%</th>
-        <th class="w-l">링크 (없으면 비움)</th><th class="x"></th>
+        <th class="w-l">링크 (없으면 비움)</th><th class="j">자료</th><th class="x"></th>
       </tr></thead>
       <tbody id="tb"></tbody>
     </table>
@@ -168,7 +210,9 @@ td.x button{min-height:30px;padding:0 9px;font-size:12px}
     <button class="warn" onclick="비우기()">모두 지우기</button>
     <div class="sp"></div>
     <span class="cnt" id="cnt"></span>
-    <button class="pri" onclick="내려받기()">⬇ juran.json 내려받기</button>
+    <button class="only-dl" onclick="새파일받기()" id="newbtn">⬇ 새 파일 받기 (R2용)</button>
+    <button class="pri only-dl" onclick="내려받기()">⬇ juran.json 내려받기</button>
+    <button class="pri only-direct" onclick="저장()" id="savebtn">💾 저장 — 사이트에 바로 반영</button>
   </div>
   <p class="note">📋 <b>표에서 붙여넣기</b> — 엑셀이나 구글 시트에서 칸을 복사해 붙이면 한꺼번에 들어갑니다.
     차례는 <b>제목 · 지은이 · 장르 · 나라 · 표 · 전표 · 점수 · 링크</b> 입니다.</p>
@@ -184,7 +228,20 @@ td.x button{min-height:30px;padding:0 9px;font-size:12px}
    보관소가 붙으면 「내려받기」가 「바로 저장」으로 바뀐다. 이 페이지는 그대로.
    ══════════════════════════════════════════════════════════ */
 
-var 열쇠='juran';           /* 지금은 자물쇠가 아니라 문패다. 아래 설명 참조 */
+/* 판 L2 : 열쇠말을 **글자로 두지 않는다.** 이 페이지는 공개 저장소에 있어 누구나 소스를 본다.
+   여기 있는 것은 열쇠말을 21만 번 갈아 만든 값(PBKDF2-SHA256)뿐이라 거꾸로 되돌릴 수 없다.
+   · 띄어쓰기는 세지 않는다 — 「ㅇ ㅏㅂ ㅓ」를 붙여 치든 띄어 치든 같다.
+   · 열쇠말을 바꾸려면 새 값을 만들어 아래 두 줄만 바꾼다(클로드에게 부탁).
+   ⚠️ 이것은 화면을 가리는 문이다. 진짜 자물쇠는 **깃허브** — 여기서 고쳐도 깃허브에 올리는 사람만 사이트를 바꾼다. */
+var 열쇠소금='945e97f75d5f2cd3078689167bdfc97f';
+var 열쇠값='325e55e82b3564cf8e2ef5b5ee037442030dc6c81958ec1116c8ce3c5e9f4117';
+function 십육(b){ return Array.prototype.map.call(new Uint8Array(b),function(x){ return ('0'+x.toString(16)).slice(-2); }).join(''); }
+function 바이트(h){ var a=new Uint8Array(h.length/2); for(var i=0;i<a.length;i++) a[i]=parseInt(h.substr(i*2,2),16); return a; }
+async function 열쇠재기(t){
+  t=String(t||'').replace(/\s+/g,'').normalize('NFKC');   /* 띄어쓰기를 먼저 빼고 맞춘다 — 순서가 바뀌면 「ㅇ ㅏ」와 「ㅇㅏ」가 달라진다 */
+  var k=await crypto.subtle.importKey('raw', new TextEncoder().encode(t), 'PBKDF2', false, ['deriveBits']);
+  return 십육(await crypto.subtle.deriveBits({name:'PBKDF2', salt:바이트(열쇠소금), iterations:210000, hash:'SHA-256'}, k, 256));
+}
 var 장르들=["K-팝","발라드","힙합/랩","R&B","EDM/댄스","록/밴드","시티팝","재즈","트로트","로파이","힐링(주파수)"];
 var 자켓장르={"K-팝":4,"발라드":0,"힙합/랩":1,"R&B":6,"EDM/댄스":2,"록/밴드":3,
               "시티팝":13,"재즈":7,"트로트":27,"로파이":15,"힐링(주파수)":20};
@@ -205,29 +262,84 @@ function 해시(s){ var h=2166136261; s=String(s);
   for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0); }
 
 /* ── 문 ── */
+/* 판 L3 : 열쇠말은 **서버가** 확인한다(라일웨이 cgo-543). 맞으면 12시간짜리 표(token)를 받는다.
+   그 표가 있어야 「💾 저장」이 R2 에 쓴다 — 표 없이 저장을 부르면 서버가 거절한다.
+   서버에 닿지 못하면 이 화면 안의 값으로만 확인하고 「내려받기 모드」로 연다. */
+var 서버=window.__서버||'https://fastapi-production-d9f2.up.railway.app';
+var 공개=window.__공개||'https://music.juranaimusic.com';
+var 서버표='';
+function 모드(바로, 말){
+  document.body.classList.toggle('direct', !!바로);
+  var m=$('mode'); m.className='mode'+(바로?' on':''); m.textContent=말||(바로?'🟢 바로 저장':'🟡 내려받기 모드');
+}
+function 표넣기(t,exp){ 서버표=t||''; try{ sessionStorage.setItem('lee-t', 서버표? (exp+'|'+서버표) : ''); }catch(e){} }
+function 표꺼내기(){
+  try{ var v=sessionStorage.getItem('lee-t')||''; var i=v.indexOf('|');
+       if(i>0 && +v.slice(0,i)*1000>Date.now()+60000) return v.slice(i+1); }catch(e){}
+  return '';
+}
+function 들이기(바로, 말){
+  try{ sessionStorage.setItem('lee','1'); }catch(e){}
+  $('gmsg').textContent=''; $('gate').hidden=true; $('main').hidden=false; 모드(바로, 말); 처음();
+}
 function 열기(){
-  if($('pw').value===열쇠){
-    try{ sessionStorage.setItem('lee','1'); }catch(e){}
-    $('gate').hidden=true; $('main').hidden=false; 처음();
-  } else $('gmsg').textContent='열쇠말이 다릅니다.';
+  var pw=$('pw').value;
+  $('gmsg').textContent='확인하는 중…';
+  fetch(서버+'/lee/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pw:pw}),
+                          signal:AbortSignal.timeout(25000)})
+    .then(function(r){ return r.json().then(function(j){ return {c:r.status,j:j}; }); })
+    .then(function(x){
+      if(x.c===403||x.c===429){ $('gmsg').textContent=(x.j&&x.j.why)||'열쇠말이 다릅니다.'; return; }
+      if(x.j&&x.j.ok&&x.j.token){ 표넣기(x.j.token,x.j.exp); 들이기(true); return; }
+      if(x.j&&x.j.ok){ 표넣기(''); 들이기(false,'🟡 내려받기 모드 — 서버에 R2 열쇠가 아직 없음'); return; }
+      throw 0;
+    })
+    .catch(function(){
+      /* 서버에 못 닿음 — 이 화면 안의 값으로만 확인하고 내려받기 모드로 */
+      열쇠재기(pw).then(function(h){
+        if(h===열쇠값) 들이기(false,'🟡 내려받기 모드 — 서버에 닿지 못함');
+        else $('gmsg').textContent='열쇠말이 다릅니다.';
+      }).catch(function(){ $('gmsg').textContent='이 브라우저에서는 열쇠를 확인할 수 없습니다 (https 주소로 여세요).'; });
+    });
 }
 $('pw').addEventListener('keydown',function(e){ if(e.key==='Enter') 열기(); });
 (function(){
   var 들어와있나=false;
   try{ 들어와있나=sessionStorage.getItem('lee')==='1'; }catch(e){}
-  if(들어와있나){ $('main').hidden=false; 처음(); } else $('gate').hidden=false;
+  if(들어와있나){ 서버표=표꺼내기(); $('main').hidden=false; 모드(!!서버표); 처음(); } else $('gate').hidden=false;
 })();
 
 /* ── 곡 표 ── */
+/* 판 L2 (2026-10-14) : 곡마다 🎵 음악 · 🎼 악보 · ✍️ 가사.
+   · 곡 번호(id)는 **한 번 붙으면 안 바뀐다.** 전에는 내려받을 때마다 표 순서로 s001… 을 새로 매겨서,
+     표가 바뀌면 s003.mp3 가 다른 곡을 가리킬 수 있었다. 파일 이름이 번호를 따르니 번호가 흔들리면 안 된다.
+   · 음악은 이 폰·컴퓨터 안에서 128k mp3 로 줄인다(바깥으로 보내지 않는다). 이미 가벼운 mp3 면 그대로 쓴다.
+   · 파일은 R2(music.juranaimusic.com/songs/)에 파트너가 끌어다 놓는다. 이 페이지에는 열쇠가 없다 —
+     공개 저장소에 있는 페이지라 열쇠를 넣으면 세상에 공개된다. */
+var 음악집='https://music.juranaimusic.com/songs/';
+var 라메주소=window.__라메주소||'https://cdnjs.cloudflare.com/ajax/libs/lamejs/1.2.1/lame.min.js';
+var 새파일={};      /* 이름 → Blob — 이번에 새로 고른 것만. 「⬇ 새 파일 받기」가 내려 준다 */
+
+function 글(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
 function 칸(값,형,넓){
-  return '<input value="'+String(값==null?'':값).replace(/"/g,'&quot;')+'"'+
+  return '<input value="'+글(값)+'"'+
          (형?' type="'+형+'"':'')+(넓?' class="'+넓+'"':'')+'>';
 }
+function 번호수(id){ var n=parseInt(String(id||'').replace(/\D/g,''),10); return isFinite(n)?n:0; }
+function 번호글(n){ var s=String(n); while(s.length<3) s='0'+s; return 's'+s; }
+function 다음번호(){
+  var m=0; $('tb').querySelectorAll('tr.song').forEach(function(tr){ m=Math.max(m,번호수(tr.dataset.id)); });
+  return 번호글(m+1);
+}
+function 분초(초){ 초=Math.round(+초||0); return Math.floor(초/60)+':'+('0'+(초%60)).slice(-2); }
+function 크기(b){ return b>=1048576?(b/1048576).toFixed(1)+'MB':Math.max(1,Math.round(b/1024))+'KB'; }
+
 function 줄HTML(c){
+  var id=c.id||다음번호();
   var g=장르들.map(function(x){ return '<option'+(x===c.g?' selected':'')+'>'+x+'</option>'; }).join('');
   var ks=Object.keys(나라들).sort(function(a,b){ return 나라들[a].localeCompare(나라들[b],'ko'); });
   var n=ks.map(function(k){ return '<option value="'+k+'"'+(k===c.나라?' selected':'')+'>'+깃발(k)+' '+나라들[k]+'</option>'; }).join('');
-  return '<tr>'+
+  return '<tr class="song" data-id="'+id+'">'+
    '<td class="n"></td>'+
    '<td>'+칸(c.t)+'</td>'+
    '<td>'+칸(c.by)+'</td>'+
@@ -239,38 +351,175 @@ function 줄HTML(c){
    '<td>'+칸(c.곡닮음,'number')+'</td>'+
    '<td>'+칸(c.가사닮음,'number')+'</td>'+
    '<td>'+칸(c.링크)+'</td>'+
-   '<td class="x"><button class="warn" onclick="this.closest(\'tr\').remove();셈()">✕</button></td>'+
-  '</tr>';
+   '<td class="j"><button type="button" class="jbtn" onclick="자료열기(this)"></button></td>'+
+   '<td class="x"><button class="warn" onclick="줄지우기(this)">✕</button></td>'+
+  '</tr>'+
+  '<tr class="more" data-id="'+id+'" hidden><td colspan="13"><div class="grid">'+
+    '<div class="cell"><b>🎵 음악 <span style="font-weight:400;color:var(--faint)">· mp3 · wav · m4a</span></b>'+
+      '<input type="file" class="f-mus" accept="audio/*,.mp3,.wav,.m4a,.aac,.flac,.ogg">'+
+      '<input type="hidden" class="v-mus" value="'+글(c.음악)+'">'+
+      '<input type="hidden" class="v-len" value="'+글(c.길이)+'">'+
+      '<div class="st s-mus"></div><audio class="a-mus" controls preload="none" hidden></audio></div>'+
+    '<div class="cell"><b>🎼 악보 <span style="font-weight:400;color:var(--faint)">· 앱 악보의 MIDI(.mid)</span></b>'+
+      '<input type="file" class="f-mid" accept=".mid,.midi,audio/midi,audio/x-midi">'+
+      '<input type="hidden" class="v-mid" value="'+글(c.악보)+'">'+
+      '<div class="st s-mid"></div></div>'+
+    '<div class="cell gaj"><b>✍️ 가사</b>'+
+      '<textarea class="v-gas" placeholder="[Verse 1]&#10;…">'+글(c.가사)+'</textarea></div>'+
+  '</div></td></tr>';
+}
+function 짝(tr){ var m=tr.nextElementSibling; return (m&&m.classList.contains('more'))?m:null; }
+function 자료그리기(tr){
+  var m=짝(tr); if(!m) return;
+  var id=tr.dataset.id, mus=m.querySelector('.v-mus').value, mid=m.querySelector('.v-mid').value,
+      gas=m.querySelector('.v-gas').value.trim(), len=m.querySelector('.v-len').value;
+  var 새음=새파일[id+'.mp3'], 새악=새파일[id+'.mid'];
+  var sm=m.querySelector('.s-mus'), au=m.querySelector('.a-mus');
+  if(새음){ sm.className='st s-mus ok'; sm.textContent='✅ 새 파일 '+id+'.mp3 · '+크기(새음.size)+(len?' · '+분초(len):'')+' — 「⬇ 새 파일 받기」 뒤 R2 songs 폴더에';
+            if(!au.dataset.u){ au.dataset.u=URL.createObjectURL(새음); au.src=au.dataset.u; } au.hidden=false; }
+  else if(mus){ sm.className='st s-mus ok'; sm.textContent='🔗 '+mus+(len?' · '+분초(len):''); if(au.getAttribute('src')!==mus) au.src=mus; au.hidden=false; }
+  else { sm.className='st s-mus'; sm.textContent='아직 없음'; au.hidden=true; }
+  var sd=m.querySelector('.s-mid');
+  if(새악){ sd.className='st s-mid ok'; sd.textContent='✅ 새 파일 '+id+'.mid · '+크기(새악.size); }
+  else if(mid){ sd.className='st s-mid ok'; sd.textContent='🔗 '+mid; }
+  else { sd.className='st s-mid'; sd.textContent='아직 없음'; }
+  var 든=[(mus||새음)?'🎵':'', (mid||새악)?'🎼':'', gas?'✍️':''].filter(Boolean).join(' ');
+  tr.querySelector('.jbtn').textContent=(든||'+ 자료')+(m.hidden?' ▾':' ▴');
+}
+function 자료열기(b){ var tr=b.closest('tr'), m=짝(tr); if(!m) return; m.hidden=!m.hidden; 자료그리기(tr); }
+function 줄지우기(b){
+  var tr=b.closest('tr'), m=짝(tr), id=tr.dataset.id;
+  delete 새파일[id+'.mp3']; delete 새파일[id+'.mid'];
+  if(m) m.remove(); tr.remove(); 셈();
 }
 function 줄추가(n){
   n=(typeof n==='number'&&n>0)?n:1;
-  var h=''; for(var i=0;i<n;i++) h+=줄HTML({t:'',by:'',g:장르들[0],나라:'KR',표:0,전표:0,점수:90,링크:''});
-  $('tb').insertAdjacentHTML('beforeend',h); 셈();
+  for(var i=0;i<n;i++) $('tb').insertAdjacentHTML('beforeend',
+    줄HTML({t:'',by:'',g:장르들[0],나라:'KR',표:0,전표:0,점수:90,링크:''}));
+  셈();
 }
-function 비우기(){ if(confirm('곡을 모두 지웁니다. 되돌릴 수 없습니다.')){ $('tb').innerHTML=''; 셈(); } }
+function 비우기(){ if(confirm('곡을 모두 지웁니다. 되돌릴 수 없습니다.')){ $('tb').innerHTML=''; 새파일={}; 셈(); } }
 function 셈(){
-  var tr=$('tb').querySelectorAll('tr');
-  for(var i=0;i<tr.length;i++) tr[i].querySelector('td.n').textContent=i+1;
-  $('cnt').textContent=tr.length+' 곡';
+  var tr=$('tb').querySelectorAll('tr.song');
+  for(var i=0;i<tr.length;i++){ tr[i].querySelector('td.n').textContent=i+1; 자료그리기(tr[i]); }
+  var 새=Object.keys(새파일).length;
+  $('cnt').textContent=tr.length+' 곡'+(새?' · 새 파일 '+새+'개':'');
+  var nb=$('newbtn'); if(nb) nb.textContent='⬇ 새 파일 받기 (R2용)'+(새?' · '+새+'개':'');
 }
 function 읽기(){
   var out=[];
-  $('tb').querySelectorAll('tr').forEach(function(tr,i){
-    var v=tr.querySelectorAll('input'), s=tr.querySelectorAll('select');
+  $('tb').querySelectorAll('tr.song').forEach(function(tr){
+    var v=tr.querySelectorAll('input'), s=tr.querySelectorAll('select'), m=짝(tr);
     /* 칸 차례 : 0 제목 · 1 지은이 · 2 표 · 3 전표 · 4 점수 · 5 곡닮음 · 6 가사닮음 · 7 링크
-       ⚠️ 한 번 한 칸 밀려 세어 표·점수·링크가 통째로 어긋났었다. 칸을 더할 때마다 다시 센다 */
+       ⚠️ 한 번 한 칸 밀려 세어 표·점수·링크가 통째로 어긋났었다. 칸을 더할 때마다 다시 센다.
+       판 L2 : 음악·악보·가사는 이 줄이 아니라 **아래 짝 줄(tr.more)** 에 있다 — 위 차례는 그대로다. */
     var t=(v[0].value||'').trim(); if(!t) return;
     var g=s[0].value, 표=+v[2].value||0;
     function 퍼(x){ var n=parseFloat(x); return isFinite(n)? Math.max(0,Math.min(100,Math.round(n))) : null; }
-    out.push({ id:'s'+('00'+(i+1)).slice(-3), t:t, by:(v[1].value||'').trim(), g:g,
+    var c={ id:tr.dataset.id, t:t, by:(v[1].value||'').trim(), g:g,
       나라:(s[1].value||'').toUpperCase(),
       표:표, 전표:Math.min(+v[3].value||0, 표), 점수:+v[4].value||0,
       곡닮음:퍼(v[5].value), 가사닮음:퍼(v[6].value),
       링크:(v[7].value||'').trim(),
-      자켓:{ gi:(자켓장르[g]||0), img:해시(t)%40, 색:0, 결:null } });
+      자켓:{ gi:(자켓장르[g]||0), img:해시(t)%40, 색:0, 결:null } };
+    if(m){
+      var mus=m.querySelector('.v-mus').value.trim(), mid=m.querySelector('.v-mid').value.trim(),
+          gas=m.querySelector('.v-gas').value.replace(/\r/g,'').trim(), len=Math.round(+m.querySelector('.v-len').value||0);
+      if(mus) c.음악=mus;
+      if(len) c.길이=len;
+      if(mid) c.악보=mid;
+      if(gas) c.가사=gas;
+    }
+    out.push(c);
   });
   out.sort(function(a,b){ return b.표-a.표; });
   return out;
+}
+
+/* ── 음악을 128k mp3 로 ── */
+function 라메받기(){
+  if(window.lamejs) return Promise.resolve();
+  return new Promise(function(ok,no){
+    var s=document.createElement('script'); s.src=라메주소; s.async=true;
+    s.onload=function(){ window.lamejs?ok():no(new Error('MP3 도구가 비어 있습니다')); };
+    s.onerror=function(){ no(new Error('MP3 도구(lamejs)를 못 받았습니다 — 인터넷을 확인해 주세요')); };
+    document.head.appendChild(s);
+  });
+}
+function 쉼(){ return new Promise(function(r){ setTimeout(r,0); }); }
+async function mp3만들기(file, 알림){
+  var buf=await file.arrayBuffer();
+  var AC=window.AudioContext||window.webkitAudioContext, ac;
+  try{ ac=new AC({sampleRate:44100}); }catch(e){ ac=new AC(); }
+  var ab;
+  try{ ab=await new Promise(function(ok,no){ var p=ac.decodeAudioData(buf.slice(0),ok,no); if(p&&p.then) p.then(ok,no); }); }
+  finally{ try{ ac.close(); }catch(e){} }
+  var 길이=ab.duration, kbps=file.size*8/길이/1000;
+  var mp3인가=/mpeg|mp3/i.test(file.type)||/\.mp3$/i.test(file.name);
+  if(mp3인가 && kbps<=150) return {blob:file, 길이:길이, 줄임:false, kbps:kbps};
+  알림('🔧 MP3 도구를 받는 중…');
+  await 라메받기();
+  var ch=Math.min(2,ab.numberOfChannels), sr=ab.sampleRate;
+  var enc=new lamejs.Mp3Encoder(ch, sr, 128);
+  var L=ab.getChannelData(0), R=ch>1?ab.getChannelData(1):null, n=L.length, 한=1152*40, parts=[];
+  function i16(f,a,b){ var o=new Int16Array(b-a); for(var i=a;i<b;i++){ var x=f[i]; x=x<-1?-1:(x>1?1:x); o[i-a]=x<0?x*32768:x*32767; } return o; }
+  var 번=0;
+  for(var a=0;a<n;a+=한){
+    var b=Math.min(n,a+한);
+    var o= R? enc.encodeBuffer(i16(L,a,b),i16(R,a,b)) : enc.encodeBuffer(i16(L,a,b));
+    if(o.length) parts.push(new Uint8Array(o));
+    if((++번)%8===0){ 알림('🔧 128k 로 줄이는 중… '+Math.round(a/n*100)+'%'); await 쉼(); }
+  }
+  var e=enc.flush(); if(e.length) parts.push(new Uint8Array(e));
+  return {blob:new Blob(parts,{type:'audio/mpeg'}), 길이:길이, 줄임:true, kbps:kbps};
+}
+
+/* 파일 고르기 — 표 하나에 귀를 한 번만 단다 */
+$('tb').addEventListener('change', async function(ev){
+  var el=ev.target; if(!el.files||!el.files[0]) return;
+  var m=el.closest('tr.more'); if(!m) return;
+  var tr=m.previousElementSibling, id=m.dataset.id, f=el.files[0];
+  if(el.classList.contains('f-mus')){
+    var sm=m.querySelector('.s-mus');
+    function 알림(x){ sm.className='st s-mus'; sm.textContent=x; }
+    알림('🔧 음악 읽는 중… ('+f.name+' · '+크기(f.size)+')');
+    try{
+      var r=await mp3만들기(f, 알림);
+      새파일[id+'.mp3']=r.blob;
+      m.querySelector('.v-mus').value=음악집+id+'.mp3';
+      m.querySelector('.v-len').value=Math.round(r.길이);
+      var au=m.querySelector('.a-mus'); if(au.dataset.u){ URL.revokeObjectURL(au.dataset.u); delete au.dataset.u; }
+      셈();
+      m.querySelector('.s-mus').textContent+= r.줄임? ' (원래 '+Math.round(r.kbps)+'k → 128k)' : ' (이미 가벼워서 그대로 · '+Math.round(r.kbps)+'k)';
+    }catch(err){ sm.className='st s-mus bad'; sm.textContent='⚠️ 음악을 못 읽었습니다 — '+(err&&err.message||err); }
+    el.value='';
+  } else if(el.classList.contains('f-mid')){
+    var sd=m.querySelector('.s-mid');
+    try{
+      var h=new Uint8Array(await f.slice(0,4).arrayBuffer());
+      if(String.fromCharCode(h[0],h[1],h[2],h[3])!=='MThd') throw new Error('MIDI 파일이 아닙니다 (.mid 를 골라 주세요)');
+      새파일[id+'.mid']=f;
+      m.querySelector('.v-mid').value=음악집+id+'.mid';
+      셈();
+    }catch(err){ sd.className='st s-mid bad'; sd.textContent='⚠️ '+(err&&err.message||err); }
+    el.value='';
+  }
+});
+$('tb').addEventListener('input', function(ev){
+  if(ev.target.classList.contains('v-gas')){ var m=ev.target.closest('tr.more'); if(m) 자료그리기(m.previousElementSibling); }
+});
+
+function 내리기(blob, 이름){
+  var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=이름;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); },4000);
+}
+function 새파일받기(){
+  var 이름들=Object.keys(새파일).sort();
+  if(!이름들.length){ alert('이번에 새로 고른 음악·악보 파일이 없습니다.'); return; }
+  alert(이름들.length+'개 파일을 내려받습니다.\n\n'+이름들.join('\n')+
+        '\n\n브라우저가 「여러 파일 내려받기 허용」을 물으면 허용을 눌러 주세요.\n받은 파일은 R2 juran-ai-music 의 songs 폴더에 끌어다 놓으면 됩니다.');
+  이름들.forEach(function(n,i){ setTimeout(function(){ 내리기(새파일[n], n); }, i*700); });
 }
 
 /* ── 붙여넣기 ── */
@@ -331,13 +580,49 @@ function 모으기(){
     기준:{ 곡수:+$('b-n').value||0, 갱신:$('b-d').value, 알림:$('b-t').value },
     뉴스: 뉴스읽기(), 곡: 읽기() };
 }
+/* ── 💾 저장 — 새 파일들을 먼저 올리고, 다 올라가면 목록(juran.json)을 쓴다 ── */
+var 저장중=false;
+function 상자(말,결){ var b=$('savebox'); b.style.display='block'; b.className=결||''; b.innerHTML=말; }
+async function 저장(){
+  if(저장중) return;
+  if(!서버표){ 상자('⚠️ 서버 표가 없습니다. 페이지를 새로 열고 열쇠말을 다시 넣어 주세요.','bad'); return; }
+  var j=모으기();
+  if(!j.곡.length && !confirm('곡이 하나도 없습니다. 그래도 저장할까요?')) return;
+  저장중=true; var 단추=$('savebtn'); if(단추) 단추.disabled=true;
+  try{
+    var 이름들=Object.keys(새파일).sort();
+    for(var i=0;i<이름들.length;i++){
+      var n=이름들[i];
+      상자('⏫ 파일 올리는 중… '+(i+1)+' / '+이름들.length+' · '+n+' ('+크기(새파일[n].size)+')');
+      var r=await fetch(서버+'/lee/file?name='+encodeURIComponent(n),{method:'POST',
+                headers:{'x-lee-token':서버표,'Content-Type':'application/octet-stream'},body:새파일[n]});
+      var x={}; try{ x=await r.json(); }catch(e){}
+      if(r.status===401){ 표넣기(''); throw new Error('열쇠 시간이 지났습니다 — 페이지를 새로 열고 열쇠말을 다시 넣어 주세요 (고친 것은 그대로 있습니다)'); }
+      if(!r.ok||!x.ok) throw new Error(n+' 을(를) 못 올렸습니다 — '+(x.why||('서버 '+r.status)));
+      delete 새파일[n];
+    }
+    셈();
+    상자('💾 목록 저장 중…');
+    var r2=await fetch(서버+'/lee/save',{method:'POST',headers:{'x-lee-token':서버표,'Content-Type':'application/json'},
+                       body:JSON.stringify(j)});
+    var y={}; try{ y=await r2.json(); }catch(e){}
+    if(r2.status===401){ 표넣기(''); throw new Error('열쇠 시간이 지났습니다 — 페이지를 새로 열고 열쇠말을 다시 넣어 주세요'); }
+    if(!r2.ok||!y.ok) throw new Error('목록을 못 썼습니다 — '+(y.why||('서버 '+r2.status)));
+    상자('✅ <b>사이트에 반영됐습니다</b> — 곡 '+y.곡+'곡'+(이름들.length?' · 새 파일 '+이름들.length+'개':'')+
+        '. <a href="https://juranaimusic.com" target="_blank" rel="noopener">juranaimusic.com 열어 보기 ↗</a>'+
+        (y.backup?'<br><span class="note">바로 전 목록은 R2 <code>'+y.backup+'</code> 에 보관했습니다.</span>':''),'ok');
+  }catch(err){
+    상자('⚠️ '+((err&&err.message)||err)+'<br><span class="note">이미 올라간 파일은 다시 올리지 않습니다. 다시 💾 저장을 누르면 남은 것부터 이어 갑니다.</span>','bad');
+  }finally{ 저장중=false; if(단추) 단추.disabled=false; }
+}
+
 function 내려받기(){
   var j=모으기();
   if(!j.곡.length && !confirm('곡이 하나도 없습니다. 그래도 내려받을까요?')) return;
-  var b=new Blob([JSON.stringify(j,null,1)],{type:'application/json'});
-  var a=document.createElement('a'); a.href=URL.createObjectURL(b); a.download='juran.json';
-  document.body.appendChild(a); a.click(); a.remove();
-  setTimeout(function(){ URL.revokeObjectURL(a.href); },3000);
+  var 빠진=[];
+  j.곡.forEach(function(c){ ['.mp3','.mid'].forEach(function(x){ if(새파일[c.id+x]) 빠진.push(c.id+x); }); });
+  if(빠진.length && !confirm('새로 고른 파일 '+빠진.length+'개가 아직 R2 에 안 올라갔을 수 있습니다.\n('+빠진.join(', ')+')\n\n「⬇ 새 파일 받기」로 받아 R2 songs 폴더에 먼저 올리셨나요?\n확인을 누르면 juran.json 을 내려받습니다.')) return;
+  내리기(new Blob([JSON.stringify(j,null,1)],{type:'application/json'}), 'juran.json');
 }
 function 파일열기(){ $('f').click(); }
 $('f').addEventListener('change',function(e){
@@ -353,15 +638,19 @@ function 채우기(j){
   if(j.기준){ $('b-n').value=j.기준.곡수||0; $('b-d').value=j.기준.갱신||''; $('b-t').value=j.기준.알림||''; }
   $('demo').checked = (j.보기용!==false);
   $('news').innerHTML=''; (j.뉴스||[]).forEach(뉴스줄);
-  $('tb').innerHTML=(j.곡||[]).map(줄HTML).join('');
+  $('tb').innerHTML=''; 새파일={};
+  (j.곡||[]).forEach(function(c){ $('tb').insertAdjacentHTML('beforeend', 줄HTML(c)); });
   셈(); 날세기();
 }
 
 /* ── 처음 열 때 지금 사이트 자료를 끌어온다 ── */
 function 처음(){
   날세기();
-  fetch('../juran.json?'+Date.now(),{cache:'no-store'})
-    .then(function(r){ if(!r.ok) throw 0; return r.json(); })
+  /* 판 L3 : 지금 사이트가 쓰는 목록 = R2 의 juran.json. 아직 없으면(첫 저장 전) 깃허브 것 */
+  function 받기(u){ return fetch(u+(u.indexOf('?')<0?'?':'&')+'t='+Date.now(),{cache:'no-store'})
+                      .then(function(r){ if(!r.ok) throw 0; return r.json(); }); }
+  받기(공개+'/juran.json')
+    .catch(function(){ return 받기('../juran.json'); })
     .then(채우기)
     .catch(function(){ 줄추가(5); 뉴스줄(); });
 }
