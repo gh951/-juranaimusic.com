@@ -51,7 +51,8 @@ var css=document.createElement('style');
 css.textContent=
 'body.주란편집 .champion,body.주란편집 .rise,body.주란편집 .item,body.주란편집 .hero h1,body.주란편집 .hero .lede{outline:2px dashed rgba(234,166,27,.85);outline-offset:3px;cursor:pointer}'+
 'body.주란편집 .rise:hover,body.주란편집 .item:hover{background:rgba(234,166,27,.10)}'+
-'body.주란편집 .champion .lbl{outline:2px dashed rgba(255,217,138,.9);outline-offset:3px;border-radius:4px;cursor:pointer}'+
+'body.주란편집 .champion .lbl,body.주란편집 .champion h2,body.주란편집 .champion .by{outline:2px dashed rgba(255,217,138,.9);outline-offset:3px;border-radius:4px;cursor:text}'+
+'body.주란편집 .champion [contenteditable]:focus{outline:2px solid #ffcf5c;background:rgba(255,255,255,.12)}'+
 'body.주란편집 .champion.끌림{outline:3px solid #ffcf5c;box-shadow:0 0 0 6px rgba(255,207,92,.35)}'+
 '.주편-손{position:relative;z-index:3;display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}'+
 '.주편-손 button{border:0;border-radius:999px;padding:7px 11px;font:700 12.5px system-ui,sans-serif;background:rgba(255,255,255,.92);color:#0d2b28;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25)}'+
@@ -133,13 +134,15 @@ function 카드손달기(){
   [].forEach.call(document.querySelectorAll('.champion'), function(카드){
     if(카드.querySelector('.주편-손')) return;
     var 손=document.createElement('div'); 손.className='주편-손';
-    손.innerHTML='<button type="button" data-w="음악">🎵 음악</button><button type="button" data-w="사진">🖼 사진</button><button type="button" data-w="고침">✏️ 고치기</button>';
+    손.innerHTML='<button type="button" data-w="음악">🎵 음악</button><button type="button" data-w="사진">🖼 사진</button><button type="button" data-w="고침">✏️ 곡 고치기</button><button type="button" data-w="카드">👑 카드 설정</button>';
+    글씨바로쓰기(카드);
     카드.appendChild(손);
     손.addEventListener('click', function(ev){
       var b=ev.target.closest('button'); if(!b) return;
       ev.preventDefault(); ev.stopPropagation();
+      if(b.dataset.w==='카드'){ 카드창(); return; }
       var c=곡찾기(카드.dataset.k);
-      if(!c){ alert('이 카드에는 아직 곡이 없습니다. 아래 「+ 곡」으로 곡을 먼저 넣어 주세요.'); return; }
+      if(!c){ alert('이 카드에는 아직 곡이 없습니다. 「👑 카드 설정」에서 곡을 고르거나 아래 「+ 곡」으로 곡을 넣어 주세요.'); return; }
       if(b.dataset.w==='고침') 곡창(c);
       else 파일고르기(b.dataset.w==='음악'?'audio/*,.mp3,.wav,.m4a,.aac,.flac,.ogg':'image/*', function(f){ 파일넣기(c,f); });
     });
@@ -153,12 +156,40 @@ function 카드손달기(){
   });
 }
 
+/* ── 판 579 : 카드 글씨를 **그 자리에서 바로** 쓴다 (이름 · 제목 · 아랫줄) ──
+   파트너 — 「텍스트를 써야 하는데 다운 바로 정해진 것만… 자유롭게 수정하게」
+   쓴 글은 그 카드에만 붙는다(곡 이름은 그대로). 다 지우면 곡에서 저절로 나오는 글로 돌아간다. */
+function 글씨바로쓰기(카드){
+  var 쪽=카드.classList.contains('glob')?'오른쪽':'왼쪽';
+  [['.lbl','이름'],['h2','제목'],['.by','부제']].forEach(function(x){
+    var el=카드.querySelector(x[0]); if(!el||el.dataset.쓰기) return;
+    el.dataset.쓰기='1';
+    try{ el.contentEditable='plaintext-only'; }catch(e){}
+    if(el.contentEditable!=='plaintext-only') el.contentEditable='true';
+    el.spellcheck=false;
+    var 처음='';
+    el.addEventListener('focus', function(){ 처음=el.textContent; });
+    el.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); el.blur(); } });
+    el.addEventListener('blur', function(){
+      var 글=el.textContent.replace(/\s+/g,' ').trim();
+      if(글===처음.replace(/\s+/g,' ').trim()) return;
+      if(x[1]==='이름' && 쪽==='왼쪽'){
+        var 나=''; try{ 나=JN.나라말(); }catch(e){}
+        if(나 && 글.indexOf(나)>=0) 글=글.split(나).join('{나라}');   /* 「🇰🇷 대한민국 …」 → 「{나라} …」 — 손님 나라대로 */
+      }
+      원본.카드=원본.카드||{}; 원본.카드[쪽]=원본.카드[쪽]||{};
+      if(글) 원본.카드[쪽][x[1]]=글; else delete 원본.카드[쪽][x[1]];
+      바꿨다(); 다시();
+    });
+  });
+}
+
 /* ── 누르면 고치기 (점선 친 곳) ── */
 document.addEventListener('click', function(ev){
   if(!원본) return;
   var t=ev.target;
-  if(t.closest('#주편-띠,#주편-막,.주편-손,.playc,a,button,select,input,textarea')) return;
-  if(t.closest('.champion .top')){ ev.preventDefault(); 카드창(); return; }   /* 판 578 : 카드 이름 줄 */
+  if(t.closest('#주편-띠,#주편-막,.주편-손,.playc,a,button,select,input,textarea,[contenteditable="true"],[contenteditable="plaintext-only"]')) return;
+  if(t.closest('.champion .top')) return;   /* 판 579 : 카드 이름은 그 자리에서 바로 쓴다 */
   var 카드=t.closest('.champion');
   if(카드){ var c=곡찾기(카드.dataset.k); if(c){ ev.preventDefault(); 곡창(c); } return; }
   var 줄=t.closest('.rise[data-k],.item[data-k]');
@@ -273,7 +304,7 @@ function 곡창(c, 새로){
     '<h3>'+(새로?'＋ 새 곡':'✏️ 곡 고치기')+' <span style="font-weight:400;color:#93aba6;font-size:12px">'+c.id+'</span></h3>'+
     '<label>제목</label><input type="text" id="e-t" value="'+글(c.t)+'" placeholder="곡 제목">'+
     '<label>지은이</label><input type="text" id="e-by" value="'+글(c.by)+'" placeholder="@이름">'+
-    '<div class="두칸"><div><label>장르</label><select id="e-g">'+장+'</select></div>'+
+    '<div class="두칸"><div><label>장르 (써도 되고 골라도 됩니다)</label><input type="text" id="e-g" list="e-g-l" value="'+글(c.g||'')+'"><datalist id="e-g-l">'+장르들.map(function(x){ return '<option value="'+x+'">'; }).join('')+'</datalist></div>'+
       '<div><label>나라</label><select id="e-n"><option value="">🌍 없음</option>'+나+'</select></div></div>'+
     '<div class="두칸"><div><label>표</label><input type="number" id="e-v" value="'+(+c.표||0)+'"></div>'+
       '<div><label>9-AI 점수</label><input type="number" id="e-s" step="0.1" value="'+(c.점수!=null?c.점수:90)+'"></div></div>'+
@@ -311,7 +342,7 @@ function 곡창(c, 새로){
   w.querySelector('#e-ok').onclick=function(){
     var t=w.querySelector('#e-t').value.trim();
     if(!t){ alert('제목을 넣어 주세요.'); return; }
-    c.t=t; c.by=w.querySelector('#e-by').value.trim(); c.g=w.querySelector('#e-g').value;
+    c.t=t; c.by=w.querySelector('#e-by').value.trim(); c.g=w.querySelector('#e-g').value.trim()||장르들[0];
     c.나라=(w.querySelector('#e-n').value||'').toUpperCase();
     c.표=Math.max(0,parseInt(w.querySelector('#e-v').value,10)||0); c.전표=Math.min(+c.전표||0,c.표);
     c.점수=parseFloat(w.querySelector('#e-s').value)||0;
@@ -340,17 +371,23 @@ function 카드창(){
   }
   var w=창열기('<h3>👑 챔피언 카드</h3>'+
     '<label>왼쪽 카드 이름</label><input type="text" id="k-ln" value="'+글(왼.이름||'')+'" placeholder="{나라} 챔피언">'+
-    '<p class="풀이">비워 두면 「🇰🇷 대한민국 챔피언」처럼 보는 사람 나라로 나옵니다. <b>{나라}</b> 라고 쓰면 그 자리에 나라 이름이 들어갑니다.</p>'+
-    '<label>왼쪽 카드에 보일 곡</label>'+고르기('k-ls', 왼.곡)+
+    '<p class="풀이">카드 글씨는 이 창 말고 <b>카드 위 글씨를 눌러 바로 써도</b> 됩니다. 비워 두면 「🇰🇷 대한민국 챔피언」처럼 보는 사람 나라로 나옵니다. <b>{나라}</b> 라고 쓰면 그 자리에 나라 이름이 들어갑니다.</p>'+
+    '<label>왼쪽 카드 제목</label><input type="text" id="k-lt" value="'+글(왼.제목||'')+'" placeholder="비우면 곡 제목">'+
+    '<label>왼쪽 카드 아랫줄</label><input type="text" id="k-lb" value="'+글(왼.부제||'')+'" placeholder="비우면 「지은이 · 장르 · 점수」">'+
+    '<label>왼쪽 카드의 곡 (음악 · 사진 · ▶)</label>'+고르기('k-ls', 왼.곡)+
+    '<hr style="border:0;border-top:1px solid rgba(8,60,55,.12);margin:16px 0 4px">'+
     '<label>오른쪽 카드 이름</label><input type="text" id="k-rn" value="'+글(오.이름||'')+'" placeholder="🌍 글로벌 챔피언">'+
-    '<label>오른쪽 카드에 보일 곡</label>'+고르기('k-rs', 오.곡)+
+    '<label>오른쪽 카드 제목</label><input type="text" id="k-rt" value="'+글(오.제목||'')+'" placeholder="비우면 곡 제목">'+
+    '<label>오른쪽 카드 아랫줄</label><input type="text" id="k-rb" value="'+글(오.부제||'')+'" placeholder="비우면 「지은이 · 장르 · 점수」">'+
+    '<label>오른쪽 카드의 곡 (음악 · 사진 · ▶)</label>'+고르기('k-rs', 오.곡)+
     '<p class="풀이">「자동」이면 표가 가장 많은 곡이 나옵니다. 곡을 고르면 표와 상관없이 그 곡이 나옵니다 — '+
       '진짜 투표가 시작되면 <b>「자동」으로 돌려 두세요</b>. 공정한 무대라는 말과 맞아야 합니다.</p>'+
     '<div class="단추들"><button type="button" id="k-no">닫기</button><button type="button" class="확인" id="k-ok">확인</button></div>');
   w.querySelector('#k-no').onclick=닫기;
   w.querySelector('#k-ok').onclick=function(){
-    원본.카드={ 왼쪽:{ 이름:w.querySelector('#k-ln').value.trim(), 곡:w.querySelector('#k-ls').value },
-               오른쪽:{ 이름:w.querySelector('#k-rn').value.trim(), 곡:w.querySelector('#k-rs').value } };
+    function 값(id){ return w.querySelector(id).value.trim(); }
+    원본.카드={ 왼쪽:{ 이름:값('#k-ln'), 제목:값('#k-lt'), 부제:값('#k-lb'), 곡:w.querySelector('#k-ls').value },
+               오른쪽:{ 이름:값('#k-rn'), 제목:값('#k-rt'), 부제:값('#k-rb'), 곡:w.querySelector('#k-rs').value } };
     바꿨다(); 다시(); 닫기();
   };
 }
