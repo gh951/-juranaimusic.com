@@ -255,7 +255,7 @@ function 글씨바로쓰기(카드){
 document.addEventListener('click', function(ev){
   if(!원본) return;
   var t=ev.target;
-  if(t.closest('#주편-띠,#주편-막,.주편-손,.playc,a,button,select,input,textarea,[contenteditable="true"],[contenteditable="plaintext-only"]')) return;
+  if(t.closest('#주편-띠,#주편-막,.주편-손,.playc,.재생줄,.votec,a,button,select,input,textarea,[contenteditable="true"],[contenteditable="plaintext-only"]')) return;
   if(t.closest('.champion .top')) return;   /* 판 579 : 카드 이름은 그 자리에서 바로 쓴다 */
   /* 판 581 : 표 숫자를 누르면 표만 고치는 작은 창 */
   var 표칸=t.closest('.champion .foot .v,.rise .vt,.item .votes');

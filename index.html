@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <!-- 판 564 : 파일 주소 끝에 판 번호를 붙인다. 손님 폰이 옛 파일을 쥐고 안 놓는 일을 막는다.
      ⚠️ js 파일을 새로 올릴 때는 이 숫자와 맨 아래 juran-check.js?v= 숫자를 같이 올린다. -->
-<script>window.JURAN판='584';</script>
+<script>window.JURAN판='585';</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>html{color-scheme:light;word-break:keep-all;overflow-wrap:break-word;line-break:strict;hanging-punctuation:allow-end}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>JURAN</title>
@@ -118,12 +118,23 @@
   .playc{margin-left:auto;width:46px;height:46px;border-radius:999px;border:0;cursor:pointer;display:grid;place-items:center;background:rgba(255,255,255,.14);color:#fff;font-size:16px}
   .playc:hover{background:rgba(255,255,255,.24)}
   /* 판 584 : 👆 손님 투표 */
+  /* 판 585 : ▶ 처럼 반투명 — 카드 사진을 가리지 않게 */
   .votec{margin-left:auto;height:46px;padding:0 16px 0 13px;border-radius:999px;border:0;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
-         background:#ffd25c;color:#2a1c00;font:800 15px var(--display,system-ui);box-shadow:0 4px 14px rgba(0,0,0,.25);position:relative}
+         background:rgba(255,255,255,.14);color:#fff;font:800 15px var(--display,system-ui);position:relative;
+         -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
   .votec span{font-size:13px;letter-spacing:.02em}
-  .votec:hover{background:#ffdf85}
+  .votec:hover{background:rgba(255,255,255,.24)}
   .votec:active{transform:scale(.94)}
-  .votec.did{background:rgba(255,255,255,.18);color:#fff;box-shadow:none}
+  .votec.did{background:rgba(255,255,255,.08);color:rgba(255,255,255,.75)}
+  .playc{-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+  /* 판 585 : 재생 줄 — ⏪ 10초 · 진행 막대 · 시간 · ⏩ 10초 */
+  .재생줄{position:relative;z-index:1;display:none;align-items:center;gap:8px;margin-top:10px;padding:6px 8px;border-radius:999px;
+          background:rgba(255,255,255,.12);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);color:#fff}
+  .champion.재생중 .재생줄{display:flex}
+  .재생줄 button{flex:none;width:38px;height:38px;border-radius:999px;border:0;cursor:pointer;background:rgba(255,255,255,.14);color:#fff;font:15px system-ui,sans-serif;line-height:1;white-space:nowrap;padding:0}
+  .재생줄 button:hover{background:rgba(255,255,255,.26)}
+  .재생줄 input[type=range]{flex:1;min-width:0;height:28px;margin:0;accent-color:#fff;cursor:pointer;background:transparent}
+  .재생줄 .때{flex:none;font:600 11.5px system-ui,sans-serif;font-variant-numeric:tabular-nums;opacity:.9;min-width:74px;text-align:center}
   .votec[disabled]{opacity:.45;cursor:default}
   .votec + .playc{margin-left:8px}
   .votec .풍선{position:absolute;left:50%;bottom:52px;transform:translateX(-50%);white-space:nowrap;background:#0d2b28;color:#eafff8;font:700 12.5px system-ui,sans-serif;
@@ -1162,22 +1173,69 @@
 
   /* ── 판 577 : 챔피언 카드 ▶ — 그 곡의 음악을 R2 에서 틀어 준다 ──
      소리는 하나만. 다른 카드를 누르면 앞의 것을 멈춘다. 화면을 옮기면 멈춘다. */
+  /* 판 585 : ❚❚ 는 **잠깐 멈춤**(그 자리에서 다시 ▶) · 카드 아래 재생 줄 — ⏪ 10초 · 막대로 옮기기 · ⏩ 10초
+     파트너 — 「틀면 끝까지 들어야 하는 불편함」 */
   (function(){
-    var 소리=null, 지금단추=null;
-    function 멈춤(){ try{ if(소리) 소리.pause(); }catch(e){} if(지금단추){ 지금단추.textContent='▶'; 지금단추.classList.remove('on'); } 지금단추=null; }
+    var 소리=null, 지금카드=null, 끌기=false;
+    function 분초(x){ x=Math.max(0,Math.floor(+x||0)); return Math.floor(x/60)+':'+('0'+(x%60)).slice(-2); }
+    function 줄(카드){
+      var z=카드.querySelector('.재생줄'); if(z) return z;
+      z=document.createElement('div'); z.className='재생줄';
+      z.innerHTML='<button type="button" data-w="뒤" aria-label="10초 뒤로" title="10초 뒤로">⏪</button>'+
+        '<input type="range" min="0" max="1000" value="0" step="1" aria-label="재생 위치">'+
+        '<span class="때">0:00 / 0:00</span>'+
+        '<button type="button" data-w="앞" aria-label="10초 앞으로" title="10초 앞으로">⏩</button>';
+      var 발=카드.querySelector('.foot'); 발.parentNode.insertBefore(z, 발.nextSibling);
+      var r=z.querySelector('input');
+      r.addEventListener('input', function(){ 끌기=true; if(소리&&지금카드===카드&&isFinite(소리.duration)) z.querySelector('.때').textContent=분초(r.value/1000*소리.duration)+' / '+분초(소리.duration); });
+      r.addEventListener('change', function(){ 끌기=false; if(소리&&지금카드===카드&&isFinite(소리.duration)) 소리.currentTime=r.value/1000*소리.duration; });
+      z.addEventListener('click', function(ev){
+        var b=ev.target.closest('button'); if(!b||!소리||지금카드!==카드) return;
+        ev.preventDefault(); ev.stopPropagation();
+        var d=isFinite(소리.duration)?소리.duration:1e9;
+        소리.currentTime=Math.max(0,Math.min(d-0.3,(소리.currentTime||0)+(b.dataset.w==='앞'?10:-10)));
+        그리기();
+      });
+      ['click','pointerdown','mousedown','touchstart'].forEach(function(t){ z.addEventListener(t,function(e){ e.stopPropagation(); }); });
+      return z;
+    }
+    function 단추(카드){ return 카드&&카드.querySelector('.playc'); }
+    function 그리기(){
+      if(!지금카드||!소리) return;
+      var b=단추(지금카드); if(b){ var 도는=!소리.paused; b.textContent=도는?'❚❚':'▶'; b.classList.toggle('on',도는); b.setAttribute('aria-label',도는?'잠깐 멈춤':'재생'); }
+      var z=줄(지금카드), d=소리.duration, t=소리.currentTime||0;
+      if(!끌기) z.querySelector('input').value=(isFinite(d)&&d>0)? Math.round(t/d*1000) : 0;
+      if(!끌기) z.querySelector('.때').textContent=분초(t)+' / '+(isFinite(d)?분초(d):'--:--');
+    }
+    function 끄기(){   /* 다른 곡으로 갈 때 — 앞 카드의 줄을 접는다 */
+      try{ if(소리) 소리.pause(); }catch(e){}
+      if(지금카드){ 지금카드.classList.remove('재생중'); var b=단추(지금카드); if(b){ b.textContent='▶'; b.classList.remove('on'); } }
+      지금카드=null;
+    }
+    function 쉬기(){ try{ if(소리) 소리.pause(); }catch(e){} 그리기(); }
     document.addEventListener('click', function(ev){
       var b=ev.target.closest && ev.target.closest('.champion .playc'); if(!b) return;
       ev.preventDefault(); ev.stopPropagation();
       var 카드=b.closest('.champion'), 곡=JN.곡(카드&&카드.dataset.k);
-      if(지금단추===b){ 멈춤(); return; }
-      멈춤();
-      if(!곡||!곡.음악){ b.title='아직 음악이 없습니다'; b.animate&&b.animate([{transform:'translateX(-3px)'},{transform:'translateX(3px)'},{transform:'none'}],{duration:220}); return; }
-      if(!소리){ 소리=new Audio(); 소리.preload='none'; 소리.addEventListener('ended',멈춤); }
+      if(지금카드===카드 && 소리 && 곡 && 소리.dataset.k===곡.id){
+        if(소리.paused){ var p0=소리.play(); if(p0&&p0.catch) p0.catch(function(){ 그리기(); }); } else 소리.pause();
+        그리기(); return;
+      }
+      if(!곡||!곡.음악){ b.title='아직 음악이 없습니다'; b.animate&&b.animate([{transform:'translateX(-3px)'},{transform:'translateX(3px)'},{transform:'none'}],{duration:220}); return; }   /* 음악 없는 카드를 눌러도 듣던 곡은 그대로 */
+      끄기();
+      if(!소리){ 소리=new Audio(); 소리.preload='metadata';
+        ['timeupdate','loadedmetadata','durationchange','play','pause'].forEach(function(t){ 소리.addEventListener(t,그리기); });
+        소리.addEventListener('ended',function(){ try{ 소리.currentTime=0; }catch(e){} 그리기(); });
+      }
       if(소리.src!==곡.음악) 소리.src=곡.음악;
-      지금단추=b; b.textContent='❚❚'; b.classList.add('on');
-      var p=소리.play(); if(p&&p.catch) p.catch(function(){ 멈춤(); });
+      소리.dataset.k=곡.id;
+      지금카드=카드; 카드.classList.add('재생중'); 줄(카드); 그리기();
+      b.textContent='❚❚'; b.classList.add('on');
+      var p=소리.play(); if(p&&p.catch) p.catch(function(){ 그리기(); });
     }, true);
-    window.addEventListener('juran:view', 멈춤);
+    /* 카드 곡이 바뀌면(편집 · 자동 1등) 앞 곡은 끈다 */
+    setInterval(function(){ if(지금카드&&소리&&지금카드.dataset.k!==소리.dataset.k) 끄기(); },1500);
+    window.addEventListener('juran:view', 쉬기);
   })();
 
   /* ── 판 584 : 👆 손님 투표 — 챔피언 카드의 손가락 ──
@@ -1229,7 +1287,7 @@
       var v=sessionStorage.getItem('lee-t')||'', i=v.indexOf('|');
       if(!(i>0 && +v.slice(0,i)*1000>Date.now()+60000)){ location.href='LEE.html'; return; }
       window.__주란편집=true;
-      var sc=document.createElement('script'); sc.src='js/juran-edit.js?v='+(window.JURAN판||'584'); sc.defer=true;
+      var sc=document.createElement('script'); sc.src='js/juran-edit.js?v='+(window.JURAN판||'585'); sc.defer=true;
       document.head.appendChild(sc);
     }catch(e){}
   })();
@@ -1904,7 +1962,7 @@ window.JK=JK;
 (function(){
   var 소리집 = 'https://www.c-go-fuli.com/';
   var 내집   = 'js/';
-  var 판끝   = '?v='+(window.JURAN판||'584');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
+  var 판끝   = '?v='+(window.JURAN판||'585');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
   var 화면줄 = [{주소:내집+'juran-words.js'+판끝, 꼭:false, 이름:'말 사전'},
                 {주소:내집+'cgo-music.js'+판끝,   꼭:true,  이름:'작곡 엔진'},
                 {주소:내집+'cgo-score.js'+판끝,   꼭:false, 이름:'악보 편집기'}];
@@ -2236,6 +2294,6 @@ window.JK=JK;
 
 <!-- 검사기 — 재는 손. 36KB. 씨앗 통(161KB)은 검사를 누를 때 받는다. -->
 <!-- 판 564 : ⚠️ 이 숫자는 머리(head)의 JURAN판 과 같이 올린다 -->
-<script src="js/juran-check.js?v=584" defer></script>
+<script src="js/juran-check.js?v=585" defer></script>
 </body>
 </html>
