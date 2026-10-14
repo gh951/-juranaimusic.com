@@ -139,7 +139,9 @@ css.textContent=
 '#주편-창 .단추들 button.지우기{flex:0 0 auto;color:#d6453f;background:#fff}'+
 '#주편-창 .풀이{font-size:12px;color:#5b7a74;margin-top:4px}'+
 'body.주란편집 .champion .foot .v,body.주란편집 .rise .vt,body.주란편집 .item .votes{outline:2px dashed #ffcf5c;outline-offset:2px;border-radius:6px;cursor:pointer}'+
-'#주편-창 input.큰수{font:800 26px system-ui,sans-serif;text-align:center;padding:12px}';
+'#주편-창 input.큰수{font:800 26px system-ui,sans-serif;text-align:center;padding:12px}'+
+'body.주란편집 [data-글]{outline:2px dashed #ffcf5c;outline-offset:2px;border-radius:5px;cursor:text}'+
+'body.주란편집 [data-글]:focus{outline-style:solid;background:rgba(255,207,92,.18)}';
 document.head.appendChild(css);
 document.body.classList.add('주란편집');
 
@@ -178,7 +180,7 @@ function 준비(j){
   if(!Array.isArray(원본.곡)) 원본.곡=[];
   원본.문구=원본.문구||{}; 원본.시즌=원본.시즌||{};
   원본.곡.forEach(function(c){ if(!c.id) c.id=다음번호(); });
-  다시(); 카드손달기(); 손글씨(); 카드글씨옮기기();
+  다시(); 카드손달기(); 손글씨(); 카드글씨옮기기(); 정한글씨쓰기();
   setInterval(손글씨, 3000);   /* 카드 곡이 저절로 바뀌어도 단추 글씨가 따라가게 */
 }
 (function 기다리기(n){
@@ -250,6 +252,54 @@ function 글씨바로쓰기(카드){
     });
   });
 }
+
+/* ── 판 586 : 화면의 정해진 글씨는 **모두** 바로 고친다 (data-글) ──
+   표 단위 「표」 · 투표 단추 「👆 투표」 · LIVE · 급상승 · 「국내 차트 50위까지 →」 · 맨 위 머리띠 …
+   단추 안의 글씨는 단추가 눌리지 않게 작은 창으로, 나머지는 그 자리에서 쓴다. 비우면 처음 글씨로. */
+function 글씨넣기(k, 글){
+  원본.글씨=원본.글씨||{};
+  글=String(글||'').replace(/\s+/g,' ').trim();
+  if(글) 원본.글씨[k]=글; else delete 원본.글씨[k];
+  if(!Object.keys(원본.글씨).length) delete 원본.글씨;
+  바꿨다(); 다시();
+}
+function 정한글씨쓰기(){
+  [].forEach.call(document.querySelectorAll('[data-글]'), function(el){
+    if(el.dataset.쓰기 || el.closest('button')) return;
+    el.dataset.쓰기='1';
+    try{ el.contentEditable='plaintext-only'; }catch(e){}
+    if(el.contentEditable!=='plaintext-only') el.contentEditable='true';
+    el.spellcheck=false;
+    var 처음='';
+    el.addEventListener('focus', function(){ 처음=el.textContent; });
+    el.addEventListener('click', function(e){ e.stopPropagation(); });
+    el.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); el.blur(); } });
+    el.addEventListener('blur', function(){
+      var 글=el.textContent.replace(/\s+/g,' ').trim();
+      if(글===처음.replace(/\s+/g,' ').trim()) return;
+      if(글===String(el.dataset.기본||'').trim()) 글='';
+      글씨넣기(el.dataset.글, 글);
+    });
+  });
+}
+function 글씨창(el){
+  var k=el.dataset.글, 기본=el.dataset.기본||el.textContent;
+  var w=창열기('<h3>✏️ 단추 글씨</h3>'+
+    '<label>지금 글씨</label><input type="text" id="g-t" value="'+글(el.textContent)+'">'+
+    '<p class="풀이">비워 두면 처음 글씨(「'+글(기본)+'」)로 돌아갑니다. 어느 나라 말로 써도 됩니다.</p>'+
+    '<div class="단추들"><button type="button" id="g-no">닫기</button><button type="button" class="확인" id="g-ok">확인</button></div>');
+  var 입=w.querySelector('#g-t');
+  function 확인(){ var v=입.value.trim(); 글씨넣기(k, v===기본.trim()?'':v); 닫기(); }
+  w.querySelector('#g-no').onclick=닫기; w.querySelector('#g-ok').onclick=확인;
+  입.addEventListener('keydown',function(e){ if(e.key==='Enter') 확인(); });
+  setTimeout(function(){ 입.focus(); 입.select(); },50);
+}
+document.addEventListener('click', function(ev){
+  if(!원본) return;
+  var b=ev.target.closest && ev.target.closest('button'); if(!b||b.closest('#주편-띠,#주편-막,.주편-손,.재생줄')) return;
+  var el=b.querySelector('[data-글]'); if(!el) return;
+  ev.preventDefault(); ev.stopPropagation(); 글씨창(el);
+}, true);
 
 /* ── 누르면 고치기 (점선 친 곳) ── */
 document.addEventListener('click', function(ev){
@@ -532,12 +582,20 @@ function 카드창(){
     '<label>오른쪽 카드의 곡 (음악 · 사진 · ▶)</label>'+고르기('k-rs', 오.곡)+
     '<p class="풀이">「자동」이면 표가 가장 많은 곡이 나옵니다. 곡을 고르면 표와 상관없이 그 곡이 나옵니다 — '+
       '진짜 투표가 시작되면 <b>「자동」으로 돌려 두세요</b>. 공정한 무대라는 말과 맞아야 합니다.</p>'+
+    '<hr style="border:0;border-top:1px solid rgba(8,60,55,.12);margin:16px 0 4px">'+
+    '<label>👆 투표하면 나오는 말</label><input type="text" id="k-v1" value="'+글((원본.글씨||{}).투표됨말||'')+'" placeholder="👆 투표했습니다 — 고맙습니다!">'+
+    '<label>👆 이미 투표했을 때 나오는 말</label><input type="text" id="k-v2" value="'+글((원본.글씨||{}).투표또말||'')+'" placeholder="오늘은 이 곡에 투표하셨습니다 — 내일 또 눌러 주세요">'+
+    '<p class="풀이">단추 글씨 「👆 투표」 · 「표」 · 「투표중」 은 카드 위에서 바로 누르면 고칠 수 있습니다.</p>'+
     '<div class="단추들"><button type="button" id="k-no">닫기</button><button type="button" class="확인" id="k-ok">확인</button></div>');
   w.querySelector('#k-no').onclick=닫기;
   w.querySelector('#k-ok').onclick=function(){
     function 값(id){ return w.querySelector(id).value.trim(); }
-    원본.카드={ 왼쪽:{ 이름:값('#k-ln'), 곡:w.querySelector('#k-ls').value },
-               오른쪽:{ 이름:값('#k-rn'), 곡:w.querySelector('#k-rs').value } };
+    var 옛=원본.카드||{};
+    원본.카드={ 왼쪽:Object.assign({}, 옛.왼쪽||{}, { 이름:값('#k-ln'), 곡:w.querySelector('#k-ls').value }),
+               오른쪽:Object.assign({}, 옛.오른쪽||{}, { 이름:값('#k-rn'), 곡:w.querySelector('#k-rs').value }) };
+    원본.글씨=원본.글씨||{};
+    [['#k-v1','투표됨말'],['#k-v2','투표또말']].forEach(function(x){ var v=값(x[0]); if(v) 원본.글씨[x[1]]=v; else delete 원본.글씨[x[1]]; });
+    if(!Object.keys(원본.글씨).length) delete 원본.글씨;
     바꿨다(); 다시(); 닫기();
   };
 }

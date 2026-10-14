@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <!-- 판 564 : 파일 주소 끝에 판 번호를 붙인다. 손님 폰이 옛 파일을 쥐고 안 놓는 일을 막는다.
      ⚠️ js 파일을 새로 올릴 때는 이 숫자와 맨 아래 juran-check.js?v= 숫자를 같이 올린다. -->
-<script>window.JURAN판='585';</script>
+<script>window.JURAN판='586';</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>html{color-scheme:light;word-break:keep-all;overflow-wrap:break-word;line-break:strict;hanging-punctuation:allow-end}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>JURAN</title>
@@ -122,7 +122,7 @@
   .votec{margin-left:auto;height:46px;padding:0 16px 0 13px;border-radius:999px;border:0;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
          background:rgba(255,255,255,.14);color:#fff;font:800 15px var(--display,system-ui);position:relative;
          -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
-  .votec span{font-size:13px;letter-spacing:.02em}
+  .votec span{font-size:14px;letter-spacing:.02em;white-space:nowrap}
   .votec:hover{background:rgba(255,255,255,.24)}
   .votec:active{transform:scale(.94)}
   .votec.did{background:rgba(255,255,255,.08);color:rgba(255,255,255,.75)}
@@ -551,7 +551,7 @@
 <section class="view" id="v-home">
   <div class="wrap">
     <div class="hero">
-      <span class="eyebrow">🏆 JURAN · 세계 최초 AI 뮤직 어워즈</span>
+      <span class="eyebrow" data-글="머리띠">🏆 JURAN · 세계 최초 AI 뮤직 어워즈</span>
       <h1>누구나 작곡가가 되는<br><span class="hl">지구에서 가장 공정한 무대</span></h1>
       <p class="lede">AI로 곡을 만들고, 악보째 올리고, 전 세계가 실시간으로 순위를 매깁니다. 심사는 9개의 AI가 — 악보를 보고, 모든 점수를 공개하면서.</p>
 
@@ -561,7 +561,7 @@
           <div>
             <h2 id="ch-t">—</h2>
             <div class="by" id="ch-by">아직 곡이 없습니다</div>
-            <div class="foot"><div class="v"><span class="num" id="ch-v">0</span> <span>표</span></div><button class="votec" type="button" aria-label="이 곡에 투표">👆<span>투표</span></button><button class="playc" aria-label="재생">▶</button></div>
+            <div class="foot"><div class="v"><span class="num" id="ch-v">0</span> <span data-글="표단위-왼">표</span></div><button class="votec" type="button" aria-label="이 곡에 투표"><span data-글="투표글-왼">👆 투표</span></button><button class="playc" aria-label="재생">▶</button></div>
           </div>
         </div>
         <div class="champion glob">
@@ -569,7 +569,7 @@
           <div>
             <h2 id="cg-t">—</h2>
             <div class="by" id="cg-by">—</div>
-            <div class="foot"><div class="v"><span class="num" id="cg-v">0</span> <span>표</span></div><button class="votec" type="button" aria-label="이 곡에 투표">👆<span>투표</span></button><button class="playc" aria-label="재생">▶</button></div>
+            <div class="foot"><div class="v"><span class="num" id="cg-v">0</span> <span data-글="표단위-오">표</span></div><button class="votec" type="button" aria-label="이 곡에 투표"><span data-글="투표글-오">👆 투표</span></button><button class="playc" aria-label="재생">▶</button></div>
           </div>
         </div>
       </div>
@@ -577,16 +577,16 @@
       <div class="charts">
 
         <div class="side">
-          <div class="h"><b id="rh-home">국내</b><span class="live"><i></i>LIVE</span><span class="hcap">급상승</span></div>
+          <div class="h"><b id="rh-home">국내</b><span class="live"><i></i><span data-글="라이브-국">LIVE</span></span><span class="hcap" data-글="급상승-국">급상승</span></div>
           <div id="rise-home"></div>
-          <button class="more" onclick="showView('chart');JN.차트('home')">국내 차트 50위까지 →</button>
+          <button class="more" onclick="showView('chart');JN.차트('home')"><span data-글="더보기-국">국내 차트 50위까지 →</span></button>
           <div class="foot2"><span id="say-home">저작권 1차 예측 — 낮을수록 덜 닮았다는 뜻입니다.</span><button onclick="JN.알림(true)">ⓘ 기준</button></div>
         </div>
 
         <div class="side">
-          <div class="h"><b>🌍 글로벌</b><span class="live"><i></i>LIVE</span><span class="hcap">급상승</span></div>
+          <div class="h"><b data-글="급상승제목-글">🌍 글로벌</b><span class="live"><i></i><span data-글="라이브-글">LIVE</span></span><span class="hcap" data-글="급상승-글">급상승</span></div>
           <div id="rise-glob"></div>
-          <button class="more" onclick="showView('chart');JN.차트('global')">글로벌 차트 50위까지 →</button>
+          <button class="more" onclick="showView('chart');JN.차트('global')"><span data-글="더보기-글">글로벌 차트 50위까지 →</span></button>
           <div class="foot2"><span id="say-glob">저작권 1차 예측 — 낮을수록 덜 닮았다는 뜻입니다.</span><button onclick="JN.알림(true)">ⓘ 기준</button></div>
         </div>
 
@@ -1024,6 +1024,7 @@
     if(l && l!==document.activeElement) l.textContent=이름(카.왼쪽&&카.왼쪽.이름, 나라말+' 챔피언');
     var lg=document.getElementById('cl-glob');
     if(lg && lg!==document.activeElement) lg.textContent=이름(카.오른쪽&&카.오른쪽.이름, '🌍 글로벌 챔피언');
+    _글씨칠하기();
     /* 판 584 : 「투표중」 도 운영자가 쓴다 */
     [['cs-home',카.왼쪽],['cs-glob',카.오른쪽]].forEach(function(x){
       var e=document.getElementById(x[0]); if(e && e!==document.activeElement) e.textContent=이름(x[1]&&x[1].상태,'투표중'); });
@@ -1039,7 +1040,17 @@
 
   /* ── 곡 자료를 juran.json 에서 ── */
   var _원본=null;   /* 판 577 : 읽어 온 그대로 — 편집 모드가 이것을 고쳐 저장한다 */
-  var _손님표={};   /* 판 584 : 손님이 👆 로 넣은 표 (R2 votes.json) — 보이는 표 = 운영자 표 + 손님 표 */
+  var _손님표={};
+  /* 판 586 : 화면의 정해진 글씨(data-글)를 운영자가 바꾼다 — 원본.글씨[이름]. 비우면 처음 글씨로.
+     파트너 — 「하나 하면 알아듣고」 → 카드·급상승의 글씨는 모두 같은 방법으로 바뀐다 */
+  function _글(k,기본){ var g=(_원본&&_원본.글씨)||{}; var v=String(g[k]==null?'':g[k]).trim(); return v||기본; }
+  function _글씨칠하기(){
+    [].forEach.call(document.querySelectorAll('[data-글]'), function(e){
+      if(e===document.activeElement) return;
+      if(e.dataset.기본==null) e.dataset.기본=e.textContent;
+      var v=_글(e.dataset.글, e.dataset.기본); if(e.textContent!==v) e.textContent=v;
+    });
+  }   /* 판 584 : 손님이 👆 로 넣은 표 (R2 votes.json) — 보이는 표 = 운영자 표 + 손님 표 */
   function _자료넣기(j){
     if(!j||!j.곡||!j.곡.length) return false;
     var 새={}; genres.forEach(function(g){ 새[g.n]=[]; });
@@ -1256,8 +1267,8 @@
       ev.preventDefault(); ev.stopPropagation();
       var k=(b.closest('.champion')||{}).dataset; k=k&&k.k;
       if(!k){ 풍선(b,'아직 곡이 없습니다'); return; }
-      if(window.__주란편집){ 풍선(b,'편집 모드에서는 투표하지 않습니다'); return; }
-      if(_투표했나(k)){ 풍선(b,'오늘은 이 곡에 투표하셨습니다 — 내일 또 눌러 주세요'); return; }
+      if(window.__주란편집) return;   /* 편집 모드에서는 단추 글씨를 고친다 (juran-edit.js) */
+      if(_투표했나(k)){ 풍선(b,_글('투표또말','오늘은 이 곡에 투표하셨습니다 — 내일 또 눌러 주세요')); return; }
       if(b.dataset.보냄) return; b.dataset.보냄='1';
       fetch(서버+'/vote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:k})})
         .then(function(r){ return r.json().then(function(x){ return {c:r.status,x:x}; }, function(){ return {c:r.status,x:{}}; }); })
@@ -1265,12 +1276,12 @@
           if(a.x&&a.x.ok){
             _손님표[k]=+a.x.표||((+_손님표[k]||0)+1); _투표적기(k);
             var d=document.createElement('span'); d.className='더'; d.textContent='+1'; b.appendChild(d); setTimeout(function(){ d.remove(); },1300);
-            풍선(b,'👆 투표했습니다 — 고맙습니다!');
+            풍선(b,_글('투표됨말','👆 투표했습니다 — 고맙습니다!'));
             if(_원본 && _자료넣기(_원본)){ paintRise(); render(false); }
             return;
           }
-          if(a.x&&a.x.again) _투표적기(k);
-          풍선(b,(a.x&&a.x.why)||('투표를 준비하는 중입니다 ('+a.c+')'));
+          if(a.x&&a.x.again){ _투표적기(k); 풍선(b,_글('투표또말','오늘은 이 곡에 투표하셨습니다 — 내일 또 눌러 주세요')); }
+          else 풍선(b,(a.x&&a.x.why)||('투표를 준비하는 중입니다 ('+a.c+')'));
           if(_원본 && _자료넣기(_원본)){ paintRise(); }
         })
         .catch(function(){ 풍선(b,'인터넷을 확인해 주세요'); })
@@ -1287,7 +1298,7 @@
       var v=sessionStorage.getItem('lee-t')||'', i=v.indexOf('|');
       if(!(i>0 && +v.slice(0,i)*1000>Date.now()+60000)){ location.href='LEE.html'; return; }
       window.__주란편집=true;
-      var sc=document.createElement('script'); sc.src='js/juran-edit.js?v='+(window.JURAN판||'585'); sc.defer=true;
+      var sc=document.createElement('script'); sc.src='js/juran-edit.js?v='+(window.JURAN판||'586'); sc.defer=true;
       document.head.appendChild(sc);
     }catch(e){}
   })();
@@ -1962,7 +1973,7 @@ window.JK=JK;
 (function(){
   var 소리집 = 'https://www.c-go-fuli.com/';
   var 내집   = 'js/';
-  var 판끝   = '?v='+(window.JURAN판||'585');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
+  var 판끝   = '?v='+(window.JURAN판||'586');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
   var 화면줄 = [{주소:내집+'juran-words.js'+판끝, 꼭:false, 이름:'말 사전'},
                 {주소:내집+'cgo-music.js'+판끝,   꼭:true,  이름:'작곡 엔진'},
                 {주소:내집+'cgo-score.js'+판끝,   꼭:false, 이름:'악보 편집기'}];
@@ -2294,6 +2305,6 @@ window.JK=JK;
 
 <!-- 검사기 — 재는 손. 36KB. 씨앗 통(161KB)은 검사를 누를 때 받는다. -->
 <!-- 판 564 : ⚠️ 이 숫자는 머리(head)의 JURAN판 과 같이 올린다 -->
-<script src="js/juran-check.js?v=585" defer></script>
+<script src="js/juran-check.js?v=586" defer></script>
 </body>
 </html>
