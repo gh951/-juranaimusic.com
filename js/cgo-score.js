@@ -3727,7 +3727,12 @@ try{ if(!_au372.paused) _자기514(); }catch(e){}
   (function(){
     var 멈춤=false, 단추=null, 굴릴틀=0, 지난마디=-2;
     var 조용히=false; try{ 조용히=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches; }catch(e){}
-    function 연주중(){ try{ var pb=window._cgoScorePB; return !!(pb&&pb.playing); }catch(e){ return false; } }
+    /* 판 572 : 수노 곡도 따라간다 — 수노는 소리판(#cgo-vvip-audio)이 흐르고 띠 이름이 다르다(#cgo-sc-sync372).
+       CGO 는 악보 칸 **안에서** 굴렸는데(_sw369.scrollTo), JURAN 은 악보가 페이지에 통째로 펼쳐져 있어
+       칸 안 굴리기가 아무 일도 안 했다. 그래서 수노 곡이 흘러도 화면이 가만히 있었다. */
+    function 수노소리(){ var a=document.getElementById('cgo-vvip-audio'); return (a && !a.paused && !a.ended) ? a : null; }
+    function 연주중(){ try{ var pb=window._cgoScorePB; if(pb&&pb.playing) return true; }catch(e){} return !!수노소리(); }
+    function 지금띠(){ return document.getElementById('cgo-sc-hl') || (수노소리() && document.getElementById('cgo-sc-sync372')); }
     function 단추보이기(on){
       if(on && !단추){
         단추=document.createElement('button'); 단추.type='button';
@@ -3742,7 +3747,7 @@ try{ if(!_au372.paused) _자기514(); }catch(e){}
     }
     function 따라가기(바로){
       if(멈춤 || !연주중()) return;
-      var hl=document.getElementById('cgo-sc-hl'); if(!hl) return;
+      var hl=지금띠(); if(!hl) return;
       var r=hl.getBoundingClientRect(), H=window.innerHeight||700;
       if(!r.height) return;                                   /* 떼어 둔 화면 — 안 보인다 */
       var 위=Math.max(72, H*0.12);
@@ -3769,7 +3774,11 @@ try{ if(!_au372.paused) _자기514(); }catch(e){}
       지난마디=마디;
       따라가기(false);
     }
-    function 띠인가(n){ return n && n.nodeType===1 && (n.id==='cgo-sc-hl'); }
+    function 띠인가(n){ return n && n.nodeType===1 && (n.id==='cgo-sc-hl' || n.id==='cgo-sc-sync372'); }
+    /* 수노 곡을 처음부터 다시 틀면 다시 따라간다 (소리 사건은 위로 안 올라오니 붙잡기 단계로 듣는다) */
+    document.addEventListener('play',function(e){
+      if(e.target && e.target.id==='cgo-vvip-audio'){ 멈춤=false; 단추보이기(false); }
+    },true);
     try{
       var 지켜봄=new MutationObserver(function(바뀐것){
         for(var i=0;i<바뀐것.length;i++){
