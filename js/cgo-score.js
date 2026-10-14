@@ -3678,15 +3678,26 @@ try{ if(!_au372.paused) _자기514(); }catch(e){}
   /* ⚠️ CGO 악보는 **그릴 때의 폭**으로 한 번 그리고 끝이다. 글자를 키우거나 창을
      바꾸면 그린 그림과 자리가 안 맞는다. 폭이 8% 넘게 달라졌을 때만 다시 그린다.
      (고리를 돌지 않는다 — 바뀔 때 한 번이다.) */
-  var 지난폭=0, 늦=null;
+  /* ⚠️ 판 570 : 이 장치가 **곡을 끊고 있었다.**
+     파트너 — 「악보와 띠 소리만 나오고 끊어집니다. 원래는 안 끊어지고 계속 나와야」
+     재 보니 곡이 시작되고 0.6초 뒤에 여기서 악보를 다시 그렸고, CGO 작곡 손은
+     악보를 다시 그릴 때 **연주를 멈춘다**(renderGrooveAsScore → _cgoScoreStop).
+     악보 칸이 처음 나타나는 순간을 「폭이 바뀌었다」로 잘못 본 것이다(지난폭이 0 이었다).
+     ① 처음 본 폭은 **기억만** 한다 — 그것은 바뀐 게 아니라 처음 잰 것이다.
+     ② **연주 중에는 다시 그리지 않는다.** 폭이 바뀌었으면 적어 두고, 연주가 끝난 뒤
+        다음에 이 장치가 깰 때(폭이 또 바뀌거나 창이 바뀔 때) 맞춘다. 고리를 돌지 않는다. */
+  var 지난폭=0, 늦=null, 밀린폭=false;
+  function 연주중(){ try{ var pb=window._cgoScorePB; return !!(pb&&pb.playing); }catch(e){ return false; } }
   function 폭보기(){
     try{
       var m=window._cgoMusicMod; if(!m||!m.root) return;
       var w=m.root.querySelector('#cgo-groove-score-wrap');
       if(!w || !w.querySelector('svg')) return;
       var 이번=w.offsetWidth||0; if(!이번) return;
-      if(지난폭 && Math.abs(이번-지난폭)/지난폭 < 0.08){ 지난폭=이번; return; }
-      지난폭=이번;
+      if(!지난폭){ 지난폭=이번; return; }                                   /* ① */
+      if(Math.abs(이번-지난폭)/지난폭 < 0.08 && !밀린폭){ 지난폭=이번; return; }
+      if(연주중()){ 밀린폭=true; return; }                                   /* ② */
+      지난폭=이번; 밀린폭=false;
       window._cgoGenerateScoreOnly368();
     }catch(e){}
   }
