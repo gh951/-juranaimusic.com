@@ -496,6 +496,14 @@
    폰 칸이 그보다 좁으면(예 314) 폭만 줄고 높이는 그대로라, 그림이 가운데로 몰리며
    위아래에 600px 가까운 빈칸이 생겼다. 높이를 폭에 맞춰 따라가게 한다. */
 #cgo-groove-score-wrap svg{height:auto!important;max-width:100%}
+/* 판 575 : 노래 말 · 멜로디 · 나이 — 세 칸을 한 줄에.
+   파트너 — 「언어선택·상관없음 다운바 색이 흰 바탕에 흰 글씨라 잘 안 보여요. 모든 세대 글씨체로」
+   바탕이 반투명이면 폰·PC 가 펼친 목록을 흰 바탕으로 그리는데 글씨는 연보라라 안 보였다.
+   셋 다 진한 바탕 + 노란 글씨로 맞춘다. 펼친 목록(option)도 같은 색. */
+#cgoMdLang,#cgoMdMel,#juran-age-sel-575{background:#221d33!important;color:#fde68a!important;
+  border:1px solid rgba(251,191,36,.35)!important;font-size:12px!important;padding:7px 6px!important;
+  border-radius:8px!important;flex:1 1 0!important;min-width:0!important;font-family:inherit;outline:none}
+#cgoMdLang option,#cgoMdMel option,#juran-age-sel-575 option{background:#221d33;color:#fde68a}
 </style>
 </head>
 <body>
@@ -1905,43 +1913,28 @@ window.JK=JK;
 
   function 나이칸달기575(){
     var r=document.getElementById('cgo-music-root'); if(!r) return;
-    if(r.querySelector('#juran-age-575')) return;
-    var 분위기=r.querySelector('#cgo-mood-wrap'); if(!분위기 || !분위기.parentNode) return;
-    var 상자=document.createElement('div');
-    상자.id='juran-age-575';
-    상자.style.cssText='margin:0 0 12px;';
-    var 줄=document.createElement('div');
-    줄.style.cssText='display:flex;align-items:center;gap:8px;';
-    var 이름=document.createElement('label');
-    이름.htmlFor='juran-age-sel-575';
-    이름.textContent='🎂 누구의 노래인가요';
-    이름.style.cssText='font-size:12px;color:#fcd34d;font-weight:700;white-space:nowrap;';
+    if(r.querySelector('#juran-age-sel-575')) return;
+    /* 「한국어 · 상관없음」 줄 끝에 셋째 칸으로 붙인다. 그 줄이 없으면 분위기 칸 바로 아래. */
+    var 말칸=r.querySelector('#cgoMdLang');
+    var 줄=말칸 && 말칸.parentNode;
     var 칸=document.createElement('select');
     칸.id='juran-age-sel-575';
-    칸.style.cssText='flex:1;min-width:0;padding:8px 10px;border-radius:8px;background:#221d33;'
-      +'border:1px solid rgba(251,191,36,.35);color:#fde68a;font-size:13px;font-family:inherit;outline:none;';
-    [['','자동 — 모든 세대'],['10','10대'],['20','20대'],['30','30대'],['40','40대'],['50','50대'],['60','60대 이상']]
+    칸.title='누구의 노래인가요 — 고른 세대가 기억하는 물건과 장소로 가사를 지어요';
+    칸.setAttribute('aria-label', 칸.title);
+    [['','🎂 모든 세대'],['10','🎂 10대'],['20','🎂 20대'],['30','🎂 30대'],['40','🎂 40대'],['50','🎂 50대'],['60','🎂 60대 이상']]
       .forEach(function(x){
         var o=document.createElement('option'); o.value=x[0]; o.textContent=x[1];
-        o.style.cssText='background:#221d33;color:#fde68a;';
         칸.appendChild(o);
       });
     칸.value=나이값575;
-    var 풀이=document.createElement('p');
-    풀이.style.cssText='font-size:11px;color:#a8a29e;margin:5px 0 0;line-height:1.5;';
-    function 풀이쓰기(){
-      풀이.textContent = 나이값575
-        ? '그 세대가 기억하는 물건과 장소로 가사를 지어요. 아래 마음 카드나 가사 단추를 누르세요.'
-        : '고르면 그 세대가 기억하는 물건과 장소로 가사를 지어요.';
-    }
-    풀이쓰기();
     칸.addEventListener('change', function(){
       나이값575 = /^(10|20|30|40|50|60)$/.test(칸.value) ? 칸.value : '';
       try{ if(나이값575) localStorage.setItem('juran-age-575', 나이값575); else localStorage.removeItem('juran-age-575'); }catch(e){}
-      풀이쓰기();
     });
-    줄.appendChild(이름); 줄.appendChild(칸);
-    상자.appendChild(줄); 상자.appendChild(풀이);
+    if(줄){ 줄.appendChild(칸); return; }
+    var 분위기=r.querySelector('#cgo-mood-wrap'); if(!분위기 || !분위기.parentNode) return;
+    var 상자=document.createElement('div'); 상자.style.cssText='display:flex;margin:0 0 10px;';
+    상자.appendChild(칸);
     분위기.parentNode.insertBefore(상자, 분위기.nextSibling);
   }
 
