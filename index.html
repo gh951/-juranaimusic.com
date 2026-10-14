@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <!-- 판 564 : 파일 주소 끝에 판 번호를 붙인다. 손님 폰이 옛 파일을 쥐고 안 놓는 일을 막는다.
      ⚠️ js 파일을 새로 올릴 때는 이 숫자와 맨 아래 juran-check.js?v= 숫자를 같이 올린다. -->
-<script>window.JURAN판='573';</script>
+<script>window.JURAN판='574';</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>html{color-scheme:light;word-break:keep-all;overflow-wrap:break-word;line-break:strict;hanging-punctuation:allow-end}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>JURAN</title>
@@ -1743,7 +1743,7 @@ window.JK=JK;
 (function(){
   var 소리집 = 'https://www.c-go-fuli.com/';
   var 내집   = 'js/';
-  var 판끝   = '?v='+(window.JURAN판||'573');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
+  var 판끝   = '?v='+(window.JURAN판||'574');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
   var 화면줄 = [{주소:내집+'juran-words.js'+판끝, 꼭:false, 이름:'말 사전'},
                 {주소:내집+'cgo-music.js'+판끝,   꼭:true,  이름:'작곡 엔진'},
                 {주소:내집+'cgo-score.js'+판끝,   꼭:false, 이름:'악보 편집기'}];
@@ -1816,6 +1816,8 @@ window.JK=JK;
     try{ if(m.audioCtx&&m.audioCtx.state==='suspended') m.audioCtx.resume(); }catch(e){}
     try{ if(m._resizeBg) m._resizeBg(); }catch(e){}
     try{ if(!m.bgAnimId&&m._startBgCanvas) m._startBgCanvas(); }catch(e){}
+    /* 판 574 : 떼어 둔 사이에 수노 악보가 그려졌으면, 붙은 지금 한 번 다시 그려 소리 따라가기를 단다 */
+    try{ if(window._juran폭보기574) window._juran폭보기574(); }catch(e){}
   }
   document.addEventListener('visibilitychange',function(){
     if(document.hidden) 재우기(true);     /* 내려놨으면 통째로 뗀다 */
@@ -2013,6 +2015,6 @@ window.JK=JK;
 
 <!-- 검사기 — 재는 손. 36KB. 씨앗 통(161KB)은 검사를 누를 때 받는다. -->
 <!-- 판 564 : ⚠️ 이 숫자는 머리(head)의 JURAN판 과 같이 올린다 -->
-<script src="js/juran-check.js?v=573" defer></script>
+<script src="js/juran-check.js?v=574" defer></script>
 </body>
 </html>

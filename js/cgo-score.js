@@ -3581,6 +3581,9 @@ try{ if(!_au372.paused) _자기514(); }catch(e){}
   window._cgoGenerateScoreOnly368 = function(){
     try{
       var mod=window._cgoMusicMod; if(!mod) return;
+      /* 판 574 : 악보 칸이 지금 문서에 붙어 있나 — 떼어 둔 화면에 그리면 소리 따라가기를 못 단다.
+         그때는 표를 남겨, 화면이 다시 붙을 때 폭보기(③)가 한 번 더 그리게 한다. */
+      try{ window._주란떼어그림574 = !document.getElementById('cgo-groove-score-wrap'); }catch(_e574){}
       mod.selected=mod.selected||{};
       if(!mod.selected.key) mod.selected.key='C Major';
       if(!mod.tempoBpm) mod.tempoBpm=120;
@@ -3688,12 +3691,25 @@ try{ if(!_au372.paused) _자기514(); }catch(e){}
         다음에 이 장치가 깰 때(폭이 또 바뀌거나 창이 바뀔 때) 맞춘다. 고리를 돌지 않는다. */
   var 지난폭=0, 늦=null, 밀린폭=false;
   function 연주중(){ try{ var pb=window._cgoScorePB; return !!(pb&&pb.playing); }catch(e){ return false; } }
+  /* ⚠️ 판 574 : 판 570 의 ①이 **수노 악보 따라가기를 죽였다.**
+     파트너 — 「수노 노래와 악보의 음표가 되었던 것이 안 되어요」 「시각 쪽지도 없어졌어요」
+     재 보니 이랬다. 수노 곡은 1~3분 걸려서 손님은 기다리다 다른 앱으로 간다. 그러면 특허 구조가
+     화면을 통째로 **떼어 둔다**(재우기). 그 사이 악보가 오면 떼어 둔 화면 안에 그려지는데,
+     그때는 소리판(#cgo-vvip-audio)도 악보 칸도 문서에서 못 찾아 노란 띠 · 보라 점 · 시각 쪽지를
+     하나도 못 단다. 손님이 돌아와 화면이 다시 붙으면, 판 570 전에는 이 장치가 「처음 본 폭」을
+     핑계로 **한 번 다시 그려서** 그것들을 달아 주고 있었다. ①이 바로 그 한 번을 막았다.
+     ③ 그래서 「떼어 둔 채 그려졌다」는 표(_주란떼어그림574 — 악보 손이 적는다)가 있으면
+        화면이 붙자마자 **꼭 한 번** 다시 그린다. ①은 그대로 둔다 — AI 곡을 끊던 것을 막는 자리다. */
   function 폭보기(){
     try{
       var m=window._cgoMusicMod; if(!m||!m.root) return;
       var w=m.root.querySelector('#cgo-groove-score-wrap');
       if(!w || !w.querySelector('svg')) return;
       var 이번=w.offsetWidth||0; if(!이번) return;
+      if(window._주란떼어그림574 && document.getElementById('cgo-groove-score-wrap')===w){   /* ③ */
+        window._주란떼어그림574=false; 지난폭=이번; 밀린폭=false;
+        window._cgoGenerateScoreOnly368(); return;
+      }
       if(!지난폭){ 지난폭=이번; return; }                                   /* ① */
       if(Math.abs(이번-지난폭)/지난폭 < 0.08 && !밀린폭){ 지난폭=이번; return; }
       if(연주중()){ 밀린폭=true; return; }                                   /* ② */
@@ -3702,6 +3718,8 @@ try{ if(!_au372.paused) _자기514(); }catch(e){}
     }catch(e){}
   }
   window.addEventListener('resize',function(){ if(늦) clearTimeout(늦); 늦=setTimeout(폭보기,260); });
+  /* 판 574 : 화면이 다시 붙을 때(깨우기) index.html 이 부른다 — 지켜보는 칸이 바뀌었어도 놓치지 않게 */
+  window._juran폭보기574=function(){ if(늦) clearTimeout(늦); 늦=setTimeout(폭보기,150); };
   try{
     if(window.ResizeObserver){
       var ro=new ResizeObserver(function(){ if(늦) clearTimeout(늦); 늦=setTimeout(폭보기,260); });
