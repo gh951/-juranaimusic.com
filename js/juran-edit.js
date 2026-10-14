@@ -107,7 +107,7 @@ var css=document.createElement('style');
 css.textContent=
 'body.주란편집 .champion,body.주란편집 .rise,body.주란편집 .item,body.주란편집 .hero h1,body.주란편집 .hero .lede{outline:2px dashed rgba(234,166,27,.85);outline-offset:3px;cursor:pointer}'+
 'body.주란편집 .rise:hover,body.주란편집 .item:hover{background:rgba(234,166,27,.10)}'+
-'body.주란편집 .champion .lbl,body.주란편집 .champion h2,body.주란편집 .champion .by{outline:2px dashed rgba(255,217,138,.9);outline-offset:3px;border-radius:4px;cursor:text}'+
+'body.주란편집 .champion .lbl,body.주란편집 .champion .live .상태,body.주란편집 .champion h2,body.주란편집 .champion .by{outline:2px dashed rgba(255,217,138,.9);outline-offset:3px;border-radius:4px;cursor:text}'+
 'body.주란편집 .champion [contenteditable]:focus{outline:2px solid #ffcf5c;background:rgba(255,255,255,.12)}'+
 'body.주란편집 .champion.끌림{outline:3px solid #ffcf5c;box-shadow:0 0 0 6px rgba(255,207,92,.35)}'+
 '.주편-손{position:relative;z-index:3;display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}'+
@@ -220,7 +220,7 @@ function 카드손달기(){
    쓴 글은 그 카드에만 붙는다(곡 이름은 그대로). 다 지우면 곡에서 저절로 나오는 글로 돌아간다. */
 function 글씨바로쓰기(카드){
   var 쪽=카드.classList.contains('glob')?'오른쪽':'왼쪽';
-  [['.lbl','이름'],['h2','제목'],['.by','부제']].forEach(function(x){
+  [['.lbl','이름'],['.live .상태','상태'],['h2','제목'],['.by','부제']].forEach(function(x){
     var el=카드.querySelector(x[0]); if(!el||el.dataset.쓰기) return;
     el.dataset.쓰기='1';
     try{ el.contentEditable='plaintext-only'; }catch(e){}
@@ -237,7 +237,7 @@ function 글씨바로쓰기(카드){
         if(나 && 글.indexOf(나)>=0) 글=글.split(나).join('{나라}');   /* 「🇰🇷 대한민국 …」 → 「{나라} …」 — 손님 나라대로 */
       }
       var c=곡찾기(카드.dataset.k);
-      if(x[1]!=='이름' && c){
+      if((x[1]==='제목'||x[1]==='부제') && c){
         /* 판 582 : 제목·아랫줄은 **곡에** 쓴다 */
         if(!글){ 다시(); return; }                    /* 비우면 그대로 둔다 */
         if(x[1]==='제목') c.t=글; else 아랫줄읽기(c, 글);
@@ -491,11 +491,15 @@ function 곡창(c, 새로){
    파트너 — 「투표도 직접 수정하게」 */
 function 표창(c){
   var w=창열기('<h3>🗳 표 고치기 <span style="font-weight:400;color:#93aba6;font-size:12px">'+글(c.t||c.id)+'</span></h3>'+
-    '<label>표 (숫자만)</label><input type="number" inputmode="numeric" min="0" class="큰수" id="v-n" value="'+(+c.표||0)+'">'+
+    '<label>운영자 표 (숫자만)</label><input type="number" inputmode="numeric" min="0" class="큰수" id="v-n" value="'+(+c.표||0)+'">'+
+    '<p class="풀이" id="v-g" style="font-size:13px;color:#0d2b28"></p>'+
     '<p class="풀이">지금은 운영자가 정하는 숫자입니다. <b>손님 투표가 열리면 표는 손님 투표로만 오르게</b> 두세요 — 「공정한 무대」라는 말과 맞아야 합니다.</p>'+
     '<div class="단추들"><button type="button" id="v-no">닫기</button><button type="button" class="확인" id="v-ok">확인</button></div>'+
     '<p class="풀이">「확인」은 화면에만 바꿉니다. 아래 <b>💾 저장</b>을 눌러야 사이트에 나옵니다.</p>');
-  var 입=w.querySelector('#v-n');
+  var 입=w.querySelector('#v-n'), 손=0; try{ 손=JN.손님표(c.id); }catch(e){}
+  function 합(){ var n=parseInt(String(입.value).replace(/[^\d]/g,''),10)||0;
+    w.querySelector('#v-g').innerHTML='👆 손님 투표 <b>+'+손.toLocaleString()+'</b> → 카드에는 <b>'+(n+손).toLocaleString()+'표</b>'; }
+  입.addEventListener('input',합); 합();
   function 확인(){
     var n=parseInt(String(입.value).replace(/[^\d]/g,''),10);
     if(!isFinite(n)||n<0){ alert('숫자를 넣어 주세요.'); return; }
