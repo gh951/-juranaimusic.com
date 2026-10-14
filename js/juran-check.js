@@ -33,6 +33,7 @@
    【판 563】 공개 곡 밭(js/field · Lakh MIDI 13,671곡)과 견주기 — 불은 여기서 켠다.
    【판 564】 닮은 공개 곡을 **다섯**까지 이름 그대로 보여 준다 (파트너 — 「공정하려면 닮았으면 닮았다고」)
              📏 읽는 법 한 줄 · 검사증은 금빛 PDF · 파일마다 판 번호를 붙여 폰이 옛 파일을 안 쥔다
+   【판 565】 밭 field-4 — clean_midi + LMD-matched. 곡 수(이름 기준)와 편곡 수를 나눠 말한다.
              씨앗은 참고로만(재 보니 진짜 노래도 짧은 씨앗을 대개 품고 있다).
 
    끄기 : window.JC끔 = true
@@ -74,7 +75,7 @@ function 작품지문(글){
 var 씨 = null, 씨가는중 = null;
 /* 판 564 : 파일 주소에 판 번호를 붙인다 — 폰이 옛 파일을 쥐고 안 놓는 일을 막는다.
    판 번호는 index.html 이 window.JURAN판 에 적는다. */
-function 판표(){ return '?v='+encodeURIComponent(window.JURAN판||'564'); }
+function 판표(){ return '?v='+encodeURIComponent(window.JURAN판||'566'); }
 /* 씨앗 통은 161KB 다. 검사를 누르기 전에는 **안 받는다.**
    보이지 않는 것은 살리지 않는다 — 우리 특허와 같은 생각이다. */
 function 씨앗불러오기(){
@@ -334,7 +335,8 @@ function 밭검사(미디들){
         본이름[열쇠]=r; 결과.push(r);
       });
       결과.sort(function(x,y){ return y.같은토막-x.같은토막; });
-      return {곡수:B.곡수, 판:B.정보.판, 목록:결과.slice(0,5)};
+      /* 판 565 : 한 곡에 편곡(MIDI)이 여럿 있다. 손님에게는 **곡 수**를 말하고 편곡 수는 곁에 둔다 */
+      return {곡수:B.정보.곡이름수||B.곡수, 편곡수:B.곡수, 판:B.정보.판, 목록:결과.slice(0,5)};
     });
   });
 }
@@ -683,7 +685,14 @@ var 잣대 = { 닮음노랑:80, 닮음빨강:100, 토막노랑:9, 토막빨강:1
      시험 : 「Let It Be」 45음을 음 나눔까지 흔들어 숨겨 넣으니 27음으로 맨 위에 찾았다(🟡).
    씨앗은 불을 안 켠다 — 진짜 노래 400곡을 씨앗과 견주니 가운데가 78% 였다.
      씨앗이 짧아서(7~29음) 긴 노래 안에 우연히 통째로 들어 있다. 그리고 씨앗은 우리 엔진의 틀이다. */
-  세상노랑:22, 세상빨강:30 };
+  /* 판 565 — 밭이 field-4(곡 22,000 · 편곡 32,000)로 커져 다시 쟀다. 같은 방법 · 같은 1,500곡.
+       가운데 14음 · 넷 중 셋 17음 · 열에 아홉 24음 · 백에 아흔다섯 32음 · 백에 아흔아홉 53음
+       30음을 넘는 몫 6.4% · 36음을 넘는 몫 3.3%
+     곡이 많아지면 「우연히 가장 닮은 곡」도 조금 더 닮게 나온다(고를 곡이 많으니까).
+     30~37음 칸을 하나하나 들여다보니 진짜 같은 곡(베토벤 5번↔벤처스, 파헬벨↔쿨리오)과
+     우연(되풀이 리프끼리)이 섞여 있었다. 그래서 **뜻은 그대로**(열에 아홉 위 = 🟡, 백에 셋 = 🔴) 두고 숫자를 옮긴다.
+     → 🟡 25음  🔴 36음 */
+  세상노랑:25, 세상빨강:36 };
 function 빛(참){ return 참?'🟢':'🟡'; }
 function 세빛(v, 노, 빨){ return v>=빨 ? '🔴' : (v>=노 ? '🟡' : '🟢'); }
 function 그리기(R){
@@ -695,7 +704,7 @@ function 그리기(R){
     else{
       /* ── 🌍 공개 곡 (판 563) — 불은 여기서 켠다 ── */
       var W=R.세상||{};
-      h+='<div class="sub2">🌍 공개 곡과 견주기'+(W.곡수?' <span>— '+W.곡수.toLocaleString()+'곡</span>':'')+'</div>';
+      h+='<div class="sub2">🌍 공개 곡과 견주기'+(W.곡수?' <span>— '+W.곡수.toLocaleString()+'곡'+(W.편곡수>W.곡수?' · 편곡 '+W.편곡수.toLocaleString()+'개':'')+'</span>':'')+'</div>';
       if(W.기다림){ h+='<div class="row"><b>견주는 중</b><span>공개 곡 밭을 여는 중입니다… 처음 한 번은 1~2초 걸립니다</span></div>'; }
       else if(W.탈){ h+='<div class="row"><b>잴 수 없음</b><span>'+W.탈+'</span></div>'; }
       else if(W.목록){
@@ -705,7 +714,7 @@ function 그리기(R){
              ' <b style="color:#e6f4ef">'+x.같은토막+'음</b> 연달아 똑같이 — 「'+그글(x.곡명)+'」'+(x.가수?' · '+그글(x.가수):'')+'</span></div>';
         });
         h+='<div class="note" style="margin:-2px 0 8px">📏 <b style="color:#9ac7b8">읽는 법</b> — 서로 관계없는 공개 곡끼리도 <b style="color:#e6f4ef">보통 14음</b>은 겹칩니다. '+
-           '🟡 22음부터 · 🔴 30음부터입니다. 같은 음이 이어지면 하나로 셉니다. 판단은 보시는 분이 하십니다.</div>';
+           '🟡 '+잣대.세상노랑+'음부터 · 🔴 '+잣대.세상빨강+'음부터입니다. 같은 음이 이어지면 하나로 셉니다. 판단은 보시는 분이 하십니다.</div>';
         var 첫=W.목록[0];
         if(첫 && 첫.자리){
           h+='<div class="over"><div class="ovh">🎼 악보 겹쳐 보기 <span>— 빨간 음 '+첫.같은토막+'개가 똑같이 오르내립니다</span></div>'+
@@ -922,7 +931,7 @@ function 검사증그림(g, W, H, R){
 
   if(R.악보 && !R.악보.탈){
     var 세=R.세상||{};
-    제목글('공개 곡과 견주기', 세.곡수? '— '+세.곡수.toLocaleString()+'곡 가운데 가장 닮은 곳' : '');
+    제목글('공개 곡과 견주기', 세.곡수? '— '+세.곡수.toLocaleString()+'곡'+(세.편곡수>세.곡수?' (편곡 '+세.편곡수.toLocaleString()+'개)':'')+' 가운데 가장 닮은 곳' : '');
     if(!세.목록){ 칸('공개 곡', '못 견줌 (밭을 못 불러옴)'); }
     else if(!세.목록.length){ 칸('공개 곡', '눈에 띄게 겹치는 곳이 없음'); }
     else 세.목록.forEach(function(x,i){
@@ -937,7 +946,7 @@ function 검사증그림(g, W, H, R){
     /* 읽는 법 */
     g.fillStyle='#6b5a34'; g.font='400 17px '+글꼴;
     g.fillText('읽는 법 — 서로 관계없는 공개 곡끼리도 보통 14음은 겹칩니다.', 84, y+4); y+=28;
-    var lx=84; [['#16a34a','21음 아래'],['#eab308','22음부터'],['#dc2626','30음부터']].forEach(function(p){
+    var lx=84; [['#16a34a',(잣대.세상노랑-1)+'음 아래'],['#eab308',잣대.세상노랑+'음부터'],['#dc2626',잣대.세상빨강+'음부터']].forEach(function(p){
       g.beginPath(); g.arc(lx+7, y-2, 7, 0, Math.PI*2); g.fillStyle=p[0]; g.fill();
       g.fillStyle='#6b5a34'; g.fillText(p[1], lx+20, y+4); lx+=40+g.measureText(p[1]).width;
     });
@@ -974,7 +983,7 @@ function 검사증그림(g, W, H, R){
   var 밭수=(R.세상&&R.세상.곡수)||0, 씨수=(씨앗준비()?씨앗준비().곡수.toLocaleString():'—');
   var 마디=[
     ['1. 검증 및 대조 데이터 범위 (Reference Data)', [
-      '· 공개 참조 음원 : '+(밭수? 밭수.toLocaleString()+'곡 (Lakh MIDI · Colin Raffel · CC-BY 4.0 기준)' : '이번 검사에서 불러오지 못함'),
+      '· 공개 참조 음원 : '+(밭수? 밭수.toLocaleString()+'곡 (Lakh MIDI · Colin Raffel · CC-BY 4.0 기준 · 곡 이름 Million Song Dataset)' : '이번 검사에서 불러오지 못함'),
       '· 자체 씨앗 음원 : '+씨수+'곡',
       '· 식별 필터링 : 등록 아티스트 실명 DB 및 지정 금기어 목록']],
     ['2. 검사 한계 및 제외 범위 (Limitation of Test)', [
@@ -1117,7 +1126,7 @@ function 검사기페이지(){
   /* 판 563 : 페이지 아래 「세상 곡과는 안 견준다」 글을 밭이 있으면 고쳐 쓴다 */
   (window['JURAN밭정보']? Promise.resolve(true) : 글받기(정보주소())).then(function(){
     var 정보=window['JURAN밭정보'], p=document.querySelector('#v-check-body + p.hint');
-    if(정보 && p) p.innerHTML='견주는 것은 <b>공개 곡 '+정보.곡수.toLocaleString()+'곡</b>(Lakh MIDI · Colin Raffel · CC-BY 4.0)과 '+
+    if(정보 && p) p.innerHTML='견주는 것은 <b>공개 곡 '+(정보.곡이름수||정보.곡수).toLocaleString()+'곡</b>(Lakh MIDI · Colin Raffel · CC-BY 4.0)과 '+
       '<b>JURAN 씨앗 · 실명 목록 · 금기어 목록</b>입니다. <b>K팝과 2010년대 뒤 노래는 이 밭에 거의 없습니다</b> — 계속 늘리고 있습니다. '+
       '그래서 이 검사는 「안전하다」고 말하지 않고 <b>잰 값만</b> 적습니다. 더 정확한 검사증이 필요하면 바깥 검사 기관으로 이어 드립니다.';
   });

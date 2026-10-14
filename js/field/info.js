@@ -1,1 +1,1 @@
-window['JURAN밭정보']={"판":"field-3","곡수":13671,"k":8,"w":8,"조각곡수":500,"조각수":28,"출처":"Lakh MIDI Dataset v0.1 · Colin Raffel · CC-BY 4.0 · clean_midi.tar.gz","만든때":"2026-10-13T14:17:16.911Z","그물":"같은 음 접은 줄 (field-3) — 조각은 field-2 그대로"};
+window['JURAN밭정보']={"판":"field-4","곡수":32137,"k":8,"w":8,"조각곡수":500,"조각수":65,"출처":"Lakh MIDI Dataset v0.1 · Colin Raffel · CC-BY 4.0 · clean_midi + LMD-matched (곡 이름: Million Song Dataset)","만든때":"2026-10-14T00:59:34.485Z","짜임":{"clean_midi":13671,"lmd_matched":18466,"짝점수문턱":0.6,"엉뚱한이름뺌":1275},"곡이름수":21970,"그물":"같은 음 접은 줄 (field-3 방식)"};
