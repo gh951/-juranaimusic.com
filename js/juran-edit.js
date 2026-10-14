@@ -65,10 +65,16 @@ function 카드붙이기(c){
 /* 「@RayD · 팝/블루스 · 9-AI 심사 83점」 → 지은이 · 장르 · 점수 */
 function 아랫줄읽기(c, 글){
   var 조각=String(글||'').split(/\s*·\s*/).map(function(x){ return x.trim(); }).filter(Boolean), 나머지=[];
+  var 점수조각=null;
   조각.forEach(function(x){
-    var m=x.match(/(?:9\s*-?\s*AI|심사)[^\d]*([\d.]+)/i) || x.match(/^([\d.]+)\s*점$/);
-    if(m && isFinite(parseFloat(m[1]))) c.점수=parseFloat(m[1]); else 나머지.push(x);
+    var m=x.match(/(?:9\s*-?\s*AI|심사|evaluation|score|points?)[^\d]*([\d.]+)/i) || x.match(/^([\d.]+)\s*(?:점|points?|pts?)$/i);
+    if(점수조각==null && m && isFinite(parseFloat(m[1]))){ c.점수=parseFloat(m[1]); 점수조각=x.replace(m[1],'{점}'); } else 나머지.push(x);
   });
+  /* 판 583 : 점수 글씨도 **쓴 그대로** — 「9-AI Evaluation: 87 Points」 를 한국말로 바꾸지 않는다.
+     기본 꼴(9-AI 심사 87점)이면 저장하지 않고, 점수를 빼고 쓰면 카드에서도 뺀다. */
+  if(점수조각==null) c.점수말='';
+  else if(/^9-AI 심사 \{점\}점$/.test(점수조각)) delete c.점수말;
+  else c.점수말=점수조각;
   if(나머지[0]!=null) c.by=나머지[0];
   if(나머지.length>1) c.g=나머지.slice(1).join(' · ');
 }
