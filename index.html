@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <!-- 판 564 : 파일 주소 끝에 판 번호를 붙인다. 손님 폰이 옛 파일을 쥐고 안 놓는 일을 막는다.
      ⚠️ js 파일을 새로 올릴 때는 이 숫자와 맨 아래 juran-check.js?v= 숫자를 같이 올린다. -->
-<script>window.JURAN판='574';</script>
+<script>window.JURAN판='575';</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>html{color-scheme:light;word-break:keep-all;overflow-wrap:break-word;line-break:strict;hanging-punctuation:allow-end}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>JURAN</title>
@@ -1743,7 +1743,7 @@ window.JK=JK;
 (function(){
   var 소리집 = 'https://www.c-go-fuli.com/';
   var 내집   = 'js/';
-  var 판끝   = '?v='+(window.JURAN판||'574');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
+  var 판끝   = '?v='+(window.JURAN판||'575');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
   var 화면줄 = [{주소:내집+'juran-words.js'+판끝, 꼭:false, 이름:'말 사전'},
                 {주소:내집+'cgo-music.js'+판끝,   꼭:true,  이름:'작곡 엔진'},
                 {주소:내집+'cgo-score.js'+판끝,   꼭:false, 이름:'악보 편집기'}];
@@ -1850,6 +1850,7 @@ window.JK=JK;
     });
     try{ window._cgoMusicMod._switchTab('make'); }catch(e){}
     몸스캔떼기();
+    try{ 나이칸달기575(); }catch(e){}
   }
 
   /* 판 569 : 「🫀 내 몸 주파수 스캔」 단추와 그 결과 칸을 **떼어 낸다**(숨기지 않는다).
@@ -1866,8 +1867,82 @@ window.JK=JK;
     if(m && !m._몸스캔569 && typeof m._buildMakePanel==='function'){
       m._몸스캔569=true;
       var 원래=m._buildMakePanel;
-      m._buildMakePanel=function(){ var x=원래.apply(this,arguments); try{ 몸스캔떼기(); }catch(e){} return x; };
+      m._buildMakePanel=function(){ var x=원래.apply(this,arguments); try{ 몸스캔떼기(); }catch(e){} try{ 나이칸달기575(); }catch(e){} return x; };
     }
+  }
+
+  /* ═══ 판 575 : 나이 맞춤 가사 ══════════════════════════════════════════
+     파트너 — 「가사 생성란에 연령별 다운 바를 만들면 어떨까여」
+     가사 짓는 곳 맨 위(마음 카드 위)에 「🎂 누구의 노래인가요」 칸을 단다.
+     고른 나이는 우리 서버(cgo-542, 가사 엔진 v43)에만 간다. 서버가 그 세대의 사물로 짓고,
+     수노에는 **다 지어진 가사만** 간다. 어떤 사물을 몇 %로 뽑는지는 비공개 서버 안에만 있다.
+     · 「자동」(처음 값)이면 아무것도 안 보낸다 — 지금까지와 글자 하나 다르지 않은 가사.
+     · cgo-music.js 는 건드리지 않는다(위 다듬기 원칙). 가사 부탁(/generate_lyrics)이
+       나갈 때 그 편지에 age 한 칸만 덧붙인다. 다른 부탁은 손대지 않고 그대로 보낸다.
+     · 고른 나이는 이 폰에 기억해 둔다(다음에 와도 그대로). 기억이 안 되는 폰이면 자동. */
+  var 나이값575 = '';
+  try{ 나이값575 = localStorage.getItem('juran-age-575') || ''; }catch(e){ 나이값575=''; }
+  if(!/^(10|20|30|40|50|60)$/.test(나이값575)) 나이값575 = '';
+
+  (function(){
+    if(window.__주란나이편지575 || typeof window.fetch!=='function') return;
+    window.__주란나이편지575 = true;
+    var 원fetch = window.fetch;
+    window.fetch = function(u, o){
+      try{
+        var 주소 = (typeof u==='string') ? u : ((u && u.url) || '');
+        if(나이값575 && /\/generate_lyrics(\?|$)/.test(주소) && o && typeof o.body==='string'){
+          var 편지 = JSON.parse(o.body);
+          if(편지 && typeof 편지==='object' && 편지.age==null){
+            편지.age = 나이값575;
+            o = Object.assign({}, o, {body: JSON.stringify(편지)});
+          }
+        }
+      }catch(e){}
+      return 원fetch.call(window, u, o);
+    };
+  })();
+
+  function 나이칸달기575(){
+    var r=document.getElementById('cgo-music-root'); if(!r) return;
+    if(r.querySelector('#juran-age-575')) return;
+    var 분위기=r.querySelector('#cgo-mood-wrap'); if(!분위기 || !분위기.parentNode) return;
+    var 상자=document.createElement('div');
+    상자.id='juran-age-575';
+    상자.style.cssText='margin:0 0 12px;';
+    var 줄=document.createElement('div');
+    줄.style.cssText='display:flex;align-items:center;gap:8px;';
+    var 이름=document.createElement('label');
+    이름.htmlFor='juran-age-sel-575';
+    이름.textContent='🎂 누구의 노래인가요';
+    이름.style.cssText='font-size:12px;color:#fcd34d;font-weight:700;white-space:nowrap;';
+    var 칸=document.createElement('select');
+    칸.id='juran-age-sel-575';
+    칸.style.cssText='flex:1;min-width:0;padding:8px 10px;border-radius:8px;background:#221d33;'
+      +'border:1px solid rgba(251,191,36,.35);color:#fde68a;font-size:13px;font-family:inherit;outline:none;';
+    [['','자동 — 모든 세대'],['10','10대'],['20','20대'],['30','30대'],['40','40대'],['50','50대'],['60','60대 이상']]
+      .forEach(function(x){
+        var o=document.createElement('option'); o.value=x[0]; o.textContent=x[1];
+        o.style.cssText='background:#221d33;color:#fde68a;';
+        칸.appendChild(o);
+      });
+    칸.value=나이값575;
+    var 풀이=document.createElement('p');
+    풀이.style.cssText='font-size:11px;color:#a8a29e;margin:5px 0 0;line-height:1.5;';
+    function 풀이쓰기(){
+      풀이.textContent = 나이값575
+        ? '그 세대가 기억하는 물건과 장소로 가사를 지어요. 아래 마음 카드나 가사 단추를 누르세요.'
+        : '고르면 그 세대가 기억하는 물건과 장소로 가사를 지어요.';
+    }
+    풀이쓰기();
+    칸.addEventListener('change', function(){
+      나이값575 = /^(10|20|30|40|50|60)$/.test(칸.value) ? 칸.value : '';
+      try{ if(나이값575) localStorage.setItem('juran-age-575', 나이값575); else localStorage.removeItem('juran-age-575'); }catch(e){}
+      풀이쓰기();
+    });
+    줄.appendChild(이름); 줄.appendChild(칸);
+    상자.appendChild(줄); 상자.appendChild(풀이);
+    분위기.parentNode.insertBefore(상자, 분위기.nextSibling);
   }
 
   function 소리받기(){
@@ -2015,6 +2090,6 @@ window.JK=JK;
 
 <!-- 검사기 — 재는 손. 36KB. 씨앗 통(161KB)은 검사를 누를 때 받는다. -->
 <!-- 판 564 : ⚠️ 이 숫자는 머리(head)의 JURAN판 과 같이 올린다 -->
-<script src="js/juran-check.js?v=574" defer></script>
+<script src="js/juran-check.js?v=575" defer></script>
 </body>
 </html>
