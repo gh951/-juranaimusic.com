@@ -3714,6 +3714,79 @@ try{ if(!_au372.paused) _자기514(); }catch(e){}
     }
   }catch(e){}
 
+  /* ═══ 판 571 : 악보 따라가기 ═════════════════════════════════════════════
+     파트너 — 「음표 찍히면 자동으로 악보가 찍히는 구간에 맞게 내려가게」
+     CGO 작곡 손은 곡이 흐르면 지금 마디에 띠(#cgo-sc-hl)를 켠다. 그런데 화면은
+     안 따라가서, 재 보니 3마디만 지나도 띠가 화면 아래로 빠져나갔다.
+     ・ 띠가 새로 켜질 때만 본다 — 고리를 돌지 않는다(마디마다 한 번, 2초에 한 번꼴).
+     ・ 띠가 화면 아래 82% 를 넘거나 위로 숨으면, 띠가 화면 위 30% 자리에 오게 한 번 굴린다.
+     ・ 손님이 손가락으로 화면을 만지면 따라가기를 멈추고 「▶ 악보 따라가기」 단추를 띄운다.
+       보고 싶은 데를 보는데 자꾸 끌려가면 짜증 난다. 단추를 누르면 다시 따라간다.
+     ・ 새 곡이 처음부터 흐르면(첫 마디) 저절로 다시 따라간다.
+     ・ 작곡 손(cgo-gen.js)은 한 글자도 안 건드린다. 띠가 켜지는 것만 지켜본다. */
+  (function(){
+    var 멈춤=false, 단추=null, 굴릴틀=0, 지난마디=-2;
+    var 조용히=false; try{ 조용히=window.matchMedia&&matchMedia('(prefers-reduced-motion:reduce)').matches; }catch(e){}
+    function 연주중(){ try{ var pb=window._cgoScorePB; return !!(pb&&pb.playing); }catch(e){ return false; } }
+    function 단추보이기(on){
+      if(on && !단추){
+        단추=document.createElement('button'); 단추.type='button';
+        단추.textContent='▶ 악보 따라가기';
+        단추.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:calc(18px + env(safe-area-inset-bottom,0px));'+
+          'z-index:55;padding:11px 18px;border:0;border-radius:999px;font-weight:800;font-size:14px;cursor:pointer;'+
+          'background:#10b981;color:#04221a;box-shadow:0 6px 20px rgba(0,0,0,.25)';
+        단추.addEventListener('click',function(){ 멈춤=false; 단추보이기(false); 따라가기(true); });
+        document.body.appendChild(단추);
+      }
+      if(단추) 단추.style.display=on?'block':'none';
+    }
+    function 따라가기(바로){
+      if(멈춤 || !연주중()) return;
+      var hl=document.getElementById('cgo-sc-hl'); if(!hl) return;
+      var r=hl.getBoundingClientRect(), H=window.innerHeight||700;
+      if(!r.height) return;                                   /* 떼어 둔 화면 — 안 보인다 */
+      var 위=Math.max(72, H*0.12);
+      if(바로 || r.bottom > H*0.82 || r.top < 위){
+        var 목표=Math.max(0, (window.pageYOffset||0) + r.top - H*0.30);
+        try{ window.scrollTo({top:목표, behavior:조용히?'auto':'smooth'}); }catch(e){ window.scrollTo(0,목표); }
+      }
+    }
+    /* 손님 손 — 화면을 만지면 멈춘다 (단추 자신은 빼고) */
+    ['touchstart','wheel','keydown'].forEach(function(k){
+      window.addEventListener(k,function(e){
+        if(!연주중()) return;
+        if(단추 && e.target && 단추.contains(e.target)) return;
+        if(k==='keydown' && !/^(ArrowUp|ArrowDown|PageUp|PageDown|Home|End| )$/.test(e.key||'')) return;
+        if(!멈춤){ 멈춤=true; 단추보이기(true); }
+      },{passive:true, capture:true});   /* 붙잡기 단계 — 안쪽에서 막아도 먼저 듣는다 */
+    });
+    /* 띠가 켜지거나 꺼질 때만 깬다 */
+    function 띠살핌(){
+      굴릴틀=0;
+      if(!연주중()){ 멈춤=false; 단추보이기(false); 지난마디=-2; return; }
+      var 마디=-1; try{ 마디=window._cgoScorePB.bar; }catch(e){}
+      if(마디===0 && 지난마디!==0){ 멈춤=false; 단추보이기(false); }   /* 새 곡 첫 마디 — 다시 따라간다 */
+      지난마디=마디;
+      따라가기(false);
+    }
+    function 띠인가(n){ return n && n.nodeType===1 && (n.id==='cgo-sc-hl'); }
+    try{
+      var 지켜봄=new MutationObserver(function(바뀐것){
+        for(var i=0;i<바뀐것.length;i++){
+          var b=바뀐것[i], j;
+          for(j=0;j<b.addedNodes.length;j++)   if(띠인가(b.addedNodes[j]))   { if(!굴릴틀) 굴릴틀=requestAnimationFrame(띠살핌); return; }
+          for(j=0;j<b.removedNodes.length;j++) if(띠인가(b.removedNodes[j])) { if(!굴릴틀) 굴릴틀=requestAnimationFrame(띠살핌); return; }
+        }
+      });
+      var 걸기=function(){
+        var 자리=document.getElementById('cgo-music-mount');
+        if(자리) 지켜봄.observe(자리,{childList:true,subtree:true}); else setTimeout(걸기,1500);
+      };
+      걸기();
+    }catch(e){}
+    window._juran따라가기571={ 다시:function(){ 멈춤=false; 단추보이기(false); 따라가기(true); } };
+  })();
+
   try{ window.renderGrooveAsScore = renderGrooveAsScore; }catch(e){}
   try{ console.log('[JURAN] CGO 악보 편집기 실림'); }catch(e){}
 })();
