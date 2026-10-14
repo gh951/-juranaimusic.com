@@ -353,14 +353,13 @@ function 크기(b){ return b>=1048576?(b/1048576).toFixed(1)+'MB':Math.max(1,Mat
 
 function 줄HTML(c){
   var id=c.id||다음번호();
-  var g=장르들.map(function(x){ return '<option'+(x===c.g?' selected':'')+'>'+x+'</option>'; }).join('');
   var ks=Object.keys(나라들).sort(function(a,b){ return 나라들[a].localeCompare(나라들[b],'ko'); });
   var n=ks.map(function(k){ return '<option value="'+k+'"'+(k===c.나라?' selected':'')+'>'+깃발(k)+' '+나라들[k]+'</option>'; }).join('');
   return '<tr class="song" data-id="'+id+'">'+
    '<td class="n"></td>'+
    '<td>'+칸(c.t)+'</td>'+
    '<td>'+칸(c.by)+'</td>'+
-   '<td><select>'+g+'</select></td>'+
+   '<td><input type="text" class="v-g" list="장르목록" value="'+글(c.g||장르들[0])+'"></td>'+
    '<td><select><option value="">🌍 없음</option>'+n+'</select></td>'+
    '<td>'+칸(c.표,'number')+'</td>'+
    '<td>'+칸(c.전표,'number')+'</td>'+
@@ -426,15 +425,15 @@ function 셈(){
 function 읽기(){
   var out=[];
   $('tb').querySelectorAll('tr.song').forEach(function(tr){
-    var v=tr.querySelectorAll('input'), s=tr.querySelectorAll('select'), m=짝(tr);
+    var v=tr.querySelectorAll('input:not(.v-g)'), s=tr.querySelectorAll('select'), m=짝(tr);
     /* 칸 차례 : 0 제목 · 1 지은이 · 2 표 · 3 전표 · 4 점수 · 5 곡닮음 · 6 가사닮음 · 7 링크
        ⚠️ 한 번 한 칸 밀려 세어 표·점수·링크가 통째로 어긋났었다. 칸을 더할 때마다 다시 센다.
        판 L2 : 음악·악보·가사는 이 줄이 아니라 **아래 짝 줄(tr.more)** 에 있다 — 위 차례는 그대로다. */
     var t=(v[0].value||'').trim(); if(!t) return;
-    var g=s[0].value, 표=+v[2].value||0;
+    var g=(tr.querySelector('.v-g').value||'').trim()||장르들[0], 표=+v[2].value||0;   /* 판 L5 : 장르는 마음대로 쓴다 (편집 모드와 같게) */
     function 퍼(x){ var n=parseFloat(x); return isFinite(n)? Math.max(0,Math.min(100,Math.round(n))) : null; }
     var c={ id:tr.dataset.id, t:t, by:(v[1].value||'').trim(), g:g,
-      나라:(s[1].value||'').toUpperCase(),
+      나라:(s[0].value||'').toUpperCase(),
       표:표, 전표:Math.min(+v[3].value||0, 표), 점수:+v[4].value||0,
       곡닮음:퍼(v[5].value), 가사닮음:퍼(v[6].value),
       링크:(v[7].value||'').trim(),
@@ -442,11 +441,11 @@ function 읽기(){
     if(m){
       var mus=m.querySelector('.v-mus').value.trim(), mid=m.querySelector('.v-mid').value.trim(),
           gas=m.querySelector('.v-gas').value.replace(/\r/g,'').trim(), len=Math.round(+m.querySelector('.v-len').value||0);
-      if(mus) c.음악=mus;
-      if(len) c.길이=len;
-      if(mid) c.악보=mid;
-      if(gas) c.가사=gas;
+      c.음악=mus; c.길이=len; c.악보=mid; c.가사=gas;
     }
+    /* 판 L5 : 표에 없는 칸(사진 · 악보들 …)은 **받은 그대로** 둔다 — 전에는 표로 저장하면 사진이 지워졌다 */
+    var 옛=받은곡[c.id]; c=Object.assign({}, 옛||{}, c);
+    ['음악','길이','악보','가사'].forEach(function(k){ if(c[k]===''||c[k]===0||c[k]==null) delete c[k]; });
     out.push(c);
   });
   out.sort(function(a,b){ return b.표-a.표; });
@@ -547,7 +546,7 @@ function 붙여넣기(){
   t.split(/\r?\n/).forEach(function(line){
     if(!line.trim()) return;
     var c=line.split('\t');
-    var g=(c[2]||'').trim(); if(장르들.indexOf(g)<0) g=장르들[0];
+    var g=(c[2]||'').trim()||장르들[0];
     var 나=(c[3]||'').trim().toUpperCase(); if(!나라들[나]) 나='';
     var 표=parseInt((c[4]||'0').replace(/[^0-9]/g,''),10)||0;
     var 전=parseInt((c[5]||'0').replace(/[^0-9]/g,''),10)||0;
@@ -590,12 +589,13 @@ function 날세기(){
 $('s-to').addEventListener('change',날세기);
 
 /* ── 내려받기 / 불러오기 ── */
+var 받은={}, 받은곡={};   /* 판 L5 : 불러온 목록 그대로 — 표에 없는 것(카드 · 사진 · 악보들)을 지키려고 */
 function 모으기(){
-  return { 보기용: $('demo').checked,
+  return Object.assign(JSON.parse(JSON.stringify(받은||{})), { 보기용: $('demo').checked,
     시즌:{ 이름:$('s-name').value, 시작:$('s-from').value, 끝:$('s-to').value },
     문구:{ 제목1:$('t1').value, 제목2:$('t2').value, 설명:$('t3').value },
     기준:{ 곡수:+$('b-n').value||0, 갱신:$('b-d').value, 알림:$('b-t').value },
-    뉴스: 뉴스읽기(), 곡: 읽기() };
+    뉴스: 뉴스읽기(), 곡: 읽기() });
 }
 /* ── 💾 저장 — 새 파일들을 먼저 올리고, 다 올라가면 목록(juran.json)을 쓴다 ── */
 var 저장중=false;
@@ -650,6 +650,7 @@ $('f').addEventListener('change',function(e){
   fr.readAsText(f); e.target.value='';
 });
 function 채우기(j){
+  받은=j||{}; 받은곡={}; (받은.곡||[]).forEach(function(c){ if(c&&c.id) 받은곡[c.id]=c; });
   if(j.시즌){ $('s-name').value=j.시즌.이름||''; $('s-from').value=j.시즌.시작||''; $('s-to').value=j.시즌.끝||''; }
   if(j.문구){ $('t1').value=j.문구.제목1||''; $('t2').value=j.문구.제목2||''; $('t3').value=j.문구.설명||''; }
   if(j.기준){ $('b-n').value=j.기준.곡수||0; $('b-d').value=j.기준.갱신||''; $('b-t').value=j.기준.알림||''; }
@@ -671,6 +672,8 @@ function 처음(){
     .then(채우기)
     .catch(function(){ 줄추가(5); 뉴스줄(); });
 }
+(function(){ var d=document.createElement('datalist'); d.id='장르목록';
+  d.innerHTML=장르들.map(function(x){ return '<option value="'+x+'">'; }).join(''); document.body.appendChild(d); })();
 </script>
 </body>
 </html>

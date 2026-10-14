@@ -45,6 +45,46 @@ function 다음번호(){ var m=0; (원본.곡||[]).forEach(function(c){ m=Math.m
 function 곡찾기(k){ var r=null; (원본&&원본.곡||[]).forEach(function(c){ if(c.id===k) r=c; }); return r; }
 function 다시(){ try{ JN.다시그리기(원본); }catch(e){} 손글씨(); }
 /* 판 581 : 카드 단추에 지금 들어 있는 것을 보인다 — 「🎵 음악 ✅ 5:00」 */
+/* ── 판 582 : 「카드 = 곡」 ──
+   파트너 — 「수정하려고 하면 팝업에 가사도 없고 제목도 다르고 장르도 다르다」 「표 1147 확인해도 그대로」
+   까닭: 카드 글씨는 **카드에만** 붙고(곡은 그대로), 카드는 「표 1등」을 저절로 보여서
+         표를 바꾸면 **다른 곡이 카드로 올라왔다.** 이제는
+   · 카드 제목·아랫줄을 쓰면 **그 곡의** 제목·지은이·장르가 바뀐다 → 팝업 · 차트 · 저장본이 모두 같다
+   · 카드에서 무엇이든 고친 곡은 **그 카드에 붙는다** → 표를 줄여도 카드가 다른 곡으로 안 바뀐다
+     (다시 표 1등을 보이려면 👑 카드 설정 → 「자동」) */
+function 쪽이름(카드){ return 카드.classList.contains('glob')?'오른쪽':'왼쪽'; }
+function 카드붙이기(c){
+  if(!c||!c.id) return;
+  [].forEach.call(document.querySelectorAll('.champion'), function(카드){
+    if(카드.dataset.k!==c.id) return;
+    var 쪽=쪽이름(카드);
+    원본.카드=원본.카드||{}; 원본.카드[쪽]=원본.카드[쪽]||{};
+    원본.카드[쪽].곡=c.id;
+  });
+}
+/* 「@RayD · 팝/블루스 · 9-AI 심사 83점」 → 지은이 · 장르 · 점수 */
+function 아랫줄읽기(c, 글){
+  var 조각=String(글||'').split(/\s*·\s*/).map(function(x){ return x.trim(); }).filter(Boolean), 나머지=[];
+  조각.forEach(function(x){
+    var m=x.match(/(?:9\s*-?\s*AI|심사)[^\d]*([\d.]+)/i) || x.match(/^([\d.]+)\s*점$/);
+    if(m && isFinite(parseFloat(m[1]))) c.점수=parseFloat(m[1]); else 나머지.push(x);
+  });
+  if(나머지[0]!=null) c.by=나머지[0];
+  if(나머지.length>1) c.g=나머지.slice(1).join(' · ');
+}
+function 카드글씨옮기기(){
+  var 카=원본.카드||{}, 옮김=[];
+  [].forEach.call(document.querySelectorAll('.champion'), function(카드){
+    var 쪽=쪽이름(카드), 덧=카[쪽]; if(!덧||!(덧.제목||덧.부제)) return;
+    var c=곡찾기(카드.dataset.k); if(!c) return;
+    if(덧.제목) c.t=String(덧.제목).trim();
+    if(덧.부제) 아랫줄읽기(c, 덧.부제);
+    delete 덧.제목; delete 덧.부제; 덧.곡=c.id;
+    옮김.push('「'+c.t+'」');
+  });
+  if(옮김.length){ 바꿨다(); 다시(); 띠그리기('🔁 카드에 쓰신 글씨를 곡 '+옮김.join(' · ')+' 에 옮겼습니다 — 💾 저장을 눌러 주세요'); }
+}
+
 function 손글씨(){
   [].forEach.call(document.querySelectorAll('.champion'), function(카드){
     var 손=카드.querySelector('.주편-손'); if(!손) return;
@@ -132,7 +172,7 @@ function 준비(j){
   if(!Array.isArray(원본.곡)) 원본.곡=[];
   원본.문구=원본.문구||{}; 원본.시즌=원본.시즌||{};
   원본.곡.forEach(function(c){ if(!c.id) c.id=다음번호(); });
-  다시(); 카드손달기(); 손글씨();
+  다시(); 카드손달기(); 손글씨(); 카드글씨옮기기();
   setInterval(손글씨, 3000);   /* 카드 곡이 저절로 바뀌어도 단추 글씨가 따라가게 */
 }
 (function 기다리기(n){
@@ -189,6 +229,14 @@ function 글씨바로쓰기(카드){
       if(x[1]==='이름' && 쪽==='왼쪽'){
         var 나=''; try{ 나=JN.나라말(); }catch(e){}
         if(나 && 글.indexOf(나)>=0) 글=글.split(나).join('{나라}');   /* 「🇰🇷 대한민국 …」 → 「{나라} …」 — 손님 나라대로 */
+      }
+      var c=곡찾기(카드.dataset.k);
+      if(x[1]!=='이름' && c){
+        /* 판 582 : 제목·아랫줄은 **곡에** 쓴다 */
+        if(!글){ 다시(); return; }                    /* 비우면 그대로 둔다 */
+        if(x[1]==='제목') c.t=글; else 아랫줄읽기(c, 글);
+        if(원본.카드&&원본.카드[쪽]){ delete 원본.카드[쪽].제목; delete 원본.카드[쪽].부제; }
+        카드붙이기(c); 바꿨다(); 다시(); return;
       }
       원본.카드=원본.카드||{}; 원본.카드[쪽]=원본.카드[쪽]||{};
       if(글) 원본.카드[쪽][x[1]]=글; else delete 원본.카드[쪽][x[1]];
@@ -276,7 +324,7 @@ async function 파일넣기(c, f, 알림, 쪽){
     } else if(k==='악보'){
       끝말='✅ 악보 '+(await 악보넣기(c,f));
     } else throw new Error((f.name||'이 파일')+' — 음악(mp3·wav·m4a)이나 그림 파일이 아닙니다');
-    바꿨다(); 다시();
+    카드붙이기(c); 바꿨다(); 다시();
     알림(끝말);
     return true;
   }catch(err){ 알림('⚠️ '+((err&&err.message)||err)); return false; }
@@ -421,7 +469,7 @@ function 곡창(c, 새로){
     var gas=w.querySelector('#e-gas').value.replace(/\r/g,'').trim(); if(gas) c.가사=gas; else delete c.가사;
     c.자켓={gi:(자켓장르[c.g]||0), img:해시(c.t)%40, 색:0, 결:null};
     if(새로 && !곡찾기(c.id)) 원본.곡.push(c);
-    바꿨다(); 다시(); 닫기();
+    카드붙이기(c); 바꿨다(); 다시(); 닫기();
   };
   var d=w.querySelector('#e-del');
   if(d) d.onclick=function(){
@@ -446,7 +494,7 @@ function 표창(c){
     var n=parseInt(String(입.value).replace(/[^\d]/g,''),10);
     if(!isFinite(n)||n<0){ alert('숫자를 넣어 주세요.'); return; }
     c.표=n; c.전표=Math.min(+c.전표||0,n);
-    바꿨다(); 다시(); 닫기();
+    카드붙이기(c); 바꿨다(); 다시(); 닫기();
   }
   w.querySelector('#v-no').onclick=닫기;
   w.querySelector('#v-ok').onclick=확인;
@@ -458,20 +506,19 @@ function 표창(c){
 function 카드창(){
   var 카=원본.카드||{}, 왼=카.왼쪽||{}, 오=카.오른쪽||{};
   var 곡들=(원본.곡||[]).slice().sort(function(a,b){ return (+b.표||0)-(+a.표||0); });
+  var 내=''; try{ 내=JN.내나라(); }catch(e){}
   function 고르기(id, 지금){
+    /* 판 582 : 왼쪽은 「내 나라」 카드 — 그 나라 곡만 고를 수 있다 (다른 나라 곡은 거기 손님에게 안 보이니까) */
+    var 목록=(id==='k-ls'&&내)? 곡들.filter(function(c){ return !c.나라||c.나라===내||c.id===지금; }) : 곡들;
     return '<select id="'+id+'"><option value="">자동 — 표 1등</option>'+
-      곡들.map(function(c){ return '<option value="'+글(c.id)+'"'+(c.id===지금?' selected':'')+'>'+글(c.t||c.id)+' · '+글(c.by||'')+'</option>'; }).join('')+'</select>';
+      목록.map(function(c){ return '<option value="'+글(c.id)+'"'+(c.id===지금?' selected':'')+'>'+글(c.t||c.id)+' · '+글(c.by||'')+'</option>'; }).join('')+'</select>';
   }
   var w=창열기('<h3>👑 챔피언 카드</h3>'+
     '<label>왼쪽 카드 이름</label><input type="text" id="k-ln" value="'+글(왼.이름||'')+'" placeholder="{나라} 챔피언">'+
-    '<p class="풀이">카드 글씨는 이 창 말고 <b>카드 위 글씨를 눌러 바로 써도</b> 됩니다. 비워 두면 「🇰🇷 대한민국 챔피언」처럼 보는 사람 나라로 나옵니다. <b>{나라}</b> 라고 쓰면 그 자리에 나라 이름이 들어갑니다.</p>'+
-    '<label>왼쪽 카드 제목</label><input type="text" id="k-lt" value="'+글(왼.제목||'')+'" placeholder="비우면 곡 제목">'+
-    '<label>왼쪽 카드 아랫줄</label><input type="text" id="k-lb" value="'+글(왼.부제||'')+'" placeholder="비우면 「지은이 · 장르 · 점수」">'+
+    '<p class="풀이">카드 제목·아랫줄은 <b>카드 위 글씨를 눌러 바로</b> 쓰세요 — 그 곡의 제목·지은이·장르가 함께 바뀝니다. 카드 이름을 비워 두면 「🇰🇷 대한민국 챔피언」처럼 보는 사람 나라로 나옵니다. <b>{나라}</b> 라고 쓰면 그 자리에 나라 이름이 들어갑니다.</p>'+
     '<label>왼쪽 카드의 곡 (음악 · 사진 · ▶)</label>'+고르기('k-ls', 왼.곡)+
     '<hr style="border:0;border-top:1px solid rgba(8,60,55,.12);margin:16px 0 4px">'+
     '<label>오른쪽 카드 이름</label><input type="text" id="k-rn" value="'+글(오.이름||'')+'" placeholder="🌍 글로벌 챔피언">'+
-    '<label>오른쪽 카드 제목</label><input type="text" id="k-rt" value="'+글(오.제목||'')+'" placeholder="비우면 곡 제목">'+
-    '<label>오른쪽 카드 아랫줄</label><input type="text" id="k-rb" value="'+글(오.부제||'')+'" placeholder="비우면 「지은이 · 장르 · 점수」">'+
     '<label>오른쪽 카드의 곡 (음악 · 사진 · ▶)</label>'+고르기('k-rs', 오.곡)+
     '<p class="풀이">「자동」이면 표가 가장 많은 곡이 나옵니다. 곡을 고르면 표와 상관없이 그 곡이 나옵니다 — '+
       '진짜 투표가 시작되면 <b>「자동」으로 돌려 두세요</b>. 공정한 무대라는 말과 맞아야 합니다.</p>'+
@@ -479,8 +526,8 @@ function 카드창(){
   w.querySelector('#k-no').onclick=닫기;
   w.querySelector('#k-ok').onclick=function(){
     function 값(id){ return w.querySelector(id).value.trim(); }
-    원본.카드={ 왼쪽:{ 이름:값('#k-ln'), 제목:값('#k-lt'), 부제:값('#k-lb'), 곡:w.querySelector('#k-ls').value },
-               오른쪽:{ 이름:값('#k-rn'), 제목:값('#k-rt'), 부제:값('#k-rb'), 곡:w.querySelector('#k-rs').value } };
+    원본.카드={ 왼쪽:{ 이름:값('#k-ln'), 곡:w.querySelector('#k-ls').value },
+               오른쪽:{ 이름:값('#k-rn'), 곡:w.querySelector('#k-rs').value } };
     바꿨다(); 다시(); 닫기();
   };
 }

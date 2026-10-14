@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <!-- 판 564 : 파일 주소 끝에 판 번호를 붙인다. 손님 폰이 옛 파일을 쥐고 안 놓는 일을 막는다.
      ⚠️ js 파일을 새로 올릴 때는 이 숫자와 맨 아래 juran-check.js?v= 숫자를 같이 올린다. -->
-<script>window.JURAN판='581';</script>
+<script>window.JURAN판='582';</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>html{color-scheme:light;word-break:keep-all;overflow-wrap:break-word;line-break:strict;hanging-punctuation:allow-end}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>JURAN</title>
@@ -963,7 +963,8 @@
     var 카=(_원본&&_원본.카드)||{};
     function 정한곡(k){ if(!k) return null; var r=null; 모두.forEach(function(x){ if(x.id===k) r=x; }); return r; }
     var 왼곡=정한곡(카.왼쪽&&카.왼쪽.곡), 오곡=정한곡(카.오른쪽&&카.오른쪽.곡);
-    if(왼곡) 국=[왼곡];
+    /* 판 582 : 왼쪽(내 나라) 카드에 붙인 곡은 **그 나라 손님에게만** — 일본 손님에게 한국 곡을 「일본 실시간」이라 하지 않게 */
+    if(왼곡 && (!왼곡.나라 || !_내나라 || 왼곡.나라===_내나라)) 국=[왼곡];
     if(오곡) 모두=[오곡].concat(모두.filter(function(x){ return x!==오곡; }));
     /* 판 579 : 카드 글씨(제목·아랫줄)도 운영자가 **마음대로 쓴다**. 비우면 곡에서 저절로.
        편집 중인 글씨(커서가 있는 칸)는 덮어쓰지 않는다 — 6초마다 다시 그려도 쓰던 글이 안 지워지게. */
@@ -1063,6 +1064,7 @@
     다시그리기:function(j){ if(_자료넣기(j)){ paintRise(); render(true); } },
     왕:function(){ return _왕; },
     나라말:function(){ return (_내나라? 나라깃발(_내나라)+' '+나라글(_내나라) : '국내'); },   /* 판 579 */
+    내나라:function(){ return _내나라||''; },   /* 판 582 */
     곡:function(k){ var r=null; _풀().forEach(function(x){ if(x.id===k) r=x; }); return r; },
     급상승:function(w){ _급보기=w;
       var a=document.getElementById('rt-home'), b=document.getElementById('rt-glob');
@@ -1157,7 +1159,7 @@
       var v=sessionStorage.getItem('lee-t')||'', i=v.indexOf('|');
       if(!(i>0 && +v.slice(0,i)*1000>Date.now()+60000)){ location.href='LEE.html'; return; }
       window.__주란편집=true;
-      var sc=document.createElement('script'); sc.src='js/juran-edit.js?v='+(window.JURAN판||'581'); sc.defer=true;
+      var sc=document.createElement('script'); sc.src='js/juran-edit.js?v='+(window.JURAN판||'582'); sc.defer=true;
       document.head.appendChild(sc);
     }catch(e){}
   })();
@@ -1831,7 +1833,7 @@ window.JK=JK;
 (function(){
   var 소리집 = 'https://www.c-go-fuli.com/';
   var 내집   = 'js/';
-  var 판끝   = '?v='+(window.JURAN판||'581');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
+  var 판끝   = '?v='+(window.JURAN판||'582');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
   var 화면줄 = [{주소:내집+'juran-words.js'+판끝, 꼭:false, 이름:'말 사전'},
                 {주소:내집+'cgo-music.js'+판끝,   꼭:true,  이름:'작곡 엔진'},
                 {주소:내집+'cgo-score.js'+판끝,   꼭:false, 이름:'악보 편집기'}];
@@ -2163,6 +2165,6 @@ window.JK=JK;
 
 <!-- 검사기 — 재는 손. 36KB. 씨앗 통(161KB)은 검사를 누를 때 받는다. -->
 <!-- 판 564 : ⚠️ 이 숫자는 머리(head)의 JURAN판 과 같이 올린다 -->
-<script src="js/juran-check.js?v=581" defer></script>
+<script src="js/juran-check.js?v=582" defer></script>
 </body>
 </html>
