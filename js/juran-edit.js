@@ -51,6 +51,7 @@ var css=document.createElement('style');
 css.textContent=
 'body.주란편집 .champion,body.주란편집 .rise,body.주란편집 .item,body.주란편집 .hero h1,body.주란편집 .hero .lede{outline:2px dashed rgba(234,166,27,.85);outline-offset:3px;cursor:pointer}'+
 'body.주란편집 .rise:hover,body.주란편집 .item:hover{background:rgba(234,166,27,.10)}'+
+'body.주란편집 .champion .lbl{outline:2px dashed rgba(255,217,138,.9);outline-offset:3px;border-radius:4px;cursor:pointer}'+
 'body.주란편집 .champion.끌림{outline:3px solid #ffcf5c;box-shadow:0 0 0 6px rgba(255,207,92,.35)}'+
 '.주편-손{position:relative;z-index:3;display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}'+
 '.주편-손 button{border:0;border-radius:999px;padding:7px 11px;font:700 12.5px system-ui,sans-serif;background:rgba(255,255,255,.92);color:#0d2b28;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25)}'+
@@ -157,6 +158,7 @@ document.addEventListener('click', function(ev){
   if(!원본) return;
   var t=ev.target;
   if(t.closest('#주편-띠,#주편-막,.주편-손,.playc,a,button,select,input,textarea')) return;
+  if(t.closest('.champion .top')){ ev.preventDefault(); 카드창(); return; }   /* 판 578 : 카드 이름 줄 */
   var 카드=t.closest('.champion');
   if(카드){ var c=곡찾기(카드.dataset.k); if(c){ ev.preventDefault(); 곡창(c); } return; }
   var 줄=t.closest('.rise[data-k],.item[data-k]');
@@ -326,6 +328,31 @@ function 곡창(c, 새로){
     바꿨다(); 다시(); 닫기();
   };
   setTimeout(function(){ var i=w.querySelector('#e-t'); if(i&&새로) i.focus(); },50);
+}
+
+/* ── 판 578 : 챔피언 카드 이름 · 카드에 보일 곡 ── */
+function 카드창(){
+  var 카=원본.카드||{}, 왼=카.왼쪽||{}, 오=카.오른쪽||{};
+  var 곡들=(원본.곡||[]).slice().sort(function(a,b){ return (+b.표||0)-(+a.표||0); });
+  function 고르기(id, 지금){
+    return '<select id="'+id+'"><option value="">자동 — 표 1등</option>'+
+      곡들.map(function(c){ return '<option value="'+글(c.id)+'"'+(c.id===지금?' selected':'')+'>'+글(c.t||c.id)+' · '+글(c.by||'')+'</option>'; }).join('')+'</select>';
+  }
+  var w=창열기('<h3>👑 챔피언 카드</h3>'+
+    '<label>왼쪽 카드 이름</label><input type="text" id="k-ln" value="'+글(왼.이름||'')+'" placeholder="{나라} 챔피언">'+
+    '<p class="풀이">비워 두면 「🇰🇷 대한민국 챔피언」처럼 보는 사람 나라로 나옵니다. <b>{나라}</b> 라고 쓰면 그 자리에 나라 이름이 들어갑니다.</p>'+
+    '<label>왼쪽 카드에 보일 곡</label>'+고르기('k-ls', 왼.곡)+
+    '<label>오른쪽 카드 이름</label><input type="text" id="k-rn" value="'+글(오.이름||'')+'" placeholder="🌍 글로벌 챔피언">'+
+    '<label>오른쪽 카드에 보일 곡</label>'+고르기('k-rs', 오.곡)+
+    '<p class="풀이">「자동」이면 표가 가장 많은 곡이 나옵니다. 곡을 고르면 표와 상관없이 그 곡이 나옵니다 — '+
+      '진짜 투표가 시작되면 <b>「자동」으로 돌려 두세요</b>. 공정한 무대라는 말과 맞아야 합니다.</p>'+
+    '<div class="단추들"><button type="button" id="k-no">닫기</button><button type="button" class="확인" id="k-ok">확인</button></div>');
+  w.querySelector('#k-no').onclick=닫기;
+  w.querySelector('#k-ok').onclick=function(){
+    원본.카드={ 왼쪽:{ 이름:w.querySelector('#k-ln').value.trim(), 곡:w.querySelector('#k-ls').value },
+               오른쪽:{ 이름:w.querySelector('#k-rn').value.trim(), 곡:w.querySelector('#k-rs').value } };
+    바꿨다(); 다시(); 닫기();
+  };
 }
 
 /* ── 첫 화면 문구 창 ── */
