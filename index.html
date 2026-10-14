@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <!-- 판 564 : 파일 주소 끝에 판 번호를 붙인다. 손님 폰이 옛 파일을 쥐고 안 놓는 일을 막는다.
      ⚠️ js 파일을 새로 올릴 때는 이 숫자와 맨 아래 juran-check.js?v= 숫자를 같이 올린다. -->
-<script>window.JURAN판='568';</script>
+<script>window.JURAN판='569';</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>html{color-scheme:light;word-break:keep-all;overflow-wrap:break-word;line-break:strict;hanging-punctuation:allow-end}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>JURAN</title>
@@ -1737,7 +1737,7 @@ window.JK=JK;
 (function(){
   var 소리집 = 'https://www.c-go-fuli.com/';
   var 내집   = 'js/';
-  var 판끝   = '?v='+(window.JURAN판||'568');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
+  var 판끝   = '?v='+(window.JURAN판||'569');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
   var 화면줄 = [{주소:내집+'juran-words.js'+판끝, 꼭:false, 이름:'말 사전'},
                 {주소:내집+'cgo-music.js'+판끝,   꼭:true,  이름:'작곡 엔진'},
                 {주소:내집+'cgo-score.js'+판끝,   꼭:false, 이름:'악보 편집기'}];
@@ -1841,6 +1841,25 @@ window.JK=JK;
         e.placeholder='예: 잔잔한 재즈 단조 · 신나는 K팝 · 비 오는 밤의 발라드';
     });
     try{ window._cgoMusicMod._switchTab('make'); }catch(e){}
+    몸스캔떼기();
+  }
+
+  /* 판 569 : 「🫀 내 몸 주파수 스캔」 단추와 그 결과 칸을 **떼어 낸다**(숨기지 않는다).
+     파트너 — 「카드 두 개 없앨 수 없나여」. CGO(웰니스 앱)의 카메라 심박 기능이다.
+     작곡 앱에는 필요 없고, 손님에게 카메라를 달라고 하면 의심만 산다.
+     엔진 파일은 안 건드린다. 엔진이 「만들기」 칸을 다시 지을 때마다(_buildMakePanel)
+     곧바로 다시 떼어 낸다 — 이 엔진 하나에만 붙인 손잡이라 CGO 에는 아무 영향이 없다. */
+  function 몸스캔떼기(){
+    var r=document.getElementById('cgo-music-root'); if(!r) return;
+    ['#cgo-rppg-btn','#cgo-rppg-panel'].forEach(function(q){
+      r.querySelectorAll(q).forEach(function(e){ if(e.parentNode) e.parentNode.removeChild(e); });
+    });
+    var m=window._cgoMusicMod;
+    if(m && !m._몸스캔569 && typeof m._buildMakePanel==='function'){
+      m._몸스캔569=true;
+      var 원래=m._buildMakePanel;
+      m._buildMakePanel=function(){ var x=원래.apply(this,arguments); try{ 몸스캔떼기(); }catch(e){} return x; };
+    }
   }
 
   function 소리받기(){
@@ -1982,6 +2001,6 @@ window.JK=JK;
 
 <!-- 검사기 — 재는 손. 36KB. 씨앗 통(161KB)은 검사를 누를 때 받는다. -->
 <!-- 판 564 : ⚠️ 이 숫자는 머리(head)의 JURAN판 과 같이 올린다 -->
-<script src="js/juran-check.js?v=568" defer></script>
+<script src="js/juran-check.js?v=569" defer></script>
 </body>
 </html>
