@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <!-- 판 564 : 파일 주소 끝에 판 번호를 붙인다. 손님 폰이 옛 파일을 쥐고 안 놓는 일을 막는다.
      ⚠️ js 파일을 새로 올릴 때는 이 숫자와 맨 아래 juran-check.js?v= 숫자를 같이 올린다. -->
-<script>window.JURAN판='588';</script>
+<script>window.JURAN판='590';</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>html{color-scheme:light;word-break:keep-all;overflow-wrap:break-word;line-break:strict;hanging-punctuation:allow-end}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>JURAN</title>
@@ -137,6 +137,18 @@
   .재생줄 .때{flex:none;font:600 11.5px system-ui,sans-serif;font-variant-numeric:tabular-nums;opacity:.9;min-width:74px;text-align:center}
   .votec[disabled]{opacity:.45;cursor:default}
   .votec + .playc{margin-left:8px}
+  /* 판 590 : 작은 재생기 — 다른 화면으로 가도 음악은 계속, 여기서 멈추고 옮긴다 */
+  #작은재생{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:9990;display:none;align-items:center;gap:6px;
+    width:min(560px,calc(100vw - 24px));box-sizing:border-box;padding:7px 8px 7px 10px;border-radius:16px;
+    background:rgba(13,43,40,.92);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:#eafff8;box-shadow:0 10px 30px rgba(0,0,0,.35);font:600 13px system-ui,sans-serif}
+  #작은재생.보임{display:flex}
+  body.주란편집 #작은재생{bottom:118px}
+  #작은재생 .그림{flex:none;width:38px;height:38px;border-radius:9px;background:#1d4a44 center/cover no-repeat}
+  #작은재생 .글{flex:1;min-width:0;line-height:1.25}
+  #작은재생 .글 b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13.5px}
+  #작은재생 .글 span{display:block;font-size:11.5px;opacity:.8;font-variant-numeric:tabular-nums}
+  #작은재생 button{flex:none;width:38px;height:38px;border-radius:999px;border:0;cursor:pointer;background:rgba(255,255,255,.12);color:#fff;font:15px system-ui,sans-serif;padding:0}
+  #작은재생 button.큰{width:42px;height:42px;background:rgba(255,255,255,.22)}
   /* 판 588 : 편집 중 고친 곡 · 찾은 곡 */
   .rise.고침,.item.고침{box-shadow:inset 5px 0 0 #eaa61b;background:rgba(234,166,27,.10)}
   .찾음{animation:찾음 2.4s ease}
@@ -649,7 +661,7 @@
 <section class="view" id="v-chart" hidden>
   <div class="wrap">
     <button class="back" onclick="showView('home')">← 홈</button>
-    <div class="vhead"><h2>📊 실시간 차트</h2><p>장르당 TOP 50 · 국내와 글로벌 따로 · 4초마다 순위 갱신</p></div>
+    <div class="vhead"><h2>📊 실시간 차트</h2><p>장르당 TOP 50 · 국내와 글로벌 따로 · 표가 들어오면 순위가 바뀝니다</p></div>
     <div class="ntab" style="max-width:420px;margin-bottom:12px">
       <button id="ct-home" aria-pressed="true" onclick="JN.차트('home')">국내</button>
       <button id="ct-glob" aria-pressed="false" onclick="JN.차트('global')">🌍 글로벌</button>
@@ -961,11 +973,14 @@
   function _풀(){ var a=[]; Object.keys(data).forEach(function(k){ a=a.concat(data[k]); }); return a; }
   function _급순(arr){
     return arr.slice().sort(function(a,b){
-      return _멈춤비교('급',a,b) || (((b.votes||0)-(b.전표||0)) - ((a.votes||0)-(a.전표||0))); });
+      return _멈춤비교('급',a,b) || (_진짜(b)-_진짜(a)) || (((b.votes||0)-(b.전표||0)) - ((a.votes||0)-(a.전표||0))); });
   }
   /* 판 588 : ⏸ 순위 멈춤 — 편집할 때 순서를 그 자리에 묶는다. 표를 고쳐도 줄이 다른 데로 도망가지 않게.
      멈춘 뒤에 새로 넣은 곡은 **맨 위에** (찾기 쉽게). 파트너 — 「실시간을 멈춰야 검사를 하죠」 */
   var _멈춘={표:null,급:null};
+  /* 판 589 : **음악을 올린 진짜 곡은 늘 맨 위** — 보기용 곡(표가 수십만)에 밀려 안 보이던 것을 막는다.
+     파트너 — 「올렸는데 없어졌어요」 (표 850 인 진짜 곡이 50위 밖으로 밀려 있었다) */
+  function _진짜(s){ return (s&&s.음악)?1:0; }
   function _멈춤비교(종,a,b){
     var m=_멈춘[종]; if(!m) return 0;
     var x=m[a.id], y=m[b.id];
@@ -994,7 +1009,7 @@
   /* 챔피언 두 장 — 왼쪽은 내 나라, 오른쪽은 온 세계 */
   var _왕={국:null, 글:null};
   function _왕그리기(){
-    var 모두=_풀().slice().sort(function(x,y){ return y.votes-x.votes; });
+    var 모두=_풀().slice().sort(function(x,y){ return (_진짜(y)-_진짜(x)) || (y.votes-x.votes); });
     var 국=_내나라? 모두.filter(function(x){ return x.나라===_내나라; }) : [];
     /* 판 578 : 운영자가 카드 이름과 카드에 보일 곡을 정할 수 있다 (편집 모드 → 카드 이름 누르기).
        곡을 정하지 않으면(자동) 예전처럼 표 1등. 이름의 {나라} 는 보는 사람 나라로 바뀐다. */
@@ -1106,7 +1121,7 @@
     });
     _원본=j;
     Object.keys(새).forEach(function(k){
-      새[k].sort(function(a,b){ return _멈춤비교('표',a,b) || (b.votes-a.votes); });
+      새[k].sort(function(a,b){ return _멈춤비교('표',a,b) || (_진짜(b)-_진짜(a)) || (b.votes-a.votes); });
       새[k].forEach(function(s,ix){ s.prev=ix; });
     });
     data=새;
@@ -1155,7 +1170,7 @@
       _멈춘={표:null,급:null};
       if(on){
         var 표={}, 급={};
-        _풀().slice().sort(function(a,b){ return b.votes-a.votes; }).forEach(function(x,i){ if(x.id) 표[x.id]=i; });
+        _풀().slice().sort(function(a,b){ return (_진짜(b)-_진짜(a)) || (b.votes-a.votes); }).forEach(function(x,i){ if(x.id) 표[x.id]=i; });
         _급순(_풀()).forEach(function(x,i){ if(x.id) 급[x.id]=i; });
         _멈춘={표:표,급:급};
       }
@@ -1287,6 +1302,7 @@
     }
     function 단추(카드){ return 카드&&카드.querySelector('.playc'); }
     function 그리기(){
+      try{ 작은그리기(); }catch(e){}
       if(!지금카드||!소리) return;
       var b=단추(지금카드); if(b){ var 도는=!소리.paused; b.textContent=도는?'❚❚':'▶'; b.classList.toggle('on',도는); b.setAttribute('aria-label',도는?'잠깐 멈춤':'재생'); }
       var z=줄(지금카드), d=소리.duration, t=소리.currentTime||0;
@@ -1295,10 +1311,50 @@
     }
     function 끄기(){   /* 다른 곡으로 갈 때 — 앞 카드의 줄을 접는다 */
       try{ if(소리) 소리.pause(); }catch(e){}
-      if(지금카드){ 지금카드.classList.remove('재생중'); var b=단추(지금카드); if(b){ b.textContent='▶'; b.classList.remove('on'); } }
-      지금카드=null;
+      if(지금카드){ 지금카드.classList.remove('재생중'); var b=단추(지금카드); if(b){ b.textContent='▶'; b.classList.remove('on'); } try{ 보는눈&&보는눈.unobserve(지금카드); }catch(e){} }
+      지금카드=null; 카드보임=true; try{ 작은그리기(); }catch(e){}
     }
     function 쉬기(){ try{ if(소리) 소리.pause(); }catch(e){} 그리기(); }
+    /* 판 590 : 작은 재생기 — 다른 화면(차트 · 올리기 …)으로 가도 음악을 멈추지 않는다.
+       카드가 안 보이면 아래에 작은 재생기가 떠서 ❚❚ · ⏪ · ⏩ · ✕ 를 그대로 쓸 수 있다.
+       휴대폰 잠금 화면 · 알림창에도 곡 이름과 멈춤 단추가 나온다 (Media Session). */
+    var 작=document.createElement('div'); 작.id='작은재생';
+    작.innerHTML='<div class="그림"></div><div class="글"><b></b><span>0:00 / 0:00</span></div>'+
+      '<button type="button" data-w="뒤" aria-label="10초 뒤로">⏪</button><button type="button" class="큰" data-w="틀기" aria-label="재생">▶</button>'+
+      '<button type="button" data-w="앞" aria-label="10초 앞으로">⏩</button><button type="button" data-w="끄기" aria-label="닫기">✕</button>';
+    document.body.appendChild(작);
+    var 카드보임=true;
+    try{ var 보는눈=new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.target===지금카드) 카드보임=e.isIntersecting; }); 작은그리기(); },{threshold:0.25}); }catch(e){ 보는눈=null; }
+    function 작은그리기(){
+      if(!지금카드||!소리){ 작.classList.remove('보임'); return; }
+      var 곡=JN.곡(소리.dataset.k)||{}, 보임=(currentView!=='home') || !카드보임;
+      작.classList.toggle('보임', 보임);
+      작.querySelector('.글 b').textContent=(곡.t||'')+(곡.m?' · '+곡.m:'');
+      var d=소리.duration, t=소리.currentTime||0;
+      작.querySelector('.글 span').textContent=분초(t)+' / '+(isFinite(d)?분초(d):'--:--');
+      작.querySelector('[data-w=틀기]').textContent=소리.paused?'▶':'❚❚';
+      var 그=작.querySelector('.그림'); var u=(곡.사진&&/^https:|^blob:|^http:/.test(곡.사진))?'url("'+곡.사진.replace(/"/g,'%22')+'")':''; if(그.style.backgroundImage!==u) 그.style.backgroundImage=u;
+    }
+    작.addEventListener('click', function(e){
+      var b=e.target.closest('button[data-w]'); if(!b||!소리) return;
+      e.preventDefault(); e.stopPropagation();
+      var w=b.dataset.w, d=isFinite(소리.duration)?소리.duration:1e9;
+      if(w==='틀기'){ if(소리.paused){ var p=소리.play(); if(p&&p.catch) p.catch(function(){}); } else 소리.pause(); }
+      else if(w==='뒤'||w==='앞') 소리.currentTime=Math.max(0,Math.min(d-0.3,(소리.currentTime||0)+(w==='앞'?10:-10)));
+      else if(w==='끄기'){ 끄기(); }
+      그리기();
+    });
+    function 잠금화면(곡){
+      try{
+        if(!('mediaSession' in navigator)) return;
+        navigator.mediaSession.metadata=new MediaMetadata({ title:곡.t||'JURAN', artist:곡.m||'', album:'JURAN',
+          artwork:(곡.사진&&/^https:/.test(곡.사진))?[{src:곡.사진, sizes:'512x512', type:'image/jpeg'}]:[] });
+        navigator.mediaSession.setActionHandler('play', function(){ 소리&&소리.play(); });
+        navigator.mediaSession.setActionHandler('pause', function(){ 소리&&소리.pause(); });
+        navigator.mediaSession.setActionHandler('seekbackward', function(){ if(소리) 소리.currentTime=Math.max(0,(소리.currentTime||0)-10); });
+        navigator.mediaSession.setActionHandler('seekforward', function(){ if(소리) 소리.currentTime=(소리.currentTime||0)+10; });
+      }catch(e){}
+    }
     document.addEventListener('click', function(ev){
       var b=ev.target.closest && ev.target.closest('.champion .playc'); if(!b) return;
       ev.preventDefault(); ev.stopPropagation();
@@ -1315,13 +1371,13 @@
       }
       if(소리.src!==곡.음악) 소리.src=곡.음악;
       소리.dataset.k=곡.id;
-      지금카드=카드; 카드.classList.add('재생중'); 줄(카드); 그리기();
+      지금카드=카드; 카드.classList.add('재생중'); 줄(카드); 카드보임=true; try{ 보는눈&&보는눈.observe(카드); }catch(e){} 잠금화면(곡); 그리기();
       b.textContent='❚❚'; b.classList.add('on');
       var p=소리.play(); if(p&&p.catch) p.catch(function(){ 그리기(); });
     }, true);
     /* 카드 곡이 바뀌면(편집 · 자동 1등) 앞 곡은 끈다 */
     setInterval(function(){ if(지금카드&&소리&&지금카드.dataset.k!==소리.dataset.k) 끄기(); },1500);
-    window.addEventListener('juran:view', 쉬기);
+    window.addEventListener('juran:view', function(){ setTimeout(작은그리기,0); });   /* 판 590 : 화면을 옮겨도 멈추지 않는다 */
   })();
 
   /* ── 판 584 : 👆 손님 투표 — 챔피언 카드의 손가락 ──
@@ -1373,7 +1429,7 @@
       var v=sessionStorage.getItem('lee-t')||'', i=v.indexOf('|');
       if(!(i>0 && +v.slice(0,i)*1000>Date.now()+60000)){ location.href='LEE.html'; return; }
       window.__주란편집=true;
-      var sc=document.createElement('script'); sc.src='js/juran-edit.js?v='+(window.JURAN판||'588'); sc.defer=true;
+      var sc=document.createElement('script'); sc.src='js/juran-edit.js?v='+(window.JURAN판||'590'); sc.defer=true;
       document.head.appendChild(sc);
     }catch(e){}
   })();
@@ -1382,7 +1438,7 @@
   var chips=document.getElementById('chips'),listEl=document.getElementById('list'),current=genres[0].n;
   chips.innerHTML=genres.map(function(g){return '<button class="chip" role="tab" data-g="'+g.n+'" aria-selected="'+(g.n===current)+'">'+g.e+' '+g.n+'</button>';}).join('');
   chips.addEventListener('click',function(e){var b=e.target.closest('.chip');if(!b)return;current=b.dataset.g;[].forEach.call(chips.children,function(c){c.setAttribute('aria-selected',c.dataset.g===current);});var g=genres.find(function(x){return x.n===current;});document.getElementById('g-emoji').textContent=g.e;document.getElementById('g-name').textContent=g.n;render(true);});
-  function render(reset){var _전=data[current]||[];var _골=(_차보기==='home'&&_내나라)?_전.filter(function(x){return x.나라===_내나라;}):_전;var arr=_골.slice(0,50);if(!arr.length){listEl.innerHTML='<li class="item" style="opacity:.7"><span class="info"><span class="s">이 나라에는 아직 이 장르 곡이 없습니다. 🌍 글로벌을 눌러 보세요.</span></span></li>';return;}var max=arr[0].votes,olds={};[].forEach.call(listEl.children,function(li){olds[li.dataset.id]=li.getBoundingClientRect().top;});
+  function render(reset){var _전=data[current]||[];var _골=(_차보기==='home'&&_내나라)?_전.filter(function(x){return x.나라===_내나라;}):_전;var arr=_골.slice(0,50);if(!arr.length){listEl.innerHTML='<li class="item" style="opacity:.7"><span class="info"><span class="s">이 나라에는 아직 이 장르 곡이 없습니다. 🌍 글로벌을 눌러 보세요.</span></span></li>';return;}var max=Math.max.apply(null,arr.map(function(x){return x.votes||0;}).concat([1])),olds={};[].forEach.call(listEl.children,function(li){olds[li.dataset.id]=li.getBoundingClientRect().top;});
     listEl.innerHTML=arr.map(function(s,ix){var mv=s.prev-ix,cls=mv>0?'up':(mv<0?'down':'same'),ar=mv>0?('▲'+mv):(mv<0?('▼'+(-mv)):'–');
       return '<li class="item'+(window.__고친곡&&window.__고친곡[s.id]?' 고침':'')+'" data-id="'+s.t+'" data-k="'+(s.id||'')+'"><span class="rank'+(ix<3?' top':'')+'">'+(ix+1)+'</span><span class="mv '+cls+'">'+ar+'</span><span class="cv2" style="background:'+s.cv+'"></span><span class="info"><span class="t">'+s.t+'</span><span class="s">'+s.m+' · 9-AI '+s.score+'점</span></span><span class="bars"><i style="width:'+Math.round(s.votes/max*100)+'%"></i></span><span class="votes"><b class="num">'+fmt(s.votes)+'</b><small>표</small></span></li>';}).join('');
     if(!reset&&!reduce){[].forEach.call(listEl.children,function(li){var o=olds[li.dataset.id];if(o==null)return;var d=o-li.getBoundingClientRect().top;if(Math.abs(d)>1){li.style.transform='translateY('+d+'px)';li.style.transition='none';requestAnimationFrame(function(){li.style.transition='transform .6s cubic-bezier(.22,1,.36,1)';li.style.transform='';});li.classList.add('flash');}});}
@@ -2048,7 +2104,7 @@ window.JK=JK;
 (function(){
   var 소리집 = 'https://www.c-go-fuli.com/';
   var 내집   = 'js/';
-  var 판끝   = '?v='+(window.JURAN판||'588');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
+  var 판끝   = '?v='+(window.JURAN판||'590');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
   var 화면줄 = [{주소:내집+'juran-words.js'+판끝, 꼭:false, 이름:'말 사전'},
                 {주소:내집+'cgo-music.js'+판끝,   꼭:true,  이름:'작곡 엔진'},
                 {주소:내집+'cgo-score.js'+판끝,   꼭:false, 이름:'악보 편집기'}];
@@ -2380,6 +2436,6 @@ window.JK=JK;
 
 <!-- 검사기 — 재는 손. 36KB. 씨앗 통(161KB)은 검사를 누를 때 받는다. -->
 <!-- 판 564 : ⚠️ 이 숫자는 머리(head)의 JURAN판 과 같이 올린다 -->
-<script src="js/juran-check.js?v=588" defer></script>
+<script src="js/juran-check.js?v=590" defer></script>
 </body>
 </html>
