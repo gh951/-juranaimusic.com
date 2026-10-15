@@ -711,16 +711,17 @@ function 그리기(R){
         if(!W.목록.length) h+='<div class="row"><b>가장 긴 곳</b><span>🟢 눈에 띄게 겹치는 공개 곡이 없습니다</span></div>';
         W.목록.forEach(function(x,i){
           h+='<div class="row"><b>'+(i===0?'가장 닮은 곡':(i+1)+'번째')+'</b><span>'+세빛(x.같은토막,잣대.세상노랑,잣대.세상빨강)+
-             ' <b style="color:#e6f4ef">'+x.같은토막+'음</b> 연달아 똑같이 — 「'+그글(x.곡명)+'」'+(x.가수?' · '+그글(x.가수):'')+'</span></div>';
+             ' <b style="color:#e6f4ef">'+x.같은토막+'음</b> 연달아 같은 간격 — 「'+그글(x.곡명)+'」'+(x.가수?' · '+그글(x.가수):'')+'</span></div>';
         });
         h+='<div class="note" style="margin:-2px 0 8px">📏 <b style="color:#9ac7b8">읽는 법</b> — 서로 관계없는 공개 곡끼리도 <b style="color:#e6f4ef">보통 14음</b>은 겹칩니다. '+
            '🟡 '+잣대.세상노랑+'음부터 · 🔴 '+잣대.세상빨강+'음부터입니다. 같은 음이 이어지면 하나로 셉니다. 판단은 보시는 분이 하십니다.</div>';
         var 첫=W.목록[0];
         if(첫 && 첫.자리){
-          h+='<div class="over"><div class="ovh">🎼 악보 겹쳐 보기 <span>— 빨간 음 '+첫.같은토막+'개가 똑같이 오르내립니다</span></div>'+
+          var 첫말=겹침말(첫.같은토막);
+          h+='<div class="over"><div class="ovh">🎼 악보 겹쳐 보기 <span>— 간격까지 같은 음 '+첫.같은토막+'개 · <b style="color:'+첫말.색+'">'+첫말.불+' '+첫말.말+'</b></span></div>'+
              '<canvas id="jc-over" style="width:100%;height:196px;display:block"></canvas>'+
              '<div class="ovn">위는 <b>내 곡</b>, 아래는 공개 곡 「'+그글(첫.곡명)+'」입니다. 공개 곡은 조를 옮겨 내 곡 높이에 맞췄고, '+
-             '같은 음이 이어진 것은 하나로 그렸습니다. 음 길이는 견주지 않습니다.</div></div>';
+             '같은 음이 이어진 것은 하나로 그렸습니다. <b>음 사이 간격(반음 몇 개)까지 같아야</b> 같은 음으로 셉니다 — 도·미·솔과 도·레·미는 다르게 셉니다. 음 길이(리듬)는 견주지 않습니다.</div></div>';
         }
       }
       /* ── 🌱 우리 씨앗 — 참고만, 불 없음 ── */
@@ -775,6 +776,13 @@ function 그글(t){ return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt
       그래서 빨간 음은 위아래가 **같은 높이**에 선다 — 조를 옮겨도 같은 가락이라는 뜻.
    ⚠️ 음 길이는 견주지 않으니 그림도 고르게 늘어놓는다. 아는 척하지 않는다.
    ⚠️ 한 번 그리고 끝. 고리를 돌지 않는다. */
+/* 판 597 : 겹친 음 수에 따라 색과 말을 정한다 — 판정(🟢🟡🔴)과 그림 색이 늘 같다.
+   파트너 — 「11음(보통)인데 빨갛게 그려서 걸린 것처럼 보인다」 */
+function 겹침말(n){
+  if(n>=잣대.세상빨강) return {단:'빨강', 색:'#f87171', 바탕:'rgba(248,113,113,', 불:'🔴', 말:'많이 겹칩니다 — 두 곡을 직접 들어 보세요'};
+  if(n>=잣대.세상노랑) return {단:'노랑', 색:'#facc15', 바탕:'rgba(250,204,21,', 불:'🟡', 말:'눈여겨볼 만큼 겹칩니다'};
+  return {단:'초록', 색:'#4ade80', 바탕:'rgba(74,222,128,', 불:'🟢', 말:'보통 수준 — 관계없는 곡끼리도 흔히 이만큼은 겹칩니다'};
+}
 var 계단={0:0,1:0,2:1,3:1,4:2,5:3,6:3,7:4,8:4,9:5,10:5,11:6}, 검은건반={1:1,3:1,6:1,8:1,10:1};
 function 겹치기그리기(cv, a){
   if(!cv||!a||!a.자리) return;
@@ -800,10 +808,11 @@ function 겹치기그리기(cv, a){
   var 줄들=[{이름:'내 곡', 밑:66, 음:function(c){ return 내[c]; }},
            {이름:(a.아래이름||'씨앗'), 밑:160, 음:function(c){ var j=c+씨밀림; return (j>=0&&j<씨.length)?씨[j]:null; }}];
   function 같은칸(c){ return c>=z.내시작 && c<z.내시작+z.음수; }
-  /* 빨간 띠 — 두 줄을 꿰뚫는다 */
+  var 말=겹침말(z.음수), 색=말.색;   /* 판 597 : 판정 색대로 — 초록 · 노랑 · 빨강 */
+  /* 띠 — 두 줄을 꿰뚫는다 */
   var x빨0=왼+(z.내시작-c0)*칸폭, x빨1=Math.min(W-오, 왼+(z.내시작+z.음수-c0)*칸폭);
-  g.fillStyle='rgba(248,113,113,.13)'; g.fillRect(x빨0,8,x빨1-x빨0,H-16);
-  g.strokeStyle='rgba(248,113,113,.55)'; g.lineWidth=1; g.strokeRect(x빨0+.5,8.5,x빨1-x빨0-1,H-17);
+  g.fillStyle=말.바탕+'.13)'; g.fillRect(x빨0,8,x빨1-x빨0,H-16);
+  g.strokeStyle=말.바탕+'.55)'; g.lineWidth=1; g.strokeRect(x빨0+.5,8.5,x빨1-x빨0-1,H-17);
   줄들.forEach(function(오선){
     var 밑=오선.밑;
     g.strokeStyle='rgba(159,216,200,.32)'; g.lineWidth=1;
@@ -823,16 +832,16 @@ function 겹치기그리기(cv, a){
       /* 음표 머리 */
       g.save(); g.translate(x,y); g.rotate(-0.33);
       g.beginPath(); g.ellipse(0,0,4.3,3.1,0,0,Math.PI*2);
-      g.fillStyle=빨?'#f87171':'#d7ece5'; g.fill(); g.restore();
+      g.fillStyle=빨?색:'#d7ece5'; g.fill(); g.restore();
       /* 기둥 */
-      g.fillStyle=빨?'#f87171':'#d7ece5';
+      g.fillStyle=빨?색:'#d7ece5';
       var 위로=단<34; g.fillRect(위로?x+3.4:x-4.2, 위로?y-20:y, 1.1, 20);
       /* 올림표 — 칸이 좁으면 작게, 아주 좁으면 생략(음표 머리끼리 부딪친다) */
       if(검은건반[((m%12)+12)%12] && 칸폭>=10){ g.font='600 '+(칸폭<16?8:10)+'px system-ui,sans-serif'; g.textAlign='right'; g.fillText('#', x-4.6, y+3); }
     }
   });
   /* 같은 칸끼리 위아래를 잇는다 — 「여기가 겹친다」 */
-  g.strokeStyle='rgba(248,113,113,.5)'; g.lineWidth=1; g.setLineDash([2,3]);
+  g.strokeStyle=말.바탕+'.5)'; g.lineWidth=1; g.setLineDash([2,3]);
   for(var c3=Math.max(c0,z.내시작); c3<Math.min(c1,z.내시작+z.음수); c3++){
     var xx=왼+(c3-c0+0.5)*칸폭; g.beginPath(); g.moveTo(xx,82); g.lineTo(xx,112); g.stroke();
   }
@@ -938,7 +947,7 @@ function 검사증그림(g, W, H, R){
       g.fillStyle='#b8963e'; g.font='700 18px '+글꼴; g.fillText(String(i+1), 84, y);
       g.beginPath(); g.arc(122, y-6, 8, 0, Math.PI*2); g.fillStyle=불(x.같은토막); g.fill();
       g.fillStyle='#1c1608'; g.font='800 22px '+글꼴; g.fillText(x.같은토막+'음', 142, y);
-      g.fillStyle='#8a7a5a'; g.font='400 16px '+글꼴; g.fillText('연달아 똑같이', 202, y);
+      g.fillStyle='#8a7a5a'; g.font='400 16px '+글꼴; g.fillText('간격까지 같게', 202, y);
       g.fillStyle='#1c1608'; g.font=(i===0?'700 ':'400 ')+'21px '+글꼴;
       g.fillText(줄임(g,'「'+x.곡명+'」'+(x.가수?' · '+x.가수:''), W-80-310), 310, y);
       y+=40;
@@ -959,7 +968,7 @@ function 검사증그림(g, W, H, R){
       g.fillStyle='#0b1512'; g.fillRect(80, y-8, pw, ph+46);
       g.strokeStyle='#b8963e'; g.lineWidth=1; g.strokeRect(80.5, y-7.5, pw-1, ph+45);
       g.fillStyle='#f3dc8c'; g.font='700 16px '+글꼴;
-      g.fillText(줄임(g,'악보 겹쳐 보기 — 위: 내 곡 · 아래: 「'+세.목록[0].곡명+'」 · 빨간 음 '+세.목록[0].같은토막+'개가 똑같이 오르내림', pw-30), 96, y+16);
+      g.fillText(줄임(g,'악보 겹쳐 보기 — 위: 내 곡 · 아래: 「'+세.목록[0].곡명+'」 · 간격까지 같은 음 '+세.목록[0].같은토막+'개 · '+겹침말(세.목록[0].같은토막).말.split(' — ')[0], pw-30), 96, y+16);
       try{ g.drawImage(ov, 80, y+30, pw, ph); }catch(e){}
       y+=ph+64;
     }
@@ -1202,7 +1211,7 @@ function 곡검사증(R, 제목, 지은이, 겹침){
 
 /* ───────────────────────────────────────────── 내보내기 ── */
 window.JC = {
-  곡검사:곡검사, 곡검사증:곡검사증, 겹치기그리기:겹치기그리기, 잣대:잣대,   /* 판 594 */
+  곡검사:곡검사, 곡검사증:곡검사증, 겹치기그리기:겹치기그리기, 잣대:잣대, 겹침말:겹침말,   /* 판 594 · 597 */
   열기:열기, 닫기:닫기, 띠붙이기:띠붙이기, 검사기페이지:검사기페이지,
   가사검사:가사검사, 악보검사:악보검사, 지금가락:지금가락,
   지문뜨기:지문뜨기, 지문맞춰보기:지문맞춰보기, 파일을소리로:파일을소리로,
