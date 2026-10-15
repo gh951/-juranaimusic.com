@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <!-- 판 564 : 파일 주소 끝에 판 번호를 붙인다. 손님 폰이 옛 파일을 쥐고 안 놓는 일을 막는다.
      ⚠️ js 파일을 새로 올릴 때는 이 숫자와 맨 아래 juran-check.js?v= 숫자를 같이 올린다. -->
-<script>window.JURAN판='591';</script>
+<script>window.JURAN판='593';</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>html{color-scheme:light;word-break:keep-all;overflow-wrap:break-word;line-break:strict;hanging-punctuation:allow-end}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>JURAN</title>
@@ -149,6 +149,78 @@
   #작은재생 .글 span{display:block;font-size:11.5px;opacity:.8;font-variant-numeric:tabular-nums}
   #작은재생 button{flex:none;width:38px;height:38px;border-radius:999px;border:0;cursor:pointer;background:rgba(255,255,255,.12);color:#fff;font:15px system-ui,sans-serif;padding:0}
   #작은재생 button.큰{width:42px;height:42px;background:rgba(255,255,255,.22)}
+  /* 판 593 : 곡 창 — 사진 · 듣기 · 가사 · 악보 · 저작권 1차 예측을 한 창에 */
+  #곡창{position:fixed;inset:0;z-index:9994;background:rgba(4,24,22,.55);display:none;align-items:flex-end;justify-content:center}
+  #곡창.보임{display:flex}
+  @media(min-width:760px){#곡창{align-items:center}}
+  #곡창 .판{position:relative;background:#fff;color:#0d2b28;width:min(720px,100%);max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;
+    font:15px/1.6 system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;box-shadow:0 -12px 40px rgba(0,0,0,.3)}
+  @media(min-width:760px){#곡창 .판{border-radius:20px}}
+  #곡창 .닫기x{position:absolute;right:12px;top:12px;z-index:3;width:40px;height:40px;border-radius:999px;border:0;background:rgba(0,0,0,.45);color:#fff;font:700 18px system-ui;cursor:pointer}
+  #곡창 .머리{position:relative;min-height:190px;display:flex;align-items:flex-end;padding:20px;color:#fff;background:#0d2b28 center/cover no-repeat}
+  #곡창 .머리::before{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.72))}
+  #곡창 .머리>div{position:relative;z-index:1;min-width:0}
+  #곡창 .머리 h2{margin:0;font-size:26px;line-height:1.2;word-break:keep-all}
+  #곡창 .머리 .누구{opacity:.9;margin-top:4px;font-size:14px}
+  #곡창 .듣는줄{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid rgba(8,60,55,.1)}
+  #곡창 .듣는줄 button{flex:none;border:0;border-radius:999px;cursor:pointer;font:700 14px system-ui,sans-serif}
+  #곡창 .듣는줄 .틀{width:48px;height:48px;background:#0d2b28;color:#fff;font-size:17px}
+  #곡창 .듣는줄 .작{width:38px;height:38px;background:#eef5f3;color:#0d2b28}
+  #곡창 .듣는줄 input{flex:1;min-width:0;accent-color:#03897d}
+  #곡창 .듣는줄 .때{flex:none;font:600 12px system-ui;font-variant-numeric:tabular-nums;color:#5b7a74;min-width:78px;text-align:right}
+  #곡창 .할일{display:flex;gap:8px;flex-wrap:wrap;padding:12px 16px 4px}
+  #곡창 .할일 button{border:1px solid rgba(8,60,55,.15);background:#fff;border-radius:999px;min-height:38px;padding:0 14px;font:700 13.5px system-ui,sans-serif;cursor:pointer;color:#0d2b28}
+  #곡창 .탭들{display:flex;gap:4px;padding:10px 12px 0;position:sticky;top:0;background:#fff;z-index:2;border-bottom:1px solid rgba(8,60,55,.1);overflow-x:auto}
+  #곡창 .탭들 button{flex:none;border:0;background:none;padding:10px 12px;font:700 14px system-ui,sans-serif;color:#7d9893;cursor:pointer;border-bottom:3px solid transparent}
+  #곡창 .탭들 button[aria-selected=true]{color:#0d2b28;border-bottom-color:#eaa61b}
+  #곡창 .몸{padding:14px 16px 26px;min-height:200px}
+  #곡창 .몸 pre{white-space:pre-wrap;font:inherit;margin:0}
+  #곡창 .표줄{display:grid;grid-template-columns:110px 1fr;gap:6px 12px;font-size:14.5px}
+  #곡창 .표줄 dt{color:#5b7a74}
+  #곡창 .표줄 dd{margin:0;font-weight:700}
+  #곡창 .악보고르기{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  #곡창 .악보고르기 button{border:1px solid rgba(8,60,55,.18);background:#fff;border-radius:10px;min-height:36px;padding:0 12px;font:700 13px system-ui,sans-serif;cursor:pointer}
+  #곡창 .악보고르기 button[aria-pressed=true]{background:#0d2b28;color:#fff;border-color:#0d2b28}
+  #곡창 .악보판{border:1px solid rgba(8,60,55,.12);border-radius:12px;overflow:hidden;background:#fff}
+  #곡창 .악보판 img{display:block;width:100%;height:auto}
+  #곡창 .악보판 iframe{display:block;width:100%;height:70vh;border:0}
+  #곡창 .악보단추{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 0}
+  #곡창 .악보단추 a,#곡창 .악보단추 button{display:inline-flex;align-items:center;min-height:38px;padding:0 14px;border-radius:10px;border:1px solid rgba(8,60,55,.18);background:#eef5f3;color:#0d2b28;font:700 13px system-ui,sans-serif;text-decoration:none;cursor:pointer}
+  #곡창 .막대줄{display:flex;align-items:center;gap:10px;margin:8px 0}
+  #곡창 .막대줄 b{min-width:44px}
+  #곡창 .막대줄 .막{flex:1;height:10px;border-radius:999px;background:#e8efed;overflow:hidden}
+  #곡창 .막대줄 .막 i{display:block;height:100%;border-radius:999px}
+  #곡창 .알림판{margin-top:14px;padding:12px 14px;border-radius:12px;background:#fbf4e3;border:1px solid #ecd9a8;font-size:13px;line-height:1.65;color:#5a4a1e}
+  #곡창 .빈{color:#7d9893;padding:20px 0;text-align:center}
+  /* 판 592 : 펼친 줄 · ⋮ 메뉴 · 가사/악보 보기 */
+  .점{flex:none;width:30px;height:30px;border-radius:999px;border:0;background:transparent;color:#7d9893;font:700 18px/30px system-ui,sans-serif;cursor:pointer;padding:0;margin-left:2px}
+  .점:hover{background:rgba(8,60,55,.08);color:#0d2b28}
+  .rise.펼침,.item.펼침{flex-wrap:wrap;background:#f1f8f6;border-radius:14px}
+  #rise-home>.rise.펼침,#rise-glob>.rise.펼침{padding:10px 8px}
+  .rise.펼침 .cv{width:64px;height:64px;border-radius:12px}
+  .item.펼침 .cv2{width:72px;height:72px;border-radius:13px}
+  .rise.펼침 .t,.item.펼침 .t{font-size:17px;white-space:normal;word-break:keep-all;line-height:1.3}
+  .rise.펼침 .s,.item.펼침 .s{white-space:normal}
+  .펼침줄{flex-basis:100%;display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:6px 0 2px 0}
+  .펼침줄 .정보{font:800 13px var(--display,system-ui);color:#0d2b28;margin-right:4px}
+  .펼침줄 .정보 i{font-style:normal;color:var(--up,#12a36a);margin-left:6px}
+  @media(max-width:560px){ .rise.펼침 .d{display:none} .rise.펼침 .t{font-size:16px} }
+  .펼침줄 button{border:1px solid rgba(8,60,55,.15);background:#fff;border-radius:999px;min-height:36px;padding:0 13px;font:700 13px system-ui,sans-serif;cursor:pointer;color:#0d2b28}
+  .펼침줄 button:hover{background:#e6f3ef}
+  #점메뉴{position:fixed;z-index:9995;background:#fff;border:1px solid rgba(8,60,55,.12);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.18);padding:6px;min-width:180px;display:none}
+  #점메뉴.보임{display:block}
+  #점메뉴 button{display:block;width:100%;text-align:left;border:0;background:none;padding:11px 12px;border-radius:8px;font:600 14px system-ui,sans-serif;cursor:pointer;color:#0d2b28}
+  #점메뉴 button:hover{background:#eef5f3}
+  #곡보기{position:fixed;inset:0;z-index:9996;background:rgba(0,0,0,.45);display:none;align-items:flex-end;justify-content:center}
+  #곡보기.보임{display:flex}
+  @media(min-width:700px){#곡보기{align-items:center}}
+  #곡보기 .판{background:#fff;color:#0d2b28;width:min(560px,100%);max-height:86vh;overflow:auto;border-radius:18px 18px 0 0;padding:18px 18px 24px;font:15px/1.7 system-ui,"Apple SD Gothic Neo","Malgun Gothic",sans-serif}
+  @media(min-width:700px){#곡보기 .판{border-radius:18px}}
+  #곡보기 h3{margin:0 0 10px;font-size:18px}
+  #곡보기 pre{white-space:pre-wrap;font:inherit;margin:0}
+  #곡보기 a.악보{display:flex;gap:8px;align-items:center;padding:11px 12px;margin-top:8px;border-radius:10px;background:#eef5f3;color:#0d2b28;text-decoration:none;font-weight:700}
+  #곡보기 .닫기{margin-top:16px;width:100%;min-height:44px;border-radius:12px;border:1px solid rgba(8,60,55,.2);background:#eef5f3;font:700 14px system-ui,sans-serif;cursor:pointer}
+  #알림말{position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:9997;background:#0d2b28;color:#eafff8;font:700 13.5px system-ui,sans-serif;padding:10px 16px;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.3);display:none;max-width:calc(100vw - 32px);text-align:center}
   /* 판 591 : 목록 네모(표지)에 사진 · ▶ — 누르면 그 곡이 나온다 */
   .cv,.cv2{position:relative}
   [data-play].틀수{cursor:pointer}
@@ -961,13 +1033,15 @@
   /* ── 곡 한 줄 그리기 ── */
   function _줄(s,순){
     var 오름=Math.max(0,(s.votes||0)-(s.전표||0));
-    return '<div class="rise'+(window.__고친곡&&window.__고친곡[s.id]?' 고침':'')+(s.음악?' 있음':'')+'" data-k="'+(s.id||'')+'">'+
+    return '<div class="rise'+(window.__고친곡&&window.__고친곡[s.id]?' 고침':'')+(s.음악?' 있음':'')+(_펼친k&&s.id===_펼친k?' 펼침':'')+'" data-k="'+(s.id||'')+'">'+
       '<span class="rk'+(순<=3?' top':'')+'">'+순+'</span>'+
       '<span class="cv'+(s.음악?' 틀수':'')+'" data-play="'+(s.id||'')+'" style="background:'+_표지(s)+'"></span>'+
       '<div class="mid"><div class="t">'+s.t+'</div><div class="s">'+s.m+' · '+s.g+'</div>'+
         '<div class="sim">'+_막대('곡',s.곡닮음)+_막대('가사',s.가사닮음)+'</div></div>'+
       '<div class="vt">'+fmt(s.votes||0)+'<small>표</small></div>'+
       '<div class="d">▲ '+fmt(오름)+'</div>'+
+      '<button type="button" class="점" data-menu="'+(s.id||'')+'" aria-label="더보기">⋮</button>'+
+      (_펼친k&&s.id===_펼친k? _펼침줄(s) : '')+
       '</div>';
   }
   /* 짧을수록 좋다 — 0~19 초록 · 20~39 노랑 · 40↑ 빨강 · 아직 안 쟀으면 회색 */
@@ -990,6 +1064,23 @@
   /* 판 589 : **음악을 올린 진짜 곡은 늘 맨 위** — 보기용 곡(표가 수십만)에 밀려 안 보이던 것을 막는다.
      파트너 — 「올렸는데 없어졌어요」 (표 850 인 진짜 곡이 50위 밖으로 밀려 있었다) */
   function _진짜(s){ return (s&&s.음악)?1:0; }
+  /* 판 592 : 벅스처럼 — 누른 줄은 크게(사진 · 글씨) 펼치고, 줄마다 ⋮ 로 듣기 · 투표 · 가사 · 악보 · 공유 */
+  var _펼친k='';
+  function _할일들(s){
+    var a=[];
+    a.push(['자세히','ℹ️ 자세히']);   /* 판 593 : 곡 창 */
+    a.push(['듣기', s.음악?'▶ 듣기':'🔇 음악 없음']);
+    a.push(['투표','👆 투표']);
+    if(s.가사) a.push(['가사','📜 가사']);
+    if(s.악보들&&s.악보들.length) a.push(['악보','🎼 악보']);
+    a.push(['공유','🔗 공유하기']);
+    if(window.__주란편집) a.push(['고침','✏️ 곡 고치기']);
+    return a;
+  }
+  function _펼침줄(s){
+    var 오름=Math.max(0,(s.votes||0)-(s.전표||0));
+    return '<div class="펼침줄"><span class="정보">'+fmt(s.votes||0)+'표<i>▲ '+fmt(오름)+'</i></span>'+_할일들(s).map(function(x){ return '<button type="button" data-act="'+x[0]+'" data-k="'+s.id+'">'+x[1]+'</button>'; }).join('')+'</div>';
+  }
   /* 판 591 : 곡 사진이 있으면 목록의 네모(표지)에도 — 급상승 · 차트 · 장르 챔피언. 없으면 예전 색 */
   function _표지(s){
     var u=s&&s.사진;
@@ -1131,6 +1222,8 @@
         곡닮음:(typeof c.곡닮음==='number'?c.곡닮음:null),
         가사닮음:(typeof c.가사닮음==='number'?c.가사닮음:null),
         id:c.id||'', 음악:c.음악||'', 가사:c.가사||'', 사진:c.사진||'',   /* 판 577 */
+        길이:+c.길이||0, 검사:c.검사||null,   /* 판 593 */
+        악보들:(Array.isArray(c.악보들)?c.악보들:[]).concat(c.악보?[{이름:'MIDI',종류:'MIDI',주소:c.악보}]:[]),   /* 판 592 */
         점수말:(typeof c.점수말==='string'? c.점수말 : null)   /* 판 583 : 운영자가 쓴 점수 글씨 그대로 (빈 글이면 숨김) */
       });
     });
@@ -1363,6 +1456,9 @@
       var p=소리.play(); if(p&&p.catch) p.catch(function(){ 그리기(); });
       return true;
     }
+    JN.틀기=function(k){ return 틀기(k, null); };
+    JN.소리=function(){ return 소리; };
+    JN.도는가=function(k){ return !!(켜짐&&소리&&소리.dataset.k===k&&!소리.paused); };
     function 흔들기(e){ e&&e.animate&&e.animate([{transform:'translateX(-3px)'},{transform:'translateX(3px)'},{transform:'none'}],{duration:220}); }
     function 쉬기(){ try{ if(소리) 소리.pause(); }catch(e){} 그리기(); }
     /* 판 590 : 작은 재생기 — 다른 화면(차트 · 올리기 …)으로 가도 음악을 멈추지 않는다.
@@ -1419,7 +1515,11 @@
       /* ③ 손님은 줄 아무 데나 눌러도 */
       if(window.__주란편집) return;
       var 줄=t.closest('.rise[data-k],.item[data-k]');
-      if(줄 && 줄.dataset.k && !t.closest('a,button,input')){ if(틀기(줄.dataset.k, null)) ev.preventDefault(); }
+      if(줄 && 줄.dataset.k && !t.closest('a,button,input')){
+        ev.preventDefault();
+        if(줄.dataset.k!==_펼친k){ JN.펼치기(줄.dataset.k); }   /* 판 592 : 누른 줄은 크게 */
+        틀기(줄.dataset.k, null);
+      }
     }, true);
     /* 카드 곡이 바뀌면(편집 · 자동 1등) 음악은 그대로 두고 카드에서만 뗀다 */
     setInterval(function(){ if(지금카드&&소리&&지금카드.dataset.k!==소리.dataset.k) 카드떼기(); },1500);
@@ -1439,31 +1539,387 @@
       var e=document.createElement('span'); e.className='풍선'; e.textContent=말; b.appendChild(e);
       setTimeout(function(){ e.remove(); },2700);
     }
-    document.addEventListener('click', function(ev){
-      var b=ev.target.closest && ev.target.closest('.champion .votec'); if(!b) return;
-      ev.preventDefault(); ev.stopPropagation();
-      var k=(b.closest('.champion')||{}).dataset; k=k&&k.k;
-      if(!k){ 풍선(b,'아직 곡이 없습니다'); return; }
-      if(window.__주란편집) return;   /* 편집 모드에서는 단추 글씨를 고친다 (juran-edit.js) */
-      if(_투표했나(k)){ 풍선(b,_글('투표또말','오늘은 이 곡에 투표하셨습니다 — 내일 또 눌러 주세요')); return; }
-      if(b.dataset.보냄) return; b.dataset.보냄='1';
+    var 보내는중={};
+    /* 판 592 : 투표 한 가지 길 — 카드 👆 도, 목록 ⋮ 의 「투표」 도 여기로 */
+    function 투표(k, 말, 더하기){
+      if(!k){ 말('아직 곡이 없습니다'); return; }
+      if(window.__주란편집){ 말('편집 모드에서는 투표하지 않습니다'); return; }
+      if(_투표했나(k)){ 말(_글('투표또말','오늘은 이 곡에 투표하셨습니다 — 내일 또 눌러 주세요')); return; }
+      if(보내는중[k]) return; 보내는중[k]=1;
       fetch(서버+'/vote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:k})})
         .then(function(r){ return r.json().then(function(x){ return {c:r.status,x:x}; }, function(){ return {c:r.status,x:{}}; }); })
         .then(function(a){
           if(a.x&&a.x.ok){
             _손님표[k]=+a.x.표||((+_손님표[k]||0)+1); _투표적기(k);
-            var d=document.createElement('span'); d.className='더'; d.textContent='+1'; b.appendChild(d); setTimeout(function(){ d.remove(); },1300);
-            풍선(b,_글('투표됨말','👆 투표했습니다 — 고맙습니다!'));
+            if(더하기) 더하기();
+            말(_글('투표됨말','👆 투표했습니다 — 고맙습니다!'));
             if(_원본 && _자료넣기(_원본)){ paintRise(); render(false); }
             return;
           }
-          if(a.x&&a.x.again){ _투표적기(k); 풍선(b,_글('투표또말','오늘은 이 곡에 투표하셨습니다 — 내일 또 눌러 주세요')); }
-          else 풍선(b,(a.x&&a.x.why)||('투표를 준비하는 중입니다 ('+a.c+')'));
+          if(a.x&&a.x.again){ _투표적기(k); 말(_글('투표또말','오늘은 이 곡에 투표하셨습니다 — 내일 또 눌러 주세요')); }
+          else 말((a.x&&a.x.why)||('투표를 준비하는 중입니다 ('+a.c+')'));
           if(_원본 && _자료넣기(_원본)){ paintRise(); }
         })
-        .catch(function(){ 풍선(b,'인터넷을 확인해 주세요'); })
-        .then(function(){ delete b.dataset.보냄; });
+        .catch(function(){ 말('인터넷을 확인해 주세요'); })
+        .then(function(){ delete 보내는중[k]; });
+    }
+    JN.투표=function(k, 말){ 투표(k, 말||_알림); };
+    document.addEventListener('click', function(ev){
+      var b=ev.target.closest && ev.target.closest('.champion .votec'); if(!b) return;
+      ev.preventDefault(); ev.stopPropagation();
+      if(window.__주란편집) return;   /* 편집 모드에서는 단추 글씨를 고친다 (juran-edit.js) */
+      var k=(b.closest('.champion')||{}).dataset; k=k&&k.k;
+      투표(k, function(m){ 풍선(b,m); }, function(){
+        var d=document.createElement('span'); d.className='더'; d.textContent='+1'; b.appendChild(d); setTimeout(function(){ d.remove(); },1300); });
     }, true);
+  })();
+
+  /* ── 판 592 : 펼친 줄 · ⋮ 메뉴 · 가사/악보 보기 · 공유 ── */
+  var _알림틀=null;
+  function _알림(말){
+    var e=document.getElementById('알림말');
+    if(!e){ e=document.createElement('div'); e.id='알림말'; document.body.appendChild(e); }
+    e.textContent=말; e.style.display='block'; clearTimeout(_알림틀); _알림틀=setTimeout(function(){ e.style.display='none'; },2600);
+  }
+  (function(){
+    var 메=document.createElement('div'); 메.id='점메뉴'; document.body.appendChild(메);
+    var 보=document.createElement('div'); 보.id='곡보기'; 보.innerHTML='<div class="판"></div>'; document.body.appendChild(보);
+    보.addEventListener('click', function(e){ if(e.target===보||e.target.closest('.닫기')) 보.classList.remove('보임'); });
+    function 글(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+    function 메뉴닫기(){ 메.classList.remove('보임'); }
+    function 그리기(){ paintRise(); if(currentView==='chart') render(true); }
+    JN.펼치기=function(k){ _펼친k=k||''; 그리기(); };
+    function 하기(act, k, 곳){
+      var s=JN.곡(k); if(!s) return;
+      if(act==='듣기'){ if(!s.음악){ _알림('아직 음악이 없는 곡입니다'); return; } if(_펼친k!==k) JN.펼치기(k); JN.틀기(k); return; }
+      if(act==='투표'){ JN.투표(k); return; }
+      if(act==='자세히'){ JN.곡창(k); return; }
+      if(act==='가사'){ 보.querySelector('.판').innerHTML='<h3>📜 '+글(s.t)+'</h3><div style="color:#5b7a74;font-size:13px;margin:-6px 0 12px">'+글(s.m)+'</div><pre>'+글(s.가사)+'</pre><button type="button" class="닫기">닫기</button>'; 보.classList.add('보임'); return; }
+      if(act==='악보'){
+        보.querySelector('.판').innerHTML='<h3>🎼 '+글(s.t)+' — 악보</h3>'+(s.악보들||[]).map(function(x){
+          var 표={'MIDI':'🎹','PDF':'📄','MusicXML':'🎼','악보 사진':'🖼'}[x.종류]||'🎼';
+          return '<a class="악보" href="'+글(x.주소)+'" target="_blank" rel="noopener">'+표+' '+글(x.종류||'')+' · '+글(x.이름||'')+'</a>'; }).join('')+
+          '<button type="button" class="닫기">닫기</button>';
+        보.classList.add('보임'); return;
+      }
+      if(act==='공유'){
+        var u=location.origin+location.pathname+'?곡='+encodeURIComponent(k);
+        if(navigator.share){ navigator.share({title:s.t+' — JURAN', text:s.t+' · '+s.m, url:u}).catch(function(){}); return; }
+        try{ navigator.clipboard.writeText(u).then(function(){ _알림('🔗 주소를 복사했습니다 — 붙여 넣어 보내 주세요'); }, function(){ prompt('이 주소를 복사해 보내 주세요', u); }); }
+        catch(e){ prompt('이 주소를 복사해 보내 주세요', u); }
+        return;
+      }
+      if(act==='고침'){ var 줄=곳&&곳.closest('.rise[data-k],.item[data-k]'); var t=줄&&줄.querySelector('.t'); if(t) t.click(); }
+    }
+    document.addEventListener('click', function(ev){
+      var t=ev.target; if(!t.closest) return;
+      var m=t.closest('.점[data-menu]');
+      if(m){
+        ev.preventDefault(); ev.stopImmediatePropagation();
+        if(메.classList.contains('보임') && 메.dataset.k===m.dataset.menu){ 메뉴닫기(); return; }
+        var s=JN.곡(m.dataset.menu); if(!s) return;
+        메.dataset.k=s.id;
+        메.innerHTML=_할일들(s).map(function(x){ return '<button type="button" data-act="'+x[0]+'">'+(x[0]==='듣기'&&JN.도는가(s.id)?'❚❚ 멈추기':x[1])+'</button>'; }).join('');
+        메.classList.add('보임');
+        var r=m.getBoundingClientRect(), w=메.offsetWidth, h=메.offsetHeight;
+        var top=r.bottom+4; if(top+h>window.innerHeight-8) top=Math.max(8,r.top-h-4);
+        메.style.top=top+'px'; 메.style.left=Math.max(8,Math.min(window.innerWidth-w-8, r.right-w))+'px';
+        메.줄=m; return;
+      }
+      var a=t.closest('#점메뉴 button[data-act]');
+      if(a){ ev.preventDefault(); ev.stopImmediatePropagation(); var k=메.dataset.k, 곳=메.줄; 메뉴닫기(); 하기(a.dataset.act, k, 곳); return; }
+      var p=t.closest('.펼침줄 button[data-act]');
+      if(p){ ev.preventDefault(); ev.stopImmediatePropagation(); 하기(p.dataset.act, p.dataset.k, p); return; }
+      if(메.classList.contains('보임') && !t.closest('#점메뉴')) 메뉴닫기();
+    }, true);
+    window.addEventListener('scroll', 메뉴닫기, true);
+    window.addEventListener('juran:view', 메뉴닫기);
+    /* 공유 주소 ?곡=s027 로 들어오면 그 곡을 펼쳐서 보여 준다 (소리는 손님이 눌러야 난다) */
+    var 찾을=''; try{ 찾을=new URLSearchParams(location.search).get('곡')||''; }catch(e){}
+    if(찾을){
+      var n=0, 틀=setInterval(function(){
+        n++; if(!JN.곡(찾을)){ if(n>40) clearInterval(틀); return; }
+        clearInterval(틀); _펼친k=찾을;
+        var w=JN.어디(찾을)||{}, 곳=(w.국급&&w.국급<=w.급수)?'국급':((w.글급&&w.글급<=w.급수)?'글급':(w.국차?'국차':'글차'));
+        그리기(); JN.가기(찾을, 곳);
+        setTimeout(function(){ try{ JN.곡창(찾을); }catch(e){} },700);   /* 판 593 : 공유 주소로 오면 곡 창도 */
+      },250);
+    }
+  })();
+
+  /* ── 판 593 : 곡 창 ──
+     파트너 — 「차트에서 누르면 팝업으로… 저작권 등 · 가사와 악보 · 음악을 이 안에서도. 그래야 차별성」
+     한 창 안에서 : 사진 · 듣기(❚❚ · ⏪ · ⏩ · 막대) · 투표 · 공유 · [곡 정보 | 가사 | 악보 | 저작권]
+     악보 : 악보 사진은 그대로 · PDF 는 창 안에(폰은 「크게 열기」) · MIDI / MusicXML 은 가락을 뽑아 **오선지로** 그리고
+            「🎹 악보 소리로 듣기」. 그리는 손은 js/juran-sheet.js (작곡실 악보와 따로).
+     저작권 : 「1차 예측」 이라고 분명히 쓰고, 고지사항을 늘 함께 보인다. */
+  (function(){
+    var 창=document.createElement('div'); 창.id='곡창'; 창.innerHTML='<div class="판" role="dialog" aria-modal="true"></div>'; document.body.appendChild(창);
+    var 판=창.firstChild, 지금k='', 지금탭='정보', 틀=null, 악보소리=null;
+    function 글(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+    function 분초(x){ x=Math.max(0,Math.floor(+x||0)); return Math.floor(x/60)+':'+('0'+(x%60)).slice(-2); }
+    function 닫기(){ 창.classList.remove('보임'); clearInterval(틀); 틀=null; 악보멈춤(); 지금k=''; document.documentElement.style.overflow=''; }
+    창.addEventListener('click', function(e){ if(e.target===창||e.target.closest('.닫기x')) 닫기(); });
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape' && 창.classList.contains('보임')) 닫기(); });
+    window.addEventListener('juran:view', 닫기);
+
+    function 듣는줄그리기(){
+      var 소=JN.소리(), 이곡=!!(소&&소.dataset.k===지금k), d=이곡?소.duration:0, t=이곡?(소.currentTime||0):0;
+      var 틀단=판.querySelector('.듣는줄 .틀'); if(!틀단) return;
+      틀단.textContent=(이곡&&!소.paused)?'❚❚':'▶';
+      var r=판.querySelector('.듣는줄 input'); if(r && !r.dataset.끌) r.value=(isFinite(d)&&d>0)?Math.round(t/d*1000):0;
+      var 곡=JN.곡(지금k)||{};
+      판.querySelector('.듣는줄 .때').textContent=분초(t)+' / '+(isFinite(d)&&d>0?분초(d):(곡.길이?분초(곡.길이):'--:--'));
+    }
+    function 탭그리기(){
+      var s=JN.곡(지금k); if(!s) return;
+      [].forEach.call(판.querySelectorAll('.탭들 button'), function(b){ b.setAttribute('aria-selected', b.dataset.탭===지금탭); });
+      var 몸=판.querySelector('.몸'); 악보멈춤();
+      if(지금탭==='정보'){
+        var 국=s.나라? 나라깃발(s.나라)+' '+나라글(s.나라) : '🌍';
+        몸.innerHTML='<dl class="표줄">'+
+          '<dt>지은이</dt><dd>'+글(s.m||'—')+'</dd>'+
+          '<dt>장르</dt><dd>'+글(s.g||'—')+'</dd>'+
+          '<dt>나라</dt><dd>'+글(국)+'</dd>'+
+          '<dt>표</dt><dd>'+fmt(s.votes||0)+'표 <span style="color:#12a36a">▲ '+fmt(Math.max(0,(s.votes||0)-(s.전표||0)))+'</span></dd>'+
+          '<dt>9-AI 심사</dt><dd>'+글(s.score)+'점</dd>'+
+          (s.길이?'<dt>길이</dt><dd>'+분초(s.길이)+'</dd>':'')+
+          '<dt>들어 있는 것</dt><dd>'+[s.음악?'🎵 음악':'',s.가사?'📜 가사':'',(s.악보들&&s.악보들.length)?'🎼 악보 '+s.악보들.length+'개':'',s.사진?'🖼 사진':''].filter(Boolean).join(' · ')+'</dd>'+
+          '</dl>';
+      } else if(지금탭==='가사'){
+        몸.innerHTML=s.가사? '<pre>'+글(s.가사)+'</pre>' : '<div class="빈">아직 가사가 없습니다</div>';
+      } else if(지금탭==='악보'){
+        var 목=s.악보들||[];
+        if(!목.length){ 몸.innerHTML='<div class="빈">아직 악보가 없습니다</div>'; return; }
+        몸.innerHTML='<div class="악보고르기">'+목.map(function(x,i){
+          var 표={'MIDI':'🎹','PDF':'📄','MusicXML':'🎼','악보 사진':'🖼'}[x.종류]||'🎼';
+          return '<button type="button" data-i="'+i+'">'+표+' '+글(x.종류||'')+'</button>'; }).join('')+'</div><div class="악보자리"></div>';
+        var 먼저=0; 목.forEach(function(x,i){ if(먼저===0 && (x.종류==='MusicXML')) 먼저=i; });
+        if(목[먼저].종류!=='MusicXML') 목.forEach(function(x,i){ if(x.종류==='악보 사진' && 목[먼저].종류!=='악보 사진') 먼저=i; });
+        악보보기(s, 먼저);
+      } else {
+        몸.innerHTML=저작권HTML(s);
+      }
+    }
+    function 막대(이름,값){
+      var 잼=(typeof 값==='number'&&isFinite(값)), v=잼?Math.max(0,Math.min(100,값)):0;
+      var 색=!잼?'#c9d4d1':(v<20?'#12a36a':(v<40?'#e0a21b':'#d6453f'));
+      return '<div class="막대줄"><b>'+이름+'</b><span class="막"><i style="width:'+(잼?Math.max(3,v):100)+'%;background:'+색+'"></i></span><span style="min-width:44px;text-align:right;font-weight:800">'+(잼?v+'%':'—')+'</span></div>';
+    }
+    function 저작권HTML(s){
+      var 기=_기준||{}, 검=s.검사||null;
+      var h='<h3 style="margin:0 0 4px;font-size:17px">🛡 저작권 1차 예측</h3>'+
+        '<p style="margin:0 0 10px;color:#5b7a74;font-size:13px">공개 곡'+(기.곡수?' '+fmt(기.곡수)+'곡':'')+'과 얼마나 닮았는지 잰 값입니다. <b>낮을수록 덜 닮았다는 뜻</b>입니다.</p>'+
+        막대('곡',s.곡닮음)+막대('가사',s.가사닮음);
+      if(검 && 검.닮은곡 && 검.닮은곡.length){
+        h+='<h4 style="margin:16px 0 6px;font-size:15px">가장 닮은 공개 곡</h4><ol style="margin:0;padding-left:20px">'+
+          검.닮은곡.slice(0,5).map(function(x){ return '<li><b>'+글(x.음)+'음</b> 연달아 똑같이 「'+글(x.제목)+'」 · '+글(x.누구||'')+'</li>'; }).join('')+'</ol>';
+        if(검.번호) h+='<p style="margin:10px 0 0;font-size:12.5px;color:#5b7a74">검사 번호 '+글(검.번호)+(검.때?' · '+글(검.때):'')+'</p>';
+      } else {
+        h+='<p style="margin:12px 0 0;font-size:13px;color:#5b7a74">이 곡의 자세한 검사증(닮은 곡 5개 · 악보 겹쳐 보기 · 작품 지문)은 준비 중입니다.</p>';
+      }
+      h+='<div class="알림판"><b>꼭 알아 두세요</b><br>'+
+        '· 이 값은 플랫폼 안의 자료와 견준 <b>1차 예측</b>일 뿐이며, 틀릴 수 있습니다.<br>'+
+        '· 대조 자료는 서양 고전과 옛 명곡이 중심이라, <b>K-Pop 전반과 2010년대 이후 대중음악은 대부분 빠져 있습니다.</b><br>'+
+        '· 저작권 분쟁에 대한 면책이나 안전을 보장하지 않습니다.</div>';
+      return h;
+    }
+
+    /* ── 악보 ── */
+    function 악보멈춤(){ try{ if(악보소리){ 악보소리.멈춤(); } }catch(e){} 악보소리=null; var b=판.querySelector('.악보듣기'); if(b) b.textContent='🎹 악보 소리로 듣기'; }
+    function 악보보기(s, i){
+      악보멈춤();
+      var x=s.악보들[i], 자리=판.querySelector('.악보자리'); if(!x||!자리) return;
+      [].forEach.call(판.querySelectorAll('.악보고르기 button'), function(b){ b.setAttribute('aria-pressed', +b.dataset.i===i); });
+      var 열기='<a href="'+글(x.주소)+'" target="_blank" rel="noopener">↗ 크게 열기 / 내려받기</a>';
+      if(x.종류==='악보 사진'){ 자리.innerHTML='<div class="악보판"><img src="'+글(x.주소)+'" alt="악보"></div><div class="악보단추">'+열기+'</div>'; return; }
+      if(x.종류==='PDF'){
+        자리.innerHTML=(window.innerWidth>=760? '<div class="악보판"><iframe src="'+글(x.주소)+'" title="악보 PDF"></iframe></div>' : '<div class="빈">휴대폰에서는 PDF 를 따로 엽니다</div>')+'<div class="악보단추">'+열기+'</div>';
+        return;
+      }
+      자리.innerHTML='<div class="빈">악보를 그리는 중…</div>';
+      Promise.all([악보손(), fetch(x.주소).then(function(r){ if(!r.ok) throw new Error('파일을 못 받았습니다 ('+r.status+')'); return x.종류==='MIDI'? r.arrayBuffer() : r.text(); })])
+        .then(function(a){
+          if(지금k!==s.id || 지금탭!=='악보') return;
+          var 곡=(x.종류==='MIDI')? 미디가락(a[1]) : 엑셀가락(a[1]);
+          if(!곡.음표.length) throw new Error('가락을 찾지 못했습니다');
+          자리.innerHTML='<div class="악보판 오선"></div><div class="악보단추"><button type="button" class="악보듣기">🎹 악보 소리로 듣기</button>'+열기+'</div>'+
+            (곡.잘림?'<p style="font-size:12px;color:#7d9893;margin:6px 0 0">앞의 '+곡.잘림+'마디만 그렸습니다. 전체는 「크게 열기」로 보세요.</p>':'');
+          var 통=자리.querySelector('.오선');
+          if(!window.JURAN악보그리기 || !window.JURAN악보그리기(통, 곡.음표, 곡.조성, 곡.빠르기, 곡.박자)) throw new Error('악보를 그리지 못했습니다');
+          자리.querySelector('.악보듣기').onclick=function(){
+            if(악보소리){ 악보멈춤(); return; }
+            try{ var 소=JN.소리(); if(소&&!소.paused) 소.pause(); }catch(e){}
+            악보소리=가락틀기(곡.음표, 곡.빠르기, function(){ 악보멈춤(); });
+            this.textContent='■ 멈추기';
+          };
+        })
+        .catch(function(e){ if(지금k===s.id) 자리.innerHTML='<div class="빈">'+글(e.message||e)+'</div><div class="악보단추">'+열기+'</div>'; });
+    }
+    var 손받는중=null;
+    function 악보손(){
+      if(window.JURAN악보그리기) return Promise.resolve();
+      if(손받는중) return 손받는중;
+      손받는중=new Promise(function(ok,no){
+        var sc=document.createElement('script'); sc.src='js/juran-sheet.js?v='+(window.JURAN판||'593'); sc.async=true;
+        sc.onload=function(){ ok(); }; sc.onerror=function(){ 손받는중=null; no(new Error('악보 그리는 파일(js/juran-sheet.js)을 못 받았습니다')); };
+        document.head.appendChild(sc);
+      });
+      return 손받는중;
+    }
+    var 음이름=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    function 반올림(x){ return Math.max(0.25, Math.round(x*4)/4); }
+    var 다섯={0:'C',1:'G',2:'D',3:'A',4:'E',5:'B',6:'F#',7:'C#','-1':'F','-2':'A#','-3':'D#','-4':'G#','-5':'C#','-6':'F#','-7':'B'};
+    var 다섯단={0:'A',1:'E',2:'B',3:'F#',4:'C#',5:'G#',6:'D#',7:'A#','-1':'D','-2':'G','-3':'C','-4':'F','-5':'A#','-6':'D#','-7':'G#'};
+    function 조성이름(f,단){ return 단? (다섯단[f]||'A')+' Minor' : (다섯[f]||'C')+' Major'; }
+    /* 음들 [{n,s,e}] (박 단위) → 맨 윗소리 가락 → [{name,dur}] (쉼표는 name:null) */
+    function 가락만들기(음들, 박자){
+      음들=음들.filter(function(x){ return x.e>x.s; }).sort(function(a,b){ return a.s-b.s || b.n-a.n; });
+      var 고른=[];
+      음들.forEach(function(x){
+        var 시=Math.round(x.s*4)/4, 앞=고른[고른.length-1];
+        if(앞 && Math.abs(앞.s-시)<1e-6){ if(x.n>앞.n){ 앞.n=x.n; 앞.e=x.e; } return; }
+        if(앞 && 시<앞.e && x.n<=앞.n) return;   /* 위에서 울리는 동안 아래 소리는 건너뛴다 */
+        고른.push({n:x.n, s:시, e:x.e});
+      });
+      var 끝마디=48, 한계=끝마디*박자, 잘림=0, 결과=[], 지금=0;
+      for(var i=0;i<고른.length;i++){
+        var a=고른[i], 다음=고른[i+1];
+        if(a.s>=한계){ 잘림=끝마디; break; }
+        if(a.s>지금+0.12){ 결과.push({name:null, dur:반올림(a.s-지금)}); 지금=a.s; }
+        var 끝=Math.min(a.e, 다음?다음.s:a.e, 한계), d=반올림(끝-a.s);
+        결과.push({name:음이름[a.n%12]+(Math.floor(a.n/12)-1), dur:d}); 지금=a.s+d;
+      }
+      return {음표:결과, 잘림:잘림};
+    }
+    function 미디가락(buf){
+      var d=new DataView(buf), p=0;
+      function u32(){ var v=d.getUint32(p); p+=4; return v; } function u16(){ var v=d.getUint16(p); p+=2; return v; }
+      function vlq(){ var v=0,b; do{ b=d.getUint8(p++); v=(v<<7)|(b&127); }while(b&128); return v; }
+      if(u32()!==0x4d546864) throw new Error('MIDI 파일이 아닙니다');
+      var hl=u32(); u16(); var nt=u16(), div=u16(); p=8+hl;
+      if(div&0x8000) throw new Error('이 MIDI 는 시간 방식이 달라 그릴 수 없습니다');
+      var 음=[], 빠르기=0, 박자=4, 조=0, 단=false;
+      for(var t=0;t<nt && p+8<=d.byteLength;t++){
+        if(u32()!==0x4d54726b) break;
+        var len=u32(), 끝=Math.min(d.byteLength, p+len), 틱=0, 앞상태=0, 켬={};
+        while(p<끝){
+          틱+=vlq(); var st=d.getUint8(p);
+          if(st&0x80){ p++; if(st<0xf0) 앞상태=st; } else st=앞상태;
+          if(st===0xff){ var 종=d.getUint8(p++), 길=vlq();
+            if(종===0x51&&길===3&&!빠르기) 빠르기=Math.round(60000000/((d.getUint8(p)<<16)|(d.getUint8(p+1)<<8)|d.getUint8(p+2)));
+            if(종===0x58&&길>=1) 박자=d.getUint8(p)||4;
+            if(종===0x59&&길>=2){ 조=d.getInt8(p); 단=d.getUint8(p+1)===1; }
+            p+=길; continue; }
+          if(st===0xf0||st===0xf7){ p+=vlq(); continue; }
+          var 종류=st&0xf0, ch=st&15;
+          if(종류===0x90||종류===0x80){ var n=d.getUint8(p++), v=d.getUint8(p++), 열=ch+':'+n;
+            if(종류===0x90&&v>0) 켬[열]=틱;
+            else if(켬[열]!=null){ if(ch!==9) 음.push({n:n, s:켬[열]/div, e:틱/div}); delete 켬[열]; }
+            continue; }
+          if(종류===0xc0||종류===0xd0){ p+=1; continue; }
+          p+=2;
+        }
+        p=끝;
+      }
+      var g=가락만들기(음, 박자);
+      return {음표:g.음표, 잘림:g.잘림, 빠르기:빠르기||120, 박자:박자, 조성:조성이름(조,단)};
+    }
+    function 엑셀가락(글자){
+      var x=new DOMParser().parseFromString(글자,'application/xml');
+      if(x.getElementsByTagName('parsererror').length) throw new Error('MusicXML 을 읽지 못했습니다');
+      var 파트=x.getElementsByTagName('part')[0]; if(!파트) throw new Error('악보 안에 성부가 없습니다');
+      var 나눔=1, 박자=4, 빠르기=0, 조=0, 단=false, 음=[], 지금=0, 첫목소리=null;
+      function 값(e,t){ var k=e.getElementsByTagName(t)[0]; return k?k.textContent.trim():''; }
+      [].forEach.call(파트.getElementsByTagName('measure'), function(m){
+        [].forEach.call(m.children, function(e){
+          var 이름=e.tagName;
+          if(이름==='attributes'){ var dv=+값(e,'divisions'); if(dv) 나눔=dv; var b=+값(e,'beats'); if(b) 박자=b;
+            var f=값(e,'fifths'); if(f!=='') 조=+f; if(값(e,'mode')==='minor') 단=true; }
+          else if(이름==='direction'||이름==='sound'){ var so=(이름==='sound')?e:e.getElementsByTagName('sound')[0]; if(so&&so.getAttribute('tempo')&&!빠르기) 빠르기=Math.round(+so.getAttribute('tempo')); }
+          else if(이름==='backup'){ 지금-=(+값(e,'duration')||0)/나눔; }
+          else if(이름==='forward'){ 지금+=(+값(e,'duration')||0)/나눔; }
+          else if(이름==='note'){
+            var 길=(+값(e,'duration')||0)/나눔, 화음=e.getElementsByTagName('chord').length>0;
+            var 목=값(e,'voice')||'1'; if(첫목소리==null) 첫목소리=목;
+            if(e.getElementsByTagName('grace').length) return;
+            var 시작=화음? 지금-길 : 지금;
+            if(!화음) 지금+=길;
+            if(목!==첫목소리 || e.getElementsByTagName('rest').length) return;
+            var 음높=e.getElementsByTagName('pitch')[0]; if(!음높) return;
+            var 반={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[값(음높,'step')]||0, 올=+값(음높,'alter')||0, 옥=+값(음높,'octave')||4;
+            음.push({n:(옥+1)*12+반+올, s:시작, e:시작+길});
+          }
+        });
+      });
+      var g=가락만들기(음, 박자);
+      return {음표:g.음표, 잘림:g.잘림, 빠르기:빠르기||100, 박자:박자, 조성:조성이름(조,단)};
+    }
+    /* 가락을 부드러운 소리로 — 따로 받는 파일 없이 브라우저 소리틀만 쓴다 */
+    function 가락틀기(음표, 빠르기, 끝나면){
+      var AC=window.AudioContext||window.webkitAudioContext; if(!AC) return null;
+      var ac=new AC(), 박=60/(빠르기||100), t=ac.currentTime+0.12, 끝=t;
+      var 큰=ac.createGain(); 큰.gain.value=0.22; 큰.connect(ac.destination);
+      음표.forEach(function(e){
+        var 길=e.dur*박;
+        if(e.name){
+          var m=e.name.match(/^([A-G]#?)(-?\d+)$/); if(m){
+            var n=(+m[2]+1)*12+음이름.indexOf(m[1]), f=440*Math.pow(2,(n-69)/12);
+            var o=ac.createOscillator(), g=ac.createGain(); o.type='triangle'; o.frequency.value=f;
+            g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(1,t+0.02); g.gain.exponentialRampToValueAtTime(0.25,t+Math.max(0.05,길*0.7)); g.gain.linearRampToValueAtTime(0,t+Math.max(0.06,길*0.95));
+            o.connect(g); g.connect(큰); o.start(t); o.stop(t+길);
+          }
+        }
+        t+=길; 끝=t;
+      });
+      var 시계=setTimeout(function(){ try{ ac.close(); }catch(e){} 끝나면&&끝나면(); }, (끝-ac.currentTime)*1000+300);
+      return { 멈춤:function(){ clearTimeout(시계); try{ ac.close(); }catch(e){} } };
+    }
+
+    JN.곡창=function(k){
+      var s=JN.곡(k); if(!s) return;
+      if(지금k!==k) 지금탭='정보';
+      지금k=k;
+      var 그림=_표지(s).replace(/&quot;/g,'"');
+      판.innerHTML='<button type="button" class="닫기x" aria-label="닫기">✕</button>'+
+        '<div class="머리" style="background:'+그림.replace(/"/g,"'")+'"><div><div style="font-size:12px;letter-spacing:.12em;opacity:.85;font-weight:700">JURAN · '+글(s.g||'')+'</div><h2>'+글(s.t)+'</h2><div class="누구">'+글(s.m||'')+'</div></div></div>'+
+        '<div class="듣는줄">'+(s.음악?
+          '<button type="button" class="작" data-w="뒤" aria-label="10초 뒤로">⏪</button><button type="button" class="틀" aria-label="재생">▶</button><button type="button" class="작" data-w="앞" aria-label="10초 앞으로">⏩</button>'+
+          '<input type="range" min="0" max="1000" value="0" aria-label="재생 위치"><span class="때">0:00</span>'
+          : '<span style="color:#7d9893;font-size:14px">🔇 아직 음악이 없는 곡입니다</span>')+'</div>'+
+        '<div class="할일"><button type="button" data-act="투표">👆 투표</button><button type="button" data-act="공유">🔗 공유하기</button></div>'+
+        '<div class="탭들" role="tablist"><button type="button" data-탭="정보">🎧 곡 정보</button><button type="button" data-탭="가사">📜 가사</button><button type="button" data-탭="악보">🎼 악보</button><button type="button" data-탭="저작권">🛡 저작권</button></div>'+
+        '<div class="몸"></div>';
+      창.classList.add('보임'); document.documentElement.style.overflow='hidden';
+      탭그리기();
+      if(s.음악){
+        듣는줄그리기(); clearInterval(틀); 틀=setInterval(듣는줄그리기, 300);
+        var r=판.querySelector('.듣는줄 input');
+        r.addEventListener('input', function(){ r.dataset.끌='1'; });
+        r.addEventListener('change', function(){ delete r.dataset.끌; var 소=JN.소리(); if(소&&소.dataset.k===지금k&&isFinite(소.duration)) 소.currentTime=r.value/1000*소.duration; });
+      }
+    };
+    판.addEventListener('click', function(e){
+      var t=e.target;
+      var 탭=t.closest('.탭들 button'); if(탭){ 지금탭=탭.dataset.탭; 탭그리기(); return; }
+      if(t.closest('.듣는줄 .틀')){ 악보멈춤(); JN.틀기(지금k); setTimeout(듣는줄그리기,60); return; }
+      var 작=t.closest('.듣는줄 .작'); if(작){ var 소=JN.소리(); if(!소||소.dataset.k!==지금k){ JN.틀기(지금k); return; }
+        소.currentTime=Math.max(0,(소.currentTime||0)+(작.dataset.w==='앞'?10:-10)); 듣는줄그리기(); return; }
+      var 할=t.closest('.할일 button[data-act]'); if(할){
+        if(할.dataset.act==='투표') JN.투표(지금k);
+        else { var s=JN.곡(지금k), u=location.origin+location.pathname+'?곡='+encodeURIComponent(지금k);
+          if(navigator.share) navigator.share({title:s.t+' — JURAN', url:u}).catch(function(){});
+          else try{ navigator.clipboard.writeText(u).then(function(){ _알림('🔗 주소를 복사했습니다'); }); }catch(x){ prompt('이 주소를 복사해 보내 주세요', u); } }
+        return; }
+      var 고=t.closest('.악보고르기 button'); if(고){ 악보보기(JN.곡(지금k), +고.dataset.i); return; }
+    });
+    /* 카드 제목을 눌러도 곡 창 (손님만 — 편집 모드에서는 제목을 바로 쓴다) */
+    document.addEventListener('click', function(ev){
+      if(window.__주란편집) return;
+      var h=ev.target.closest && ev.target.closest('.champion h2, .champion .by'); if(!h) return;
+      var k=(h.closest('.champion')||{}).dataset; k=k&&k.k; if(!k) return;
+      ev.preventDefault(); JN.곡창(k);
+    });
   })();
 
   /* ── 판 577 : 편집 모드 — LEE 에서 열쇠말을 넣은 사람만 ──
@@ -1475,7 +1931,7 @@
       var v=sessionStorage.getItem('lee-t')||'', i=v.indexOf('|');
       if(!(i>0 && +v.slice(0,i)*1000>Date.now()+60000)){ location.href='LEE.html'; return; }
       window.__주란편집=true;
-      var sc=document.createElement('script'); sc.src='js/juran-edit.js?v='+(window.JURAN판||'591'); sc.defer=true;
+      var sc=document.createElement('script'); sc.src='js/juran-edit.js?v='+(window.JURAN판||'593'); sc.defer=true;
       document.head.appendChild(sc);
     }catch(e){}
   })();
@@ -1486,7 +1942,7 @@
   chips.addEventListener('click',function(e){var b=e.target.closest('.chip');if(!b)return;current=b.dataset.g;[].forEach.call(chips.children,function(c){c.setAttribute('aria-selected',c.dataset.g===current);});var g=genres.find(function(x){return x.n===current;});document.getElementById('g-emoji').textContent=g.e;document.getElementById('g-name').textContent=g.n;render(true);});
   function render(reset){var _전=data[current]||[];var _골=(_차보기==='home'&&_내나라)?_전.filter(function(x){return x.나라===_내나라;}):_전;var arr=_골.slice(0,50);if(!arr.length){listEl.innerHTML='<li class="item" style="opacity:.7"><span class="info"><span class="s">이 나라에는 아직 이 장르 곡이 없습니다. 🌍 글로벌을 눌러 보세요.</span></span></li>';return;}var max=Math.max.apply(null,arr.map(function(x){return x.votes||0;}).concat([1])),olds={};[].forEach.call(listEl.children,function(li){olds[li.dataset.id]=li.getBoundingClientRect().top;});
     listEl.innerHTML=arr.map(function(s,ix){var mv=s.prev-ix,cls=mv>0?'up':(mv<0?'down':'same'),ar=mv>0?('▲'+mv):(mv<0?('▼'+(-mv)):'–');
-      return '<li class="item'+(window.__고친곡&&window.__고친곡[s.id]?' 고침':'')+(s.음악?' 있음':'')+'" data-id="'+s.t+'" data-k="'+(s.id||'')+'"><span class="rank'+(ix<3?' top':'')+'">'+(ix+1)+'</span><span class="mv '+cls+'">'+ar+'</span><span class="cv2'+(s.음악?' 틀수':'')+'" data-play="'+(s.id||'')+'" style="background:'+_표지(s)+'"></span><span class="info"><span class="t">'+s.t+'</span><span class="s">'+s.m+' · 9-AI '+s.score+'점</span></span><span class="bars"><i style="width:'+Math.round(s.votes/max*100)+'%"></i></span><span class="votes"><b class="num">'+fmt(s.votes)+'</b><small>표</small></span></li>';}).join('');
+      return '<li class="item'+(window.__고친곡&&window.__고친곡[s.id]?' 고침':'')+(s.음악?' 있음':'')+(_펼친k&&s.id===_펼친k?' 펼침':'')+'" data-id="'+s.t+'" data-k="'+(s.id||'')+'"><span class="rank'+(ix<3?' top':'')+'">'+(ix+1)+'</span><span class="mv '+cls+'">'+ar+'</span><span class="cv2'+(s.음악?' 틀수':'')+'" data-play="'+(s.id||'')+'" style="background:'+_표지(s)+'"></span><span class="info"><span class="t">'+s.t+'</span><span class="s">'+s.m+' · 9-AI '+s.score+'점</span></span><span class="bars"><i style="width:'+Math.round(s.votes/max*100)+'%"></i></span><span class="votes"><b class="num">'+fmt(s.votes)+'</b><small>표</small></span><button type="button" class="점" data-menu="'+(s.id||'')+'" aria-label="더보기">⋮</button>'+(_펼친k&&s.id===_펼친k?_펼침줄(s):'')+'</li>';}).join('');
     if(!reset&&!reduce){[].forEach.call(listEl.children,function(li){var o=olds[li.dataset.id];if(o==null)return;var d=o-li.getBoundingClientRect().top;if(Math.abs(d)>1){li.style.transform='translateY('+d+'px)';li.style.transition='none';requestAnimationFrame(function(){li.style.transition='transform .6s cubic-bezier(.22,1,.36,1)';li.style.transform='';});li.classList.add('flash');}});}
     arr.forEach(function(s,ix){s.prev=ix;});}
   render(true);
@@ -2150,7 +2606,7 @@ window.JK=JK;
 (function(){
   var 소리집 = 'https://www.c-go-fuli.com/';
   var 내집   = 'js/';
-  var 판끝   = '?v='+(window.JURAN판||'591');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
+  var 판끝   = '?v='+(window.JURAN판||'593');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
   var 화면줄 = [{주소:내집+'juran-words.js'+판끝, 꼭:false, 이름:'말 사전'},
                 {주소:내집+'cgo-music.js'+판끝,   꼭:true,  이름:'작곡 엔진'},
                 {주소:내집+'cgo-score.js'+판끝,   꼭:false, 이름:'악보 편집기'}];
@@ -2482,6 +2938,6 @@ window.JK=JK;
 
 <!-- 검사기 — 재는 손. 36KB. 씨앗 통(161KB)은 검사를 누를 때 받는다. -->
 <!-- 판 564 : ⚠️ 이 숫자는 머리(head)의 JURAN판 과 같이 올린다 -->
-<script src="js/juran-check.js?v=591" defer></script>
+<script src="js/juran-check.js?v=593" defer></script>
 </body>
 </html>
