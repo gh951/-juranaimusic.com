@@ -53,8 +53,10 @@ function 다시(){ try{ JN.다시그리기(원본); }catch(e){} 손글씨(); }
    · 카드에서 무엇이든 고친 곡은 **그 카드에 붙는다** → 표를 줄여도 카드가 다른 곡으로 안 바뀐다
      (다시 표 1등을 보이려면 👑 카드 설정 → 「자동」) */
 function 쪽이름(카드){ return 카드.classList.contains('glob')?'오른쪽':'왼쪽'; }
+window.__고친곡=window.__고친곡||{};
 function 카드붙이기(c){
   if(!c||!c.id) return;
+  window.__고친곡[c.id]=1;   /* 판 588 : 고친 곡은 목록에서 노란 줄 */
   [].forEach.call(document.querySelectorAll('.champion'), function(카드){
     if(카드.dataset.k!==c.id) return;
     var 쪽=쪽이름(카드);
@@ -149,6 +151,8 @@ document.body.classList.add('주란편집');
 var 띠=document.createElement('div'); 띠.id='주편-띠';
 띠.innerHTML='<span class="말" id="주편-말">✏️ 편집 모드 — 곡이나 글씨를 누르세요</span>'+
   '<button type="button" id="주편-새곡">+ 곡</button>'+
+  '<button type="button" id="주편-찾기">🔍 찾기</button>'+
+  '<button type="button" id="주편-멈춤">⏸ 순위 멈춤</button>'+
   '<button type="button" class="저장" id="주편-저장">💾 저장</button>'+
   '<button type="button" id="주편-표">표로 보기</button>'+
   '<button type="button" id="주편-나감">나가기</button>';
@@ -173,6 +177,66 @@ document.getElementById('주편-새곡').onclick=function(){
 };
 document.getElementById('주편-저장').onclick=저장;
 
+/* ── 판 588 : ⏸ 순위 멈춤 · 🔍 찾기 ── */
+function 멈춤그리기(켬){
+  var b=document.getElementById('주편-멈춤'); if(!b) return;
+  b.textContent=켬?'⏸ 순위 멈춤 중':'▶ 순위 움직임';
+  b.style.background=켬?'#eaa61b':''; b.style.color=켬?'#1c1300':'';
+}
+document.getElementById('주편-멈춤').onclick=function(){
+  var 켬=false; try{ 켬=!JN.멈춤인가(); 켬=JN.순위멈춤(켬); }catch(e){}
+  멈춤그리기(켬);
+  띠그리기(켬?'⏸ 순위를 멈췄습니다 — 고쳐도 줄이 제자리에 있습니다':'▶ 순위를 다시 표대로 줄 세웠습니다');
+};
+document.getElementById('주편-찾기').onclick=function(){ 찾기창(); };
+function 자리글(w){
+  if(!w) return '아직 목록에 없습니다 (확인을 눌렀나요?)';
+  var 줄=[];
+  if(w.카드.length) 줄.push('👑 '+w.카드.map(function(x){ return x+' 카드'; }).join(' · '));
+  줄.push('🇰🇷 국내 급상승 '+(w.국급? w.국급+'위'+(w.국급>w.급수?' (첫 화면엔 '+w.급수+'위까지)':'') : '— (나라가 '+(w.나라||'없음')+')'));
+  줄.push('🌍 글로벌 급상승 '+w.글급+'위'+(w.글급>w.급수?' (첫 화면엔 '+w.급수+'위까지)':''));
+  줄.push('🎧 차트 「'+w.칸+'」 칸 — 국내 '+(w.국차?w.국차+'위':'—')+' · 글로벌 '+w.글차+'위'+((w.국차>50||w.글차>50)?' (차트는 50위까지)':''));
+  if(w.장르 && w.장르!==w.칸) 줄.push('ⓘ 장르 「'+w.장르+'」 는 차트 칸 목록에 없어서 「'+w.칸+'」 칸에 있습니다');
+  return 줄.join('<br>');
+}
+function 찾기창(){
+  var w=창열기('<h3>🔍 곡 찾기</h3>'+
+    '<input type="text" id="f-q" placeholder="제목이나 지은이 몇 글자">'+
+    '<div id="f-l" style="margin-top:10px"></div>'+
+    '<div class="단추들"><button type="button" id="f-no">닫기</button></div>');
+  var 입=w.querySelector('#f-q'), 목록=w.querySelector('#f-l');
+  function 그리기(){
+    var q=입.value.trim().toLowerCase();
+    var 곡들=(원본.곡||[]).filter(function(c){ return !q || (String(c.t||'')+' '+String(c.by||'')+' '+c.id).toLowerCase().indexOf(q)>=0; });
+    if(!q){ var 고=window.__고친곡||{}; 곡들=곡들.filter(function(c){ return 고[c.id]; }); }
+    곡들=곡들.slice(0,15);
+    목록.innerHTML=곡들.length? 곡들.map(function(c){
+      var 자=null; try{ 자=JN.어디(c.id); }catch(e){}
+      return '<div style="border:1px solid rgba(8,60,55,.15);border-radius:12px;padding:10px 12px;margin-top:8px">'+
+        '<b>'+글(c.t||c.id)+'</b> <span style="color:#5b7a74;font-size:12px">'+글(c.by||'')+' · '+c.id+'</span>'+
+        '<div style="font-size:12.5px;line-height:1.7;margin-top:4px">'+자리글(자)+'</div>'+
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">'+
+          (자&&자.카드.length?'<button type="button" data-k="'+c.id+'" data-곳="카드">👑 카드로</button>':'')+
+          (자&&자.국급?'<button type="button" data-k="'+c.id+'" data-곳="국급">국내 급상승으로</button>':'')+
+          '<button type="button" data-k="'+c.id+'" data-곳="글급">글로벌 급상승으로</button>'+
+          '<button type="button" data-k="'+c.id+'" data-곳="'+(자&&자.국차?'국차':'글차')+'">차트로</button>'+
+          '<button type="button" data-k="'+c.id+'" data-곳="고침">✏️ 고치기</button>'+
+        '</div></div>';
+    }).join('') : '<p class="풀이">'+(q?'맞는 곡이 없습니다':'오늘 고친 곡이 아직 없습니다 — 제목을 써 보세요')+'</p>';
+    [].forEach.call(목록.querySelectorAll('button[data-곳]'), function(b){
+      b.style.cssText='border:1px solid rgba(8,60,55,.2);background:#eef5f3;border-radius:9px;min-height:34px;padding:0 10px;font:700 12.5px system-ui,sans-serif;cursor:pointer;color:#0d2b28';
+      b.onclick=function(){
+        var c=곡찾기(b.dataset.k); if(!c) return;
+        if(b.dataset.곳==='고침'){ 곡창(c); return; }
+        닫기(); try{ JN.가기(c.id, b.dataset.곳); }catch(e){}
+      };
+    });
+  }
+  입.addEventListener('input', 그리기); 그리기();
+  w.querySelector('#f-no').onclick=닫기;
+  setTimeout(function(){ 입.focus(); },50);
+}
+
 /* ── 목록 받기 ── */
 function 받기(u){ return fetch(u+(u.indexOf('?')<0?'?':'&')+'t='+Date.now(),{cache:'no-store'}).then(function(r){ if(!r.ok) throw 0; return r.json(); }); }
 function 준비(j){
@@ -181,6 +245,7 @@ function 준비(j){
   원본.문구=원본.문구||{}; 원본.시즌=원본.시즌||{};
   원본.곡.forEach(function(c){ if(!c.id) c.id=다음번호(); });
   다시(); 카드손달기(); 손글씨(); 카드글씨옮기기(); 정한글씨쓰기();
+  멈춤그리기(JN.순위멈춤(true));   /* 판 588 : 편집에 들어오면 순위는 멈춘 채로 */
   setInterval(손글씨, 3000);   /* 카드 곡이 저절로 바뀌어도 단추 글씨가 따라가게 */
 }
 (function 기다리기(n){
@@ -288,8 +353,10 @@ function 글씨창(el){
     '<label>지금 글씨</label><input type="text" id="g-t" value="'+글(el.textContent)+'">'+
     '<p class="풀이">비워 두면 처음 글씨(「'+글(기본)+'」)로 돌아갑니다. 어느 나라 말로 써도 됩니다.</p>'+
     (el.dataset.크기? 크기줄HTML(el.dataset.크기) : '')+
+    (el.closest('button')&&el.closest('button').onclick? '<button type="button" id="g-go" style="margin-top:12px;width:100%;min-height:40px;border-radius:10px;border:1px dashed rgba(8,60,55,.3);background:#fff;font:700 13.5px system-ui,sans-serif;cursor:pointer;color:#0d2b28">➡ 이 단추가 하는 일 하기 (예: 차트로 가기)</button>' : '')+
     '<div class="단추들"><button type="button" id="g-no">닫기</button><button type="button" class="확인" id="g-ok">확인</button></div>');
   크기줄달기(w);
+  var 가=w.querySelector('#g-go'); if(가) 가.onclick=function(){ var bt=el.closest('button'); 닫기(); try{ bt.onclick.call(bt); }catch(e){} };
   var 입=w.querySelector('#g-t');
   function 확인(){ var v=입.value.trim(); 글씨넣기(k, v===기본.trim()?'':v); 닫기(); }
   w.querySelector('#g-no').onclick=닫기; w.querySelector('#g-ok').onclick=확인;
@@ -596,6 +663,7 @@ function 곡창(c, 새로){
     c.자켓={gi:(자켓장르[c.g]||0), img:해시(c.t)%40, 색:0, 결:null};
     if(새로 && !곡찾기(c.id)) 원본.곡.push(c);
     카드붙이기(c); 바꿨다(); 다시(); 닫기();
+    if(새로) 띠그리기('🆕 「'+c.t+'」 — 목록 맨 위에 노란 줄로 있습니다 · 🔍 찾기로 자리를 볼 수 있습니다');
   };
   var d=w.querySelector('#e-del');
   if(d) d.onclick=function(){
