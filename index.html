@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <!-- 판 564 : 파일 주소 끝에 판 번호를 붙인다. 손님 폰이 옛 파일을 쥐고 안 놓는 일을 막는다.
      ⚠️ js 파일을 새로 올릴 때는 이 숫자와 맨 아래 juran-check.js?v= 숫자를 같이 올린다. -->
-<script>window.JURAN판='593';</script>
+<script>window.JURAN판='594';</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>html{color-scheme:light;word-break:keep-all;overflow-wrap:break-word;line-break:strict;hanging-punctuation:allow-end}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>JURAN</title>
@@ -1698,31 +1698,84 @@
         if(목[먼저].종류!=='MusicXML') 목.forEach(function(x,i){ if(x.종류==='악보 사진' && 목[먼저].종류!=='악보 사진') 먼저=i; });
         악보보기(s, 먼저);
       } else {
-        몸.innerHTML=저작권HTML(s);
+        저작권그리기(s, 몸);
       }
     }
-    function 막대(이름,값){
-      var 잼=(typeof 값==='number'&&isFinite(값)), v=잼?Math.max(0,Math.min(100,값)):0;
-      var 색=!잼?'#c9d4d1':(v<20?'#12a36a':(v<40?'#e0a21b':'#d6453f'));
-      return '<div class="막대줄"><b>'+이름+'</b><span class="막"><i style="width:'+(잼?Math.max(3,v):100)+'%;background:'+색+'"></i></span><span style="min-width:44px;text-align:right;font-weight:800">'+(잼?v+'%':'—')+'</span></div>';
+    /* ── 판 594 : 저작권 1차 예측 — 검사기(juran-check.js)와 **같은 손 · 같은 잣대**로 이 자리에서 잰다 ──
+       공개 곡 밭(Lakh MIDI 21,970곡 · 편곡 32,137개) · 우리 씨앗 · 가사 금기어/실명 · 작품 지문.
+       재는 것은 이 곡의 MIDI 또는 MusicXML 가락과 가사. 한 번 잰 것은 이 창이 기억한다. */
+    var 검사들={};
+    function 곡가락(s){
+      var 목=(s.악보들||[]).filter(function(x){ return x.종류==='MIDI'||x.종류==='MusicXML'; });
+      if(!목.length) return Promise.resolve(null);
+      var x=목[0];
+      return fetch(x.주소).then(function(r){ if(!r.ok) throw new Error('악보 파일을 못 받았습니다 ('+r.status+')'); return x.종류==='MIDI'? r.arrayBuffer() : r.text(); })
+        .then(function(d){
+          var g=(x.종류==='MIDI')? 미디가락(d, true) : 엑셀가락(d, true), 높=[];
+          g.음표.forEach(function(e){ if(!e.name) return; var m=e.name.match(/^([A-G]#?)(-?\d+)$/); if(m) 높.push((+m[2]+1)*12+음이름.indexOf(m[1])); });
+          return {미디들:높, 이름:x.종류+' · '+(x.이름||'')};
+        });
     }
-    function 저작권HTML(s){
-      var 기=_기준||{}, 검=s.검사||null;
-      var h='<h3 style="margin:0 0 4px;font-size:17px">🛡 저작권 1차 예측</h3>'+
-        '<p style="margin:0 0 10px;color:#5b7a74;font-size:13px">공개 곡'+(기.곡수?' '+fmt(기.곡수)+'곡':'')+'과 얼마나 닮았는지 잰 값입니다. <b>낮을수록 덜 닮았다는 뜻</b>입니다.</p>'+
-        막대('곡',s.곡닮음)+막대('가사',s.가사닮음);
-      if(검 && 검.닮은곡 && 검.닮은곡.length){
-        h+='<h4 style="margin:16px 0 6px;font-size:15px">가장 닮은 공개 곡</h4><ol style="margin:0;padding-left:20px">'+
-          검.닮은곡.slice(0,5).map(function(x){ return '<li><b>'+글(x.음)+'음</b> 연달아 똑같이 「'+글(x.제목)+'」 · '+글(x.누구||'')+'</li>'; }).join('')+'</ol>';
-        if(검.번호) h+='<p style="margin:10px 0 0;font-size:12.5px;color:#5b7a74">검사 번호 '+글(검.번호)+(검.때?' · '+글(검.때):'')+'</p>';
+    function 저작권그리기(s, 몸){
+      var k=s.id;
+      if(!window.JC || !JC.곡검사){ 몸.innerHTML='<div class="빈">검사기(js/juran-check.js)를 아직 못 받았습니다. 잠시 뒤 다시 눌러 주세요.</div>'+알림판(); return; }
+      if(검사들[k] && 검사들[k].R){ 몸.innerHTML=검사HTML(s, 검사들[k]); 검사뒤(s, 몸, 검사들[k]); return; }
+      몸.innerHTML='<h3 style="margin:0 0 6px;font-size:17px">🛡 저작권 1차 예측</h3><div class="빈">검사 중… 공개 곡 밭과 견주고 있습니다<br><span style="font-size:12px">처음 한 번은 자료(약 1.6MB)를 받느라 몇 초 걸립니다</span></div>';
+      var 가=null;
+      (검사들[k]&&검사들[k].잰중) || (검사들[k]={잰중: 곡가락(s).then(function(g){ 가=g;
+          return JC.곡검사(g?g.미디들:null, s.가사||''); })
+        .then(function(R){ 검사들[k]={R:R, 가락:가}; }, function(e){ 검사들[k]={탈:(e&&e.message)||String(e)}; })});
+      검사들[k].잰중.then(function(){
+        if(지금k!==k || 지금탭!=='저작권') return;
+        var w=검사들[k];
+        if(!w || w.탈){ 몸.innerHTML='<div class="빈">검사하다 걸렸습니다 — '+글(w&&w.탈||'')+'</div>'+알림판(); return; }
+        몸.innerHTML=검사HTML(s, w); 검사뒤(s, 몸, w);
+      });
+    }
+    function 불색(v){ var J=(JC&&JC.잣대)||{}; return v>=(J.세상빨강||30)? '#dc2626' : (v>=(J.세상노랑||22)? '#eab308' : '#16a34a'); }
+    function 검사HTML(s, w){
+      var R=w.R, 세=R.세상||{}, J=(JC&&JC.잣대)||{}, h='<h3 style="margin:0 0 4px;font-size:17px">🛡 저작권 1차 예측</h3>';
+      h+='<p style="margin:0 0 12px;color:#5b7a74;font-size:12.5px">잰 때 '+글(R.때.toLocaleString('ko-KR'))+(w.가락?' · 잰 악보: '+글(w.가락.이름):'')+'</p>';
+      if(R.악보 && !R.악보.탈){
+        h+='<h4 style="margin:6px 0 2px;font-size:15px">공개 곡과 견주기</h4><p style="margin:0 0 8px;font-size:12.5px;color:#5b7a74">'+
+          (세.곡수? fmt(세.곡수)+'곡'+(세.편곡수>세.곡수?' (편곡 '+fmt(세.편곡수)+'개)':'')+' 가운데 가장 닮은 곳' : '')+'</p>';
+        if(세.기다림||!세.목록){ h+='<div class="빈">'+글(세.탈||'공개 곡 밭을 못 불러왔습니다')+'</div>'; }
+        else if(!세.목록.length){ h+='<div class="빈">눈에 띄게 겹치는 공개 곡이 없습니다</div>'; }
+        else h+='<ol style="margin:0;padding-left:0;list-style:none">'+세.목록.map(function(x,i){
+          return '<li style="display:flex;gap:8px;align-items:baseline;padding:5px 0;border-bottom:1px solid rgba(8,60,55,.07)">'+
+            '<b style="color:#b8963e;min-width:14px">'+(i+1)+'</b><span style="width:10px;height:10px;border-radius:99px;background:'+불색(x.같은토막)+';flex:none;transform:translateY(1px)"></span>'+
+            '<b style="min-width:42px">'+x.같은토막+'음</b><span style="color:#7d9893;font-size:12.5px;flex:none">연달아 똑같이</span>'+
+            '<span style="min-width:0">「'+글(x.곡명)+'」'+(x.가수?' · '+글(x.가수):'')+'</span></li>'; }).join('')+'</ol>';
+        h+='<p style="font-size:12px;color:#6b5a34;margin:8px 0 0">읽는 법 — 서로 관계없는 공개 곡끼리도 보통 14음은 겹칩니다. '+
+          '<span style="color:#16a34a">●</span> '+((J.세상노랑||22)-1)+'음 아래 · <span style="color:#eab308">●</span> '+(J.세상노랑||22)+'음부터 · <span style="color:#dc2626">●</span> '+(J.세상빨강||30)+'음부터 · 같은 음이 이어지면 하나로 셉니다.</p>';
+        if(세.목록&&세.목록[0]&&세.목록[0].자리) h+='<div style="margin-top:12px;border-radius:10px;overflow:hidden;background:#0b1512"><div style="padding:8px 12px;color:#f3dc8c;font:700 12.5px system-ui">악보 겹쳐 보기 — 위: 이 곡 · 아래: 「'+글(세.목록[0].곡명)+'」 · 빨간 음 '+세.목록[0].같은토막+'개가 똑같이 오르내림</div><canvas class="겹침" style="width:100%;height:196px;display:block"></canvas></div>';
+        var a=R.악보;
+        h+='<dl class="표줄" style="margin-top:12px"><dt>우리 씨앗 (참고)</dt><dd>'+a.같은토막+'음 / 씨앗 '+a.씨앗음수+'음 · 「'+글(a.닮은곡)+'」</dd>'+
+          '<dt>흔한 정도 · 되풀이</dt><dd>'+a.흔함+'% · 제 되풀이 '+a.되풀이+'% (음 '+a.음수+'개)</dd></dl>';
       } else {
-        h+='<p style="margin:12px 0 0;font-size:13px;color:#5b7a74">이 곡의 자세한 검사증(닮은 곡 5개 · 악보 겹쳐 보기 · 작품 지문)은 준비 중입니다.</p>';
+        h+='<div class="빈" style="padding:12px 0">'+((s.악보들||[]).length? '악보가 사진·PDF 뿐이라 가락을 잴 수 없습니다 — MIDI 나 MusicXML 을 넣으면 공개 곡과 견줍니다' : '악보(MIDI · MusicXML)를 넣으면 공개 곡과 견줍니다')+'</div>';
       }
-      h+='<div class="알림판"><b>꼭 알아 두세요</b><br>'+
-        '· 이 값은 플랫폼 안의 자료와 견준 <b>1차 예측</b>일 뿐이며, 틀릴 수 있습니다.<br>'+
+      if(R.가사 && !R.가사.탈 && R.가사.글자수){
+        var L=R.가사;
+        h+='<h4 style="margin:16px 0 6px;font-size:15px">가사</h4><dl class="표줄"><dt>금기어 · 실명</dt><dd>'+(L.금기.length? L.금기.length+'곳':'없음')+' · '+(L.실명.length? L.실명.length+'곳':'없음')+'</dd>'+
+          '<dt>줄 되풀이</dt><dd>'+L.되풀이+'% ('+L.줄수+'줄 '+L.글자수+'자)</dd></dl>';
+      }
+      h+='<h4 style="margin:16px 0 4px;font-size:15px">작품 지문</h4><div style="font:500 13px ui-monospace,Menlo,monospace;word-break:break-all">'+글(R.지문)+'</div>'+
+        '<p style="margin:2px 0 0;font-size:12px;color:#7d9893">같은 작품을 다시 넣으면 같은 번호가 나옵니다. 한 글자만 달라도 다른 번호가 됩니다.</p>';
+      h+='<div class="악보단추" style="margin-top:14px"><button type="button" class="검사증받기" style="background:linear-gradient(135deg,#3a2a08,#5c4310);color:#f3dc8c;border-color:#8a6a1f">⬇ 검사증 받기 (PDF)</button></div>';
+      return h+알림판(세.곡수);
+    }
+    function 검사뒤(s, 몸, w){
+      var cv=몸.querySelector('canvas.겹침'), 세=w.R.세상||{};
+      if(cv && 세.목록 && 세.목록[0]){ var x=세.목록[0]; try{ JC.겹치기그리기(cv,{미디:x.미디, 자리:x.자리, 씨줄:x.씨줄, 아래이름:'공개 곡'}); }catch(e){} }
+      var b=몸.querySelector('.검사증받기');
+      if(b) b.onclick=function(){ try{ JC.곡검사증(w.R, s.t, s.m, cv); }catch(e){ _알림('검사증을 만들지 못했습니다'); } };
+    }
+    function 알림판(곡수){
+      return '<div class="알림판"><b>꼭 알아 두세요</b><br>'+
+        '· 이 값은 플랫폼 안의 자료'+(곡수?'(공개 곡 '+fmt(곡수)+'곡 · Lakh MIDI · CC-BY 4.0)':'')+'와 견준 <b>1차 예측</b>일 뿐이며, 틀릴 수 있습니다.<br>'+
         '· 대조 자료는 서양 고전과 옛 명곡이 중심이라, <b>K-Pop 전반과 2010년대 이후 대중음악은 대부분 빠져 있습니다.</b><br>'+
-        '· 저작권 분쟁에 대한 면책이나 안전을 보장하지 않습니다.</div>';
-      return h;
+        '· 분석 범위 밖의 음원과 일치하는지는 판단하지 않으며, 저작권 분쟁에 대한 면책이나 안전을 보장하지 않습니다.</div>';
     }
 
     /* ── 악보 ── */
@@ -1761,7 +1814,7 @@
       if(window.JURAN악보그리기) return Promise.resolve();
       if(손받는중) return 손받는중;
       손받는중=new Promise(function(ok,no){
-        var sc=document.createElement('script'); sc.src='js/juran-sheet.js?v='+(window.JURAN판||'593'); sc.async=true;
+        var sc=document.createElement('script'); sc.src='js/juran-sheet.js?v='+(window.JURAN판||'594'); sc.async=true;
         sc.onload=function(){ ok(); }; sc.onerror=function(){ 손받는중=null; no(new Error('악보 그리는 파일(js/juran-sheet.js)을 못 받았습니다')); };
         document.head.appendChild(sc);
       });
@@ -1773,7 +1826,7 @@
     var 다섯단={0:'A',1:'E',2:'B',3:'F#',4:'C#',5:'G#',6:'D#',7:'A#','-1':'D','-2':'G','-3':'C','-4':'F','-5':'A#','-6':'D#','-7':'G#'};
     function 조성이름(f,단){ return 단? (다섯단[f]||'A')+' Minor' : (다섯[f]||'C')+' Major'; }
     /* 음들 [{n,s,e}] (박 단위) → 맨 윗소리 가락 → [{name,dur}] (쉼표는 name:null) */
-    function 가락만들기(음들, 박자){
+    function 가락만들기(음들, 박자, 다){
       음들=음들.filter(function(x){ return x.e>x.s; }).sort(function(a,b){ return a.s-b.s || b.n-a.n; });
       var 고른=[];
       음들.forEach(function(x){
@@ -1782,7 +1835,7 @@
         if(앞 && 시<앞.e && x.n<=앞.n) return;   /* 위에서 울리는 동안 아래 소리는 건너뛴다 */
         고른.push({n:x.n, s:시, e:x.e});
       });
-      var 끝마디=48, 한계=끝마디*박자, 잘림=0, 결과=[], 지금=0;
+      var 끝마디=다?100000:48, 한계=끝마디*박자, 잘림=0, 결과=[], 지금=0;
       for(var i=0;i<고른.length;i++){
         var a=고른[i], 다음=고른[i+1];
         if(a.s>=한계){ 잘림=끝마디; break; }
@@ -1792,7 +1845,7 @@
       }
       return {음표:결과, 잘림:잘림};
     }
-    function 미디가락(buf){
+    function 미디가락(buf, 다){
       var d=new DataView(buf), p=0;
       function u32(){ var v=d.getUint32(p); p+=4; return v; } function u16(){ var v=d.getUint16(p); p+=2; return v; }
       function vlq(){ var v=0,b; do{ b=d.getUint8(p++); v=(v<<7)|(b&127); }while(b&128); return v; }
@@ -1822,10 +1875,10 @@
         }
         p=끝;
       }
-      var g=가락만들기(음, 박자);
+      var g=가락만들기(음, 박자, 다);
       return {음표:g.음표, 잘림:g.잘림, 빠르기:빠르기||120, 박자:박자, 조성:조성이름(조,단)};
     }
-    function 엑셀가락(글자){
+    function 엑셀가락(글자, 다){
       var x=new DOMParser().parseFromString(글자,'application/xml');
       if(x.getElementsByTagName('parsererror').length) throw new Error('MusicXML 을 읽지 못했습니다');
       var 파트=x.getElementsByTagName('part')[0]; if(!파트) throw new Error('악보 안에 성부가 없습니다');
@@ -1852,7 +1905,7 @@
           }
         });
       });
-      var g=가락만들기(음, 박자);
+      var g=가락만들기(음, 박자, 다);
       return {음표:g.음표, 잘림:g.잘림, 빠르기:빠르기||100, 박자:박자, 조성:조성이름(조,단)};
     }
     /* 가락을 부드러운 소리로 — 따로 받는 파일 없이 브라우저 소리틀만 쓴다 */
@@ -1931,7 +1984,7 @@
       var v=sessionStorage.getItem('lee-t')||'', i=v.indexOf('|');
       if(!(i>0 && +v.slice(0,i)*1000>Date.now()+60000)){ location.href='LEE.html'; return; }
       window.__주란편집=true;
-      var sc=document.createElement('script'); sc.src='js/juran-edit.js?v='+(window.JURAN판||'593'); sc.defer=true;
+      var sc=document.createElement('script'); sc.src='js/juran-edit.js?v='+(window.JURAN판||'594'); sc.defer=true;
       document.head.appendChild(sc);
     }catch(e){}
   })();
@@ -2606,7 +2659,7 @@ window.JK=JK;
 (function(){
   var 소리집 = 'https://www.c-go-fuli.com/';
   var 내집   = 'js/';
-  var 판끝   = '?v='+(window.JURAN판||'593');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
+  var 판끝   = '?v='+(window.JURAN판||'594');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
   var 화면줄 = [{주소:내집+'juran-words.js'+판끝, 꼭:false, 이름:'말 사전'},
                 {주소:내집+'cgo-music.js'+판끝,   꼭:true,  이름:'작곡 엔진'},
                 {주소:내집+'cgo-score.js'+판끝,   꼭:false, 이름:'악보 편집기'}];
@@ -2938,6 +2991,6 @@ window.JK=JK;
 
 <!-- 검사기 — 재는 손. 36KB. 씨앗 통(161KB)은 검사를 누를 때 받는다. -->
 <!-- 판 564 : ⚠️ 이 숫자는 머리(head)의 JURAN판 과 같이 올린다 -->
-<script src="js/juran-check.js?v=593" defer></script>
+<script src="js/juran-check.js?v=594" defer></script>
 </body>
 </html>
