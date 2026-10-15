@@ -287,7 +287,9 @@ function 글씨창(el){
   var w=창열기('<h3>✏️ 단추 글씨</h3>'+
     '<label>지금 글씨</label><input type="text" id="g-t" value="'+글(el.textContent)+'">'+
     '<p class="풀이">비워 두면 처음 글씨(「'+글(기본)+'」)로 돌아갑니다. 어느 나라 말로 써도 됩니다.</p>'+
+    (el.dataset.크기? 크기줄HTML(el.dataset.크기) : '')+
     '<div class="단추들"><button type="button" id="g-no">닫기</button><button type="button" class="확인" id="g-ok">확인</button></div>');
+  크기줄달기(w);
   var 입=w.querySelector('#g-t');
   function 확인(){ var v=입.value.trim(); 글씨넣기(k, v===기본.trim()?'':v); 닫기(); }
   w.querySelector('#g-no').onclick=닫기; w.querySelector('#g-ok').onclick=확인;
@@ -300,6 +302,74 @@ document.addEventListener('click', function(ev){
   var el=b.querySelector('[data-글]'); if(!el) return;
   ev.preventDefault(); ev.stopPropagation(); 글씨창(el);
 }, true);
+
+/* ── 판 587 : 글자 크기 — 글씨를 누르면 위에 [A− 100% A+ ↔한 줄 ↺] 가 뜬다 ──
+   파트너 — 「글자 축소 기능도… 중국 노래 제목이 폰에서 줄바꿈」
+   크기는 「처음 크기의 몇 %」 로 적어서 폰·컴퓨터 어디서나 같은 비율. 「↔ 한 줄」 은 보는 화면마다 한 줄에 맞춘다. */
+function 크기값(k){ return (원본&&원본.크기||{})[k]; }
+function 크기넣기(k, v){
+  원본.크기=원본.크기||{};
+  if(v==null||v===100) delete 원본.크기[k]; else 원본.크기[k]=v;
+  if(!Object.keys(원본.크기).length) delete 원본.크기;
+  try{ JN.크기칠하기(); }catch(e){}
+  바꿨다();
+}
+function 크기글(v){ return v==='fit'?'한 줄 맞춤':((v==null?100:v)+'%'); }
+function 크기한칸(k, 뒤){
+  var v=크기값(k), n=(v==null||v==='fit')?100:+v;
+  if(뒤==='작게') 크기넣기(k, Math.max(40, n-5));
+  else if(뒤==='크게') 크기넣기(k, Math.min(180, n+5));
+  else if(뒤==='한줄') 크기넣기(k, v==='fit'?null:'fit');
+  else 크기넣기(k, null);
+}
+function 크기줄HTML(k, 이름){
+  return '<div class="크기줄" data-k="'+글(k)+'" style="display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap">'+
+    (이름?'<span style="font-size:12px;color:#5b7a74;min-width:70px">'+글(이름)+'</span>':'<span style="font-size:12px;color:#5b7a74">글자 크기</span>')+
+    '<button type="button" data-w="작게" style="flex:0 0 auto;min-height:34px;padding:0 12px">A−</button>'+
+    '<b class="값" style="min-width:58px;text-align:center;font-size:13px">'+크기글(크기값(k))+'</b>'+
+    '<button type="button" data-w="크게" style="flex:0 0 auto;min-height:34px;padding:0 12px">A+</button>'+
+    '<button type="button" data-w="한줄" style="flex:0 0 auto;min-height:34px;padding:0 10px">↔ 한 줄</button>'+
+    '<button type="button" data-w="처음" style="flex:0 0 auto;min-height:34px;padding:0 10px">↺</button></div>';
+}
+function 크기줄달기(w){
+  [].forEach.call(w.querySelectorAll('.크기줄'), function(z){
+    z.addEventListener('click', function(e){
+      var b=e.target.closest('button[data-w]'); if(!b) return;
+      e.preventDefault(); 크기한칸(z.dataset.k, b.dataset.w);
+      z.querySelector('.값').textContent=크기글(크기값(z.dataset.k));
+    });
+  });
+}
+/* 떠 있는 글자 크기 띠 — 그 자리에서 쓰는 글씨에 */
+var 크기띠=document.createElement('div'); 크기띠.id='주편-크기';
+크기띠.style.cssText='position:fixed;z-index:9997;display:none;gap:4px;align-items:center;background:#0d2b28;color:#eafff8;border-radius:12px;padding:5px;box-shadow:0 8px 24px rgba(0,0,0,.35);font:700 12.5px system-ui,sans-serif';
+크기띠.innerHTML='<button data-w="작게">A−</button><b class="값" style="min-width:64px;text-align:center">100%</b><button data-w="크게">A+</button><button data-w="한줄">↔ 한 줄</button><button data-w="처음" title="처음 크기">↺</button>';
+[].forEach.call(크기띠.querySelectorAll('button'), function(b){ b.type='button'; b.style.cssText='border:0;border-radius:8px;min-height:34px;padding:0 10px;background:#1d4a44;color:#eafff8;font:700 13px system-ui,sans-serif;cursor:pointer'; });
+document.body.appendChild(크기띠);
+var 크기대상=null;
+function 크기띠놓기(){
+  if(!크기대상){ 크기띠.style.display='none'; return; }
+  var 지금=크기값(크기대상.dataset.크기);
+  크기띠.querySelector('.값').textContent=크기글(지금);
+  var 한=크기띠.querySelector('[data-w=한줄]'); 한.style.background=(지금==='fit')?'#eaa61b':'#1d4a44'; 한.style.color=(지금==='fit')?'#1c1300':'#eafff8';
+  크기띠.style.display='flex';
+  var r=크기대상.getBoundingClientRect(), h=크기띠.offsetHeight||44, w=크기띠.offsetWidth||260;
+  var top=r.top-h-8; if(top<8) top=r.bottom+8;
+  크기띠.style.top=top+'px'; 크기띠.style.left=Math.max(8,Math.min(window.innerWidth-w-8, r.left))+'px';
+}
+크기띠.addEventListener('pointerdown', function(e){ e.preventDefault(); });   /* 쓰던 글씨에서 커서가 빠지지 않게 */
+크기띠.addEventListener('mousedown', function(e){ e.preventDefault(); });
+크기띠.addEventListener('click', function(e){
+  var b=e.target.closest('button[data-w]'); if(!b||!크기대상) return;
+  e.preventDefault(); e.stopPropagation(); 크기한칸(크기대상.dataset.크기, b.dataset.w); 크기띠놓기();
+});
+document.addEventListener('focusin', function(e){
+  var t=e.target; if(t&&t.dataset&&t.dataset.크기&&t.isContentEditable){ 크기대상=t; 크기띠놓기(); }
+});
+document.addEventListener('focusout', function(e){
+  setTimeout(function(){ var a=document.activeElement; if(!(a&&a.dataset&&a.dataset.크기&&a.isContentEditable)){ 크기대상=null; 크기띠놓기(); } },0);
+});
+window.addEventListener('scroll', function(){ if(크기대상) 크기띠놓기(); }, true);
 
 /* ── 누르면 고치기 (점선 친 곳) ── */
 document.addEventListener('click', function(ev){
@@ -606,13 +676,16 @@ function 문구창(){
   var w=창열기('<h3>✏️ 첫 화면 문구</h3>'+
     '<label>첫 줄</label><input type="text" id="m-1" value="'+글(m.제목1||'누구나 작곡가가 되는')+'">'+
     '<label>둘째 줄 (색 들어가는 줄)</label><input type="text" id="m-2" value="'+글(m.제목2||'지구에서 가장 공정한 무대')+'">'+
+    크기줄HTML('문구제목','큰 글씨')+
     '<label>설명</label><textarea id="m-3" style="min-height:90px">'+글(m.설명||'')+'</textarea>'+
+    크기줄HTML('문구설명','설명')+
     '<div class="두칸"><div><label>시즌 이름</label><input type="text" id="m-sn" value="'+글(시.이름||'')+'"></div>'+
       '<div><label>시즌 끝나는 날</label><input type="date" id="m-se" value="'+글(시.끝||'')+'"></div></div>'+
     '<label style="display:flex;gap:8px;align-items:center;color:#0d2b28;font-size:14px;margin-top:14px">'+
       '<input type="checkbox" id="m-demo" style="width:20px;height:20px"'+(원본.보기용!==false?' checked':'')+'> 「아직 보기용입니다」 띠 보이기</label>'+
     '<p class="풀이">진짜 곡이 올라오면 띠를 꺼 주세요. 켜 두는 것이 속이지 않는 길입니다.</p>'+
     '<div class="단추들"><button type="button" id="m-no">닫기</button><button type="button" class="확인" id="m-ok">확인</button></div>');
+  크기줄달기(w);
   w.querySelector('#m-no').onclick=닫기;
   w.querySelector('#m-ok').onclick=function(){
     원본.문구={제목1:w.querySelector('#m-1').value.trim(), 제목2:w.querySelector('#m-2').value.trim(), 설명:w.querySelector('#m-3').value.trim()};
