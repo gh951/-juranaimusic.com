@@ -181,6 +181,22 @@ function 지금가락(){
   }catch(e){}
   return null;
 }
+/* 판 605 : 지금 가락의 음마다 「몇 박째에 시작하나」 — 검사증에 마디 번호를 적으려고.
+   지금가락() 과 같은 음을 같은 차례로 고른다(쉼표는 박만 더하고 건너뛴다). */
+function 지금때(){
+  var ev=window._cgoMelodyEvents; if(!(ev && ev.length)) return null;
+  var 박=[], t=0;
+  for(var i=0;i<ev.length;i++){ var d=+ev[i].dur||0; if(ev[i].name && 이름을미디(ev[i].name)!=null) 박.push(t); t+=d; }
+  var 표=String(window._cgoSelectedTimeSig||'4/4').split('/'), 마디=(+표[0]||4)*4/(+표[1]||4);
+  return 박.length>=4? {박:박, 마디:마디} : null;
+}
+/* 음 → 마디 (접힌 차례 기준). 때표가 없으면 null */
+function 접힌마디(미디들, 때표, 접힌자리){
+  if(!때표 || !때표.박 || 때표.박.length!==미디들.length) return null;
+  var k=-1, 앞=null;
+  for(var i=0;i<미디들.length;i++){ if(미디들[i]!==앞){ k++; 앞=미디들[i]; if(k===접힌자리) return Math.floor((때표.박[i]+1e-6)/(때표.마디||4))+1; } }
+  return null;
+}
 /* 연달아 똑같은 토막이 몇 음인가 — 그리고 **어디인가** (판 560)
    음 수 = 뛴 폭 수 + 1. 뛴 폭이 9개 같으면 음 10개가 같은 차례로 오르내린다. */
 function 같은토막찾기(a,b){
@@ -652,7 +668,8 @@ function 돌리기(){
 function 돌리기속(){
     var out=팝.querySelector('#jc-out');
     var 할것=[]; if(켜졌나('가사')) 할것.push('가사'); if(켜졌나('악보')) 할것.push('악보');
-    var R={때:new Date(), 가사:null, 악보:null};
+    var R={때:new Date(), 가사:null, 악보:null, 미디:담은것.미디||null};
+    try{ var 때605=지금때(); if(때605 && 담은것.미디 && 때605.박.length===담은것.미디.length) R.때표=때605; }catch(e){}
     if(할것.indexOf('가사')>=0) R.가사=가사검사(담은것.가사);
     if(할것.indexOf('악보')>=0) R.악보=악보검사(담은것.미디);
     R.지문=작품지문((담은것.가사||'')+'\u0001'+((담은것.미디||[]).join(',')));
@@ -725,10 +742,13 @@ function 그리기(R){
         var 첫=W.목록[0];
         if(첫 && 첫.자리){
           var 첫말=겹침말(첫.같은토막);
+          /* 판 605 : 초록이면 접어 둔다 — 「걸렸다」로 읽히지 않게 */
+          if(첫말.단==='초록') h+='<details class="jc-접기"><summary style="cursor:pointer;color:#9ac7b8;font-size:12.5px;margin:6px 0">▸ 가장 가까운 곡 악보로 보기 (흔한 수준)</summary>';
           h+='<div class="over"><div class="ovh">🎼 악보 겹쳐 보기 <span>— 간격까지 같은 음 '+첫.같은토막+'개 · <b style="color:'+첫말.색+'">'+첫말.불+' '+첫말.말+'</b></span></div>'+
              '<canvas id="jc-over" style="width:100%;height:196px;display:block"></canvas>'+
              '<div class="ovn">위는 <b>내 곡</b>, 아래는 공개 곡 「'+그글(첫.곡명)+'」입니다. 공개 곡은 조를 옮겨 내 곡 높이에 맞췄고, '+
              '같은 음이 이어진 것은 하나로 그렸습니다. <b>음 사이 간격(반음 몇 개)까지 같아야</b> 같은 음으로 셉니다 — 도·미·솔과 도·레·미는 다르게 셉니다. 음 길이(리듬)는 견주지 않습니다.</div></div>';
+          if(첫말.단==='초록') h+='</details>';
         }
       }
       /* ── 🌱 우리 씨앗 — 참고만, 불 없음 ── */
@@ -1065,9 +1085,12 @@ function 종합(R){
   var 세=R&&R.세상||{};
   if(R&&R.악보&&!R.악보.탈&&세.목록){
     var 곡수=(세.곡수||0).toLocaleString();
-    if(!세.목록.length){ 단계.push('초록'); 줄.push({단:'초록', 글:'가락 — 공개 곡 '+곡수+'곡과 대조 : 눈에 띄게 겹치는 곡이 없습니다'}); }
+    if(!세.목록.length){ 단계.push('초록'); 줄.push({단:'초록', 글:'가락 — 공개 곡 '+곡수+'곡과 대조 : 문제가 될 만큼 닮은 곡이 없습니다'}); }
     else { var n=세.목록[0].같은토막, m=겹침말(n); 단계.push(m.단);
-      줄.push({단:m.단, 글:'가락 — 공개 곡 '+곡수+'곡과 대조 : 가장 닮은 곳 '+n+'음 · '+(m.단==='초록'?'보통(14음)보다 적습니다':m.말)}); }
+      /* 판 605 : 파트너 문구 — 초록이면 「거의 걸리지 않는다」를 먼저, 가장 가까운 곡은 곁말로 */
+      줄.push({단:m.단, 글: m.단==='초록'
+        ? '가락 — 공개 곡 '+곡수+'곡과 대조 : 문제가 될 만큼 닮은 곡이 없습니다 (가장 가까운 곡도 흔한 수준)'
+        : '가락 — 공개 곡 '+곡수+'곡과 대조 : 가장 닮은 곳 '+n+'음 · '+m.말}); }
   } else if(R&&R.악보&&!R.악보.탈&&세.탈){
     줄.push({단:'없음', 글:'가락 — 이번에는 공개 곡 자료를 받지 못해 대조하지 못했습니다'});
   } else {
@@ -1079,8 +1102,10 @@ function 종합(R){
   }
   if(R&&R.지문) 줄.push({단:'초록', 글:'작품 고유 번호 발급 — 이 작품이 이날 이 모습이었다는 기록입니다'});
   var 제일=null; 단계.forEach(function(d){ if(제일==null||순[d]>순[제일]) 제일=d; });
+  var 가락봤나=!!(R&&R.세상&&R.세상.목록);
+  if(제일==='초록' && 가락봤나) 줄.push({단:'없음', 글:'단, 대조 자료에 없는 곡(최근 K-Pop 등)까지 보장하지는 않습니다'});
   var 제목= 제일==null? '검사할 가사나 악보가 없습니다'
-          : 제일==='초록'? '이상 없음 — 검사한 범위에서 문제가 될 곳을 찾지 못했습니다'
+          : 제일==='초록'? (가락봤나? '저작권 걱정 거의 없음 — 공개 곡 '+((R.세상.곡수||0).toLocaleString())+'곡과 견줘 문제가 될 만큼 닮은 곡이 없습니다' : '이상 없음 — 검사한 범위에서 문제가 될 곳을 찾지 못했습니다')
           : 제일==='노랑'? '확인해 볼 곳이 있습니다' : '꼭 확인해 주세요';
   return {단:제일||'없음', 제목:제목, 줄:줄};
 }
@@ -1261,39 +1286,105 @@ function 검사증그림(g, W, H, R){
     y=상+높+40;
   })();
 
+  /* ═══ 판 605 : 곡(가락) 부분 — 미피아식으로 보여 주고, 근거는 우리 잣대로 ═══
+     파트너 — 「음표 등 이런 식으로 인증서를 주어야 하지 않을까」 (미피아 결과지를 보여 주며)
+     ① 비교 곡 5곡 — 곡마다 「내 곡 가락 중 같은 순서로 겹친 몫」 막대
+     ② 같은 구간 그래프 — 내 곡과 가장 가까운 곡의 어디가 겹쳤나, 선으로 잇는다
+     ③ 요약 원 두 개 — 닮은 마디 / 전체 마디 · 같은 음 / 전체 음
+     ④ 구간 상세 — 내 곡 몇 마디 ↔ 상대 곡 몇 번째 음 · 판정 · 악보 겹쳐 보기 */
   if(R.악보 && !R.악보.탈){
-    var 세=R.세상||{};
-    제목글('가락 — 공개 곡과 대조', 세.곡수? '— '+세.곡수.toLocaleString()+'곡'+(세.편곡수>세.곡수?' (편곡 '+세.편곡수.toLocaleString()+'개)':'')+' 가운데 가장 닮은 곳' : '');
+    var 세=R.세상||{}, 내접=R.미디? 이음접기(R.미디) : null, 내수=내접? 내접.length : (R.악보.음수||0);
+    제목글('곡(가락) — 공개 곡 '+((세.곡수||0).toLocaleString())+'곡과 대조', 세.편곡수>세.곡수?'(편곡 '+세.편곡수.toLocaleString()+'개)':'');
     if(!세.목록){ 칸('공개 곡', '이번에는 자료를 받지 못해 대조하지 못했습니다'); }
-    else if(!세.목록.length){ 칸('공개 곡', '눈에 띄게 겹치는 곳이 없음'); }
-    else 세.목록.forEach(function(x,i){
-      g.fillStyle='#b8963e'; g.font='700 18px '+글꼴; g.fillText(String(i+1), 84, y);
-      g.beginPath(); g.arc(122, y-6, 8, 0, Math.PI*2); g.fillStyle=불(x.같은토막); g.fill();
-      g.fillStyle='#1c1608'; g.font='800 22px '+글꼴; g.fillText(x.같은토막+'음', 142, y);
-      g.fillStyle='#8a7a5a'; g.font='400 16px '+글꼴; g.fillText('간격까지 같게', 202, y);
-      g.fillStyle='#1c1608'; g.font=(i===0?'700 ':'400 ')+'21px '+글꼴;
-      g.fillText(줄임(g,'「'+x.곡명+'」'+(x.가수?' · '+x.가수:''), W-80-310), 310, y);
-      y+=40;
-    });
-    /* 읽는 법 */
-    g.fillStyle='#6b5a34'; g.font='400 17px '+글꼴;
-    g.fillText('읽는 법 — 음 사이 간격까지 같은 음의 수입니다. 서로 관계없는 곡끼리도 보통 14음은 겹칩니다.', 84, y+4); y+=28;
-    var lx=84; [['#16a34a',(잣대.세상노랑-1)+'음 아래'],['#eab308',잣대.세상노랑+'음부터'],['#dc2626',잣대.세상빨강+'음부터']].forEach(function(p){
-      g.beginPath(); g.arc(lx+7, y-2, 7, 0, Math.PI*2); g.fillStyle=p[0]; g.fill();
-      g.fillStyle='#6b5a34'; g.fillText(p[1], lx+20, y+4); lx+=40+g.measureText(p[1]).width;
-    });
-    g.fillText('· 같은 음이 이어지면 하나로 셉니다.', lx, y+4); y+=40;
-    /* 겹쳐 보기 그림 — 팝업에 그려진 것을 그대로 옮긴다 */
-    var ov=document.getElementById('jc-over');
-    if(ov && ov.width>0 && ov.height>0 && 세.목록 && 세.목록[0]){
-      var pw=W-160, ph=Math.round(pw*ov.height/ov.width);
-      if(ph>260){ ph=260; }
-      g.fillStyle='#0b1512'; g.fillRect(80, y-8, pw, ph+46);
-      g.strokeStyle='#b8963e'; g.lineWidth=1; g.strokeRect(80.5, y-7.5, pw-1, ph+45);
-      g.fillStyle='#f3dc8c'; g.font='700 16px '+글꼴;
-      g.fillText(줄임(g,'악보 겹쳐 보기 — 위: 내 곡 · 아래: 「'+세.목록[0].곡명+'」 · 간격까지 같은 음 '+세.목록[0].같은토막+'개 · '+겹침말(세.목록[0].같은토막).말.split(' — ')[0], pw-30), 96, y+16);
-      try{ g.drawImage(ov, 80, y+30, pw, ph); }catch(e){}
-      y+=ph+64;
+    else if(!세.목록.length){ 칸('공개 곡', '문제가 될 만큼 닮은 곡이 없습니다'); }
+    else {
+      /* ① 비교 곡 */
+      g.fillStyle='#7a5a14'; g.font='800 19px '+글꼴; g.fillText('① 비교 곡 — 가장 가까운 5곡', 80, y); y+=16;
+      세.목록.forEach(function(x,i){
+        var 몫=내수? Math.min(100, 100*x.같은토막/내수) : 0, 말=겹침말(x.같은토막);
+        var 상=y+8; g.fillStyle=i%2?'#fbf3df':'#ffffff'; g.fillRect(80, 상, W-160, 46);
+        g.fillStyle='#b8963e'; g.font='700 17px '+글꼴; g.fillText((i+1)+'위', 94, 상+30);
+        g.fillStyle='#1c1608'; g.font=(i===0?'700 ':'500 ')+'18px '+글꼴;
+        g.fillText(줄임(g,'「'+x.곡명+'」'+(x.가수?' · '+x.가수:''), 360), 150, 상+30);
+        var bx=520, bw=200; g.fillStyle='#e9e2cf'; g.fillRect(bx, 상+17, bw, 14);
+        g.fillStyle=말.색==='#4ade80'?'#60a5fa':말.색; g.fillRect(bx, 상+17, Math.max(2,bw*몫/100), 14);
+        g.fillStyle='#1c1608'; g.font='700 16px '+글꼴; g.fillText(몫.toFixed(1)+'%', bx+bw+10, 상+30);
+        g.beginPath(); g.arc(W-160, 상+24, 7, 0, Math.PI*2); g.fillStyle=단색[말.단]; g.fill();
+        g.fillStyle='#3d3015'; g.font='600 15px '+글꼴; g.fillText(말.단==='초록'?'흔함':말.단==='노랑'?'주의':'확인', W-146, 상+30);
+        y=상+46;
+      });
+      y+=10; g.fillStyle='#8a7a5a'; g.font='400 14.5px '+글꼴;
+      g.fillText('막대 : 내 곡 가락('+내수+'음) 가운데 그 곡과 같은 순서로 이어진 음의 몫 · 흔함 = 관계없는 곡끼리도 흔히 나오는 정도', 84, y+12); y+=46;
+
+      /* ② 같은 구간 그래프 */
+      var 첫=세.목록[0], 자=첫.자리;
+      if(자 && 내수){
+        g.fillStyle='#7a5a14'; g.font='800 19px '+글꼴; g.fillText('② 같은 구간 그래프 — 내 곡 ↔ 「'+줄임(g,첫.곡명,420)+'」', 80, y); y+=26;
+        var 남수=(첫.씨줄||'').length+1, gx=200, gw=W-280, 막높=26;
+        function 막(yy, 이름, 전체, 시작, 길이){
+          g.fillStyle='#5c4a20'; g.font='700 16px '+글꼴; g.fillText(줄임(g,이름,110), 84, yy+18);
+          g.fillStyle='#bfe0f0'; g.fillRect(gx, yy, gw, 막높);
+          var x0=gx+gw*시작/전체, x1=gx+gw*Math.min(전체,시작+길이)/전체;
+          g.fillStyle='#f87171'; g.fillRect(x0, yy, Math.max(3,x1-x0), 막높);
+          return [x0, x1];
+        }
+        var 위=막(y, '내 곡', 내수, 자.내시작, 자.음수), 아=막(y+92, '공개 곡', 남수, 자.씨시작, 자.음수);
+        g.strokeStyle='#15803d'; g.lineWidth=1.6;
+        g.beginPath(); g.moveTo(위[0], y+막높); g.lineTo(아[0], y+92); g.stroke();
+        g.beginPath(); g.moveTo(위[1], y+막높); g.lineTo(아[1], y+92); g.stroke();
+        /* 눈금 — 마디를 알면 마디, 모르면 음 차례 */
+        var 끝마디=접힌마디(R.미디||[], R.때표, 내수-1);
+        g.fillStyle='#8a7a5a'; g.font='400 13px '+글꼴; g.textAlign='center';
+        for(var q=0;q<=4;q++){ var 자리q=Math.round((내수-1)*q/4), 라=끝마디? (접힌마디(R.미디,R.때표,자리q)+'마디') : (자리q+1)+'번째 음';
+          g.fillText(라, gx+gw*자리q/Math.max(1,내수-1), y-6); }
+        for(var q2=0;q2<=4;q2++){ var 자리2=Math.round((남수-1)*q2/4); g.fillText((자리2+1)+'번째 음', gx+gw*자리2/Math.max(1,남수-1), y+92+막높+18); }
+        g.textAlign='left';
+        y+=92+막높+46;
+        g.fillStyle='#f87171'; g.fillRect(84, y-12, 14, 12); g.fillStyle='#5c4a20'; g.font='400 14.5px '+글꼴; g.fillText('같은 순서로 이어진 구간', 104, y-1);
+        g.fillStyle='#bfe0f0'; g.fillRect(300, y-12, 14, 12); g.fillStyle='#5c4a20'; g.fillText('나머지', 320, y-1);
+        y+=34;
+
+        /* ③ 요약 원 */
+        g.fillStyle='#7a5a14'; g.font='800 19px '+글꼴; g.fillText('③ 요약', 80, y); y+=20;
+        var 마0=접힌마디(R.미디||[], R.때표, 자.내시작), 마1=접힌마디(R.미디||[], R.때표, Math.min(내수-1, 자.내시작+자.음수-1));
+        function 원(cx, cy, 몫, 큰, 작, 제목){
+          g.beginPath(); g.moveTo(cx,cy); g.arc(cx,cy,64,-Math.PI/2,Math.PI*1.5); g.fillStyle='#60a5fa'; g.fill();
+          g.beginPath(); g.moveTo(cx,cy); g.arc(cx,cy,64,-Math.PI/2,-Math.PI/2+Math.PI*2*Math.max(0.004,몫)); g.fillStyle='#ef4444'; g.fill();
+          g.beginPath(); g.arc(cx,cy,42,0,Math.PI*2); g.fillStyle='#fffdf6'; g.fill();
+          g.textAlign='center'; g.fillStyle='#1c1608'; g.font='800 '+(큰.length>6?15:18)+'px '+글꼴; g.fillText(큰, cx, cy+6);
+          g.fillStyle='#5c4a20'; g.font='600 15px '+글꼴; g.fillText(제목, cx, cy+92); g.font='400 14px '+글꼴; g.fillText(작, cx, cy+112); g.textAlign='left';
+        }
+        var cy=y+80;
+        if(마0 && 끝마디){ var 닮마=마1-마0+1; 원(W*0.3, cy, 닮마/끝마디, 닮마+'/'+끝마디, '내 곡 '+마0+'~'+마1+'마디', '닮은 마디 / 전체 마디'); }
+        else 원(W*0.3, cy, 자.음수/내수, 자.음수+'/'+내수, (자.내시작+1)+'~'+(자.내시작+자.음수)+'번째 음', '닮은 음 / 전체 음');
+        원(W*0.7, cy, 자.음수/내수, (100*자.음수/내수).toFixed(1)+'%', '같은 순서 '+자.음수+'음 / 내 곡 '+내수+'음', '내 곡 가락 중 겹친 몫');
+        y=cy+150;
+
+        /* ④ 구간 상세 */
+        g.fillStyle='#7a5a14'; g.font='800 19px '+글꼴; g.fillText('④ 구간 상세', 80, y); y+=14;
+        var 표줄=[['내 곡 위치', (마0? 마0+'~'+마1+'마디 · ' : '')+(자.내시작+1)+'~'+(자.내시작+자.음수)+'번째 음'],
+                  ['공개 곡 위치', '「'+첫.곡명+'」 '+(자.씨시작+1)+'~'+(자.씨시작+자.음수)+'번째 음 (곡 전체 '+남수+'음)'],
+                  ['같은 순서로 이어진 음', 자.음수+'음 — 음 사이 간격(반음 수)까지 같은 음'],
+                  ['판정', 겹침말(첫.같은토막).불+' '+겹침말(첫.같은토막).말]];
+        표줄.forEach(function(r2,i){ var 상=y+6; g.fillStyle=i%2?'#fbf3df':'#ffffff'; g.fillRect(80,상,W-160,40);
+          g.fillStyle='#8a7a5a'; g.font='500 16px '+글꼴; g.fillText(r2[0], 96, 상+26);
+          g.fillStyle='#1c1608'; g.font='600 17px '+글꼴; g.fillText(줄임(g,r2[1],W-420), 300, 상+26); y=상+40; });
+        y+=30;
+      }
+      /* 겹쳐 보기 그림 — 팝업에 그려진 것을 그대로 옮긴다 */
+      var ov=document.getElementById('jc-over');
+      if(ov && ov.width>0 && ov.height>0 && 세.목록 && 세.목록[0]){
+        var pw=W-160, ph=Math.round(pw*ov.height/ov.width);
+        if(ph>260){ ph=260; }
+        g.fillStyle='#0b1512'; g.fillRect(80, y-8, pw, ph+46);
+        g.strokeStyle='#b8963e'; g.lineWidth=1; g.strokeRect(80.5, y-7.5, pw-1, ph+45);
+        g.fillStyle='#f3dc8c'; g.font='700 16px '+글꼴;
+        g.fillText(줄임(g,'악보 겹쳐 보기 — 위: 내 곡 · 아래: 「'+세.목록[0].곡명+'」 · 같은 순서로 이어진 음 '+세.목록[0].같은토막+'개', pw-30), 96, y+16);
+        try{ g.drawImage(ov, 80, y+30, pw, ph); }catch(e){}
+        y+=ph+64;
+      }
+      y=감싸기(g, '읽는 법 — 리듬(음 길이)과 같은 음 되풀이는 빼고, 음이 오르내리는 순서만 견줍니다. 2만여 곡과 견주면 관계없는 곡끼리도 가장 가까운 곡과는 보통 14음 정도가 겹칩니다. 노랑은 '+잣대.세상노랑+'음부터, 빨강은 '+잣대.세상빨강+'음부터입니다.',
+              84, y, W-170, 24, '400 15px '+글꼴, '#6b5a34')+16;
     }
     var a=R.악보;
     칸('흔히 쓰는 가락', a.흔함+'%  — 누구나 쓰는 짧은 진행의 몫');
@@ -1581,9 +1672,9 @@ function 곡견주기(){
 /* ── 판 594 : 곡 창(index.html)에서 쓰는 손 — 올린 곡의 가락 · 가사로 **같은 검사**를 돌리고 **같은 검사증**을 그린다 ──
    파트너 — 「21,970곡 검사를 1단계에 포함」. 검사기 팝업과 잣대 · 셈 · 검사증 그림이 하나도 다르지 않다.
    ⚠️ 검사기 팝업의 상태(담은것)는 검사증을 그리는 동안만 잠깐 빌리고 바로 돌려놓는다. */
-function 곡검사(미디들, 가사){
+function 곡검사(미디들, 가사, 때표){
   return 씨앗불러오기().then(function(왔나){
-    var R={때:new Date(), 가사:null, 악보:null};
+    var R={때:new Date(), 가사:null, 악보:null, 미디:미디들||null, 때표:(때표&&때표.박&&미디들&&때표.박.length===미디들.length)?때표:null};
     if(!왔나){ R.탈='씨앗 통(js/juran-seed.js)을 못 불러왔습니다'; return R; }
     if(가사) R.가사=가사검사(가사);
     if(미디들 && 미디들.length>=5) R.악보=악보검사(미디들);
@@ -1618,6 +1709,7 @@ window.JC = {
   가사검사:가사검사, 악보검사:악보검사, 지금가락:지금가락,
   지문뜨기:지문뜨기, 지문맞춰보기:지문맞춰보기, 파일을소리로:파일을소리로,
   작품지문:작품지문, 해시:해시, 씨앗준비:씨앗준비,
+  지금때:지금때,   /* 판 605 */
   밭불러오기:밭불러오기, 밭검사:밭검사, 밭후보:밭후보, 밭곡:밭곡, 밭조각받기:밭조각받기,
   진짜같은토막:진짜같은토막, 이음접기:이음접기, 줄접기:줄접기, 가락줄:가락줄
 };
