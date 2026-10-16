@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <!-- 판 564 : 파일 주소 끝에 판 번호를 붙인다. 손님 폰이 옛 파일을 쥐고 안 놓는 일을 막는다.
      ⚠️ js 파일을 새로 올릴 때는 이 숫자와 맨 아래 juran-check.js?v= 숫자를 같이 올린다. -->
-<script>window.JURAN판='602';</script>
+<script>window.JURAN판='603';</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>html{color-scheme:light;word-break:keep-all;overflow-wrap:break-word;line-break:strict;hanging-punctuation:allow-end}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>JURAN</title>
@@ -1854,7 +1854,7 @@
       if(window.JURAN악보그리기) return Promise.resolve();
       if(손받는중) return 손받는중;
       손받는중=new Promise(function(ok,no){
-        var sc=document.createElement('script'); sc.src='js/juran-sheet.js?v='+(window.JURAN판||'602'); sc.async=true;
+        var sc=document.createElement('script'); sc.src='js/juran-sheet.js?v='+(window.JURAN판||'603'); sc.async=true;
         sc.onload=function(){ ok(); }; sc.onerror=function(){ 손받는중=null; no(new Error('악보 그리는 파일(js/juran-sheet.js)을 못 받았습니다')); };
         document.head.appendChild(sc);
       });
@@ -2070,7 +2070,7 @@
       var v=sessionStorage.getItem('lee-t')||'', i=v.indexOf('|');
       if(!(i>0 && +v.slice(0,i)*1000>Date.now()+60000)){ location.href='LEE.html'; return; }
       window.__주란편집=true;
-      var sc=document.createElement('script'); sc.src='js/juran-edit.js?v='+(window.JURAN판||'602'); sc.defer=true;
+      var sc=document.createElement('script'); sc.src='js/juran-edit.js?v='+(window.JURAN판||'603'); sc.defer=true;
       document.head.appendChild(sc);
     }catch(e){}
   })();
@@ -2745,7 +2745,7 @@ window.JK=JK;
 (function(){
   var 소리집 = 'https://www.c-go-fuli.com/';
   var 내집   = 'js/';
-  var 판끝   = '?v='+(window.JURAN판||'602');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
+  var 판끝   = '?v='+(window.JURAN판||'603');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
   var 화면줄 = [{주소:내집+'juran-words.js'+판끝, 꼭:false, 이름:'말 사전'},
                 {주소:내집+'cgo-music.js'+판끝,   꼭:true,  이름:'작곡 엔진'},
                 {주소:내집+'cgo-score.js'+판끝,   꼭:false, 이름:'악보 편집기'}];
@@ -2902,6 +2902,67 @@ window.JK=JK;
         }
       }catch(e){}
       return 원fetch.call(window, u, o);
+    };
+  })();
+
+  /* ── 판 603 : 보컬 고른 대로 가게 ─────────────────────────────────────────
+     파트너 — 「보컬 추첨 · 바꾼 것이 적용이 안 되는 것 같다」. 재 보니 수노 탓이 아니라 우리 쪽 셋이었다.
+       ① 🎲 추첨으로 뽑은 뒤 ❶ 성별을 바꿔도, 먼저 뽑은 목소리(와 그 성별)가 그대로 서버로 갔다.
+          (남자로 뽑고 여자로 바꾸면 → 서버에는 male · 남자 조합)
+       ② ❷ 장르를 바꿔도 먼저 뽑은 장르의 목소리가 그대로 갔다. (발라드로 뽑고 트로트로 바꿔도 발라드 목소리)
+       ③ ❹ 조율 막대(낮고 굵은 · 높고 강한 · 공기감 …)는 어디에도 보내지 않았다 — 움직여도 곡이 안 바뀌었다.
+     cgo-music.js 는 건드리지 않는다. 여기서 ①② 는 바꾼 즉시 새로 뽑고, ③ 은 생성 편지에 음색 말로 얹는다. */
+  (function(){
+    if(window.__주란보컬603) return; window.__주란보컬603=true;
+    function 칸뒤(라벨){ var ds=document.querySelectorAll('#cgo-music-root div'); for(var i=0;i<ds.length;i++){ if(ds[i].textContent===라벨 && ds[i].nextElementSibling) return ds[i].nextElementSibling; } return null; }
+    /* ①② — 카드를 누르는 순간(먼저) 어느 줄인지 보고, 카드 일이 끝난 뒤 다시 뽑는다 */
+    document.addEventListener('click', function(ev){
+      var b=ev.target && ev.target.closest && ev.target.closest('button'); if(!b) return;
+      var 성=칸뒤('❶ 성별'), 장=칸뒤('❷ 장르'), 뽑=칸뒤('❸ 추첨'); if(!뽑) return;
+      var 어느 = (성&&성.contains(b))? '성별' : ((장&&장.contains(b))? '장르' : ''); if(!어느) return;
+      var m=window._cgoMusicMod; if(!(m && m.selected && m.selected.voiceMixId)) return;   /* 뽑은 것이 없으면 할 일 없음 */
+      setTimeout(function(){
+        try{ m.selected.voiceMixId=''; window._cgoVmixPick=null; }catch(e){}
+        var 새뽑=칸뒤('❸ 추첨'); if(새뽑) 새뽑.click();
+        try{ console.log('[판 603] '+어느+'을 바꿔서 목소리를 새로 뽑습니다'); }catch(e){}
+      }, 0);
+    }, true);
+    /* ③ — 조율 막대를 만졌으면 그 비율을 영어 음색 말로 바꿔 생성 편지의 style 에 얹는다 */
+    var 만짐=false;
+    var 층말={'낮고 굵은 목소리':'low thick chest voice','높고 강한 목소리':'high powerful belting','거칠고 탁한 목소리':'raspy gritty tone',
+      '맑고 투명한 목소리':'clear crystal-pure tone','트렌디 아이돌 톤':'bright trendy idol pop tone','소울풀 그루브 톤':'soulful groovy vocal runs',
+      '공기감(Airy) 톤':'airy breathy delivery','전자음 효과':'subtle auto-tune vocal effect'};
+    function 조율칸(){ var t=칸뒤('❹ 조율'); return t && t.nextElementSibling; }
+    document.addEventListener('input', function(ev){ var w=조율칸(); if(w && w.contains(ev.target) && ev.target.type==='range'){ 만짐=true; setTimeout(표시,0); } }, true);
+    document.addEventListener('click', function(ev){ var w=조율칸(); if(w && w.contains(ev.target) && ev.target.closest('button')){ 만짐=true; setTimeout(표시,0); } }, true);
+    function 비율(){
+      var w=조율칸(); if(!w) return [];
+      var 줄=[]; [].forEach.call(w.querySelectorAll('input[type=range]'), function(r){
+        var 칸=r.parentElement, 이름=((칸.querySelector('span')||{}).textContent||'').replace(/^[^\s]+\s/,'').trim();
+        if(층말[이름]) 줄.push({이름:이름, 말:층말[이름], 몫:+r.value||0}); });
+      return 줄.sort(function(a,b){ return b.몫-a.몫; });
+    }
+    function 음색말(){
+      var 말=function(p){ return p>=50?'mostly':p>=35?'strongly':p>=25?'clearly':p>=15?'lightly':'a touch of'; };
+      return 비율().filter(function(x){ return x.몫>=10; }).slice(0,3).map(function(x){ return 말(x.몫)+' '+x.말; }).join(', ');
+    }
+    function 표시(){
+      var w=조율칸(); if(!w) return; var 알=w.querySelector('.주란조율603');
+      if(!알){ 알=document.createElement('div'); 알.className='주란조율603'; 알.style.cssText='margin-top:6px;font-size:11px;color:#34d399;font-weight:700'; w.appendChild(알); }
+      var 위=비율().filter(function(x){ return x.몫>=10; }).slice(0,3).map(function(x){ return x.이름+' '+x.몫+'%'; }).join(' · ');
+      알.textContent=위? '✅ 곡에 들어갑니다 — '+위 : '';
+    }
+    if(typeof window.fetch!=='function') return;
+    var 원 = window.fetch;
+    window.fetch = function(u, o){
+      try{
+        var 주소=(typeof u==='string')? u : ((u&&u.url)||'');
+        if(만짐 && /\/vvip_generate(\?|$)/.test(주소) && o && typeof o.body==='string'){
+          var 편지=JSON.parse(o.body), 더=음색말();
+          if(편지 && 더){ 편지.style=(편지.style||'')+', '+더; o=Object.assign({}, o, {body:JSON.stringify(편지)}); }
+        }
+      }catch(e){}
+      return 원.call(window, u, o);
     };
   })();
 
@@ -3077,6 +3138,6 @@ window.JK=JK;
 
 <!-- 검사기 — 재는 손. 36KB. 씨앗 통(161KB)은 검사를 누를 때 받는다. -->
 <!-- 판 564 : ⚠️ 이 숫자는 머리(head)의 JURAN판 과 같이 올린다 -->
-<script src="js/juran-check.js?v=602" defer></script>
+<script src="js/juran-check.js?v=603" defer></script>
 </body>
 </html>
