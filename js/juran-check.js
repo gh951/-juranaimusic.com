@@ -823,7 +823,7 @@ function 미디줄들(buf){
       var 종류=st&0xf0, ch=st&15;
       if(종류===0x90||종류===0x80){ var n=d.getUint8(p++), v=d.getUint8(p++), 열=ch+':'+n;
         if(종류===0x90&&v>0) 켬[열]=틱;
-        else if(켬[열]!=null){ if(ch!==9){ var k=t+'-'+ch; (성부[k]||(성부[k]={이름:이름,ch:ch,악기:악기[ch]||0,음:[]})).음.push({n:n,s:켬[열]/div}); 모두.push({n:n,s:켬[열]/div}); } delete 켬[열]; }
+        else if(켬[열]!=null){ if(ch!==9){ var k=t+'-'+ch; (성부[k]||(성부[k]={이름:이름,ch:ch,악기:악기[ch]||0,음:[]})).음.push({n:n,s:켬[열]/div,e:틱/div}); 모두.push({n:n,s:켬[열]/div,e:틱/div}); } delete 켬[열]; }
         continue; }
       if(종류===0xc0){ 악기[ch]=d.getUint8(p++); continue; }
       if(종류===0xd0){ p+=1; continue; }
@@ -833,18 +833,19 @@ function 미디줄들(buf){
   }
   var 줄들=[];
   Object.keys(성부).forEach(function(k){ var s=성부[k]; if(s.음.length<5) return; var 윗=윗소리(s.음); if(윗.높이.length<5) return;
-    줄들.push({이름:s.이름? '「'+s.이름.trim()+'」 줄' : '가락 줄', 높이:윗.높이, 때:윗.때, 점:가락점수(윗.높이,s)}); });
+    줄들.push({이름:s.이름? '「'+s.이름.trim()+'」 줄' : '가락 줄', 높이:윗.높이, 때:윗.때, 음:윗.음, 점:가락점수(윗.높이,s)}); });
   줄들.sort(function(x,y){ return y.점-x.점; }); 줄들=줄들.slice(0,2);
-  if(Object.keys(성부).length>1){ var 전=윗소리(모두); if(전.높이.length>=5) 줄들.push({이름:'전체 윗소리', 높이:전.높이, 때:전.때, 점:0}); }
+  if(Object.keys(성부).length>1){ var 전=윗소리(모두); if(전.높이.length>=5) 줄들.push({이름:'전체 윗소리', 높이:전.높이, 때:전.때, 음:전.음, 점:0}); }
   if(!줄들.length) throw new Error('가락으로 쓸 음이 너무 적습니다');
   줄들.forEach(function(x){ x.마디길이=마디길이||4; x.빠르기=빠르기||110; });
   return 줄들;
 }
 /* 같은 때 울리는 음 가운데 가장 높은 음 — 높이와 시작 때(박)를 같이 */
-function 윗소리(음){ var 묶={}; 음.forEach(function(x){ var k=Math.round(x.s*4)/4; if(묶[k]==null||x.n>묶[k]) 묶[k]=x.n; });
-  var 때=Object.keys(묶).map(Number).sort(function(a,b){return a-b;}); return {높이:때.map(function(k){ return 묶[k]; }), 때:때}; }
+function 윗소리(음){ var 묶={}; 음.forEach(function(x){ var k=Math.round(x.s*4)/4; if(묶[k]==null||x.n>묶[k].n) 묶[k]=x; });
+  var 때=Object.keys(묶).map(Number).sort(function(a,b){return a-b;});
+  return {높이:때.map(function(k){ return 묶[k].n; }), 때:때, 음:때.map(function(k){ return {n:묶[k].n, s:k, e:(묶[k].e!=null?묶[k].e:k+1)}; })}; }
 /* 같은 음이 이어지면 하나로 — 첫 음의 때를 남긴다 */
-function 때접기(높, 때){ var p=[], t=[]; for(var i=0;i<높.length;i++) if(!p.length||p[p.length-1]!==높[i]){ p.push(높[i]); t.push(때?때[i]:i); } return {p:p, t:t}; }
+function 때접기(높, 때){ var p=[], t=[], 원=[]; for(var i=0;i<높.length;i++) if(!p.length||p[p.length-1]!==높[i]){ p.push(높[i]); t.push(때?때[i]:i); 원.push(i); } return {p:p, t:t, 원:원}; }
 function 가락점수(높,s){
   var n=높.length-1, 합=0, 같=0, 평=0; for(var i=1;i<높.length;i++){ var v=Math.max(-12,Math.min(12,높[i]-높[i-1])); 합+=Math.abs(v); if(!v) 같++; }
   for(var j=0;j<높.length;j++) 평+=높[j]; 평/=높.length;
@@ -873,8 +874,8 @@ function 엑셀줄들(글자){
       else if(태==='note'){ if(e.getElementsByTagName('grace').length) return;
         var 길=(+값(e,'duration')||0)/나눔, 화=e.getElementsByTagName('chord').length>0, 시=화?지금-길:지금; if(!화) 지금+=길;
         var 높=e.getElementsByTagName('pitch')[0]; if(!높||e.getElementsByTagName('rest').length) return;
-        var 반={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[값(높,'step')]||0; 음.push({n:(+값(높,'octave')+1)*12+반+(+값(높,'alter')||0), s:시}); } }); });
-    if(음.length>=5){ var 윗=윗소리(음); 줄들.push({이름:'성부 '+(pi+1), 높이:윗.높이, 때:윗.때, 점:0, 마디길이:마디길이||4, 빠르기:빠르기||100}); }
+        var 반={C:0,D:2,E:4,F:5,G:7,A:9,B:11}[값(높,'step')]||0; 음.push({n:(+값(높,'octave')+1)*12+반+(+값(높,'alter')||0), s:시, e:시+길}); } }); });
+    if(음.length>=5){ var 윗=윗소리(음); 줄들.push({이름:'성부 '+(pi+1), 높이:윗.높이, 때:윗.때, 음:윗.음, 점:0, 마디길이:마디길이||4, 빠르기:빠르기||100}); }
   });
   if(!줄들.length) throw new Error('악보에서 음을 찾지 못했습니다');
   return 줄들.slice(0,3);
@@ -913,7 +914,7 @@ function 판례대조(가, 나){
       var fa=때접기(A.높이,A.때), fb=때접기(B.높이,B.때), pa=fa.p, pb=fb.p, la=가락줄(pa), lb=가락줄(pb);
       var r1=무게맞춤(la,lb,false).점수, r2=무게맞춤(lb,la,false).점수;
       var 점=Math.max(r1,r2);
-      if(!최고||점>최고.점){ 최고={점:점, 가줄:A, 나줄:B, pa:pa, pb:pb, ta:fa.t, tb:fb.t, 거꾸로:r2>r1}; }
+      if(!최고||점>최고.점){ 최고={점:점, 가줄:A, 나줄:B, pa:pa, pb:pb, ta:fa.t, tb:fb.t, 원a:fa.원, 원b:fb.원, 거꾸로:r2>r1}; }
     }); });
     var 짝=최고.거꾸로? 무게맞춤(가락줄(최고.pb),가락줄(최고.pa),true).짝.map(function(x){ return [x[1],x[0],x[2]]; }) : 무게맞춤(가락줄(최고.pa),가락줄(최고.pb),true).짝;
     var 점수=Math.round(최고.점*10)/10, 관=관계없음몫(점수, 번수), 판=판례몫(점수), 말=판례말(점수, 관);
@@ -930,7 +931,7 @@ function 판례대조(가, 나){
             짝:짝, 같은음:같은음, 같은음나:같은음나, 같은수:Object.keys(같은음).length, 구간:[i0,i1,j0,j1],
             가마디:[마디(ta[i0],마가), 마디(ta[i1],마가)], 나마디:[마디(tb[j0],마나), 마디(tb[j1],마나)], 가전체마디:마디(ta[ta.length-1],마가),
             구간음수:i1-i0+1, 가마디길이:마가, 나마디길이:마나, 가높:최고.pa, 나높:최고.pb, 가때:ta, 나때:tb, 가빠르기:A.빠르기||110, 나빠르기:B.빠르기||110,
-            가이름:A.이름, 나이름:B.이름, 번수:번수};
+            가이름:A.이름, 나이름:B.이름, 번수:번수, 가음:A.음, 나음:B.음, 가원:최고.원a, 나원:최고.원b};
   });
 }
 /* 판 601 : 악보 맞대기 그림 — 미피아처럼 색 셋 : 🔵 내 곡 · 🟢 견줄 곡 · 🟣 같은 음. 마디 번호를 위에 적는다 */
@@ -970,6 +971,51 @@ function 맞대기그리기(cv, R, 위이름, 아래이름){
       if(같){ g.strokeStyle=맞색.같; g.globalAlpha=.35; g.beginPath(); g.moveTo(x,y1+6); g.lineTo(x,y2-6); g.stroke(); g.globalAlpha=1; } }
   }
   g.textAlign='left';
+}
+/* 판 602 : 진짜 악보로 맞대기 — 파트너 「신뢰감 있는 상호 악보 비교가 없어졌다」
+   곡 창이 쓰는 오선 악보 손(js/juran-sheet.js)으로 두 곡을 위아래로 그린다.
+   마디 번호는 원래 곡의 번호 그대로 · 두 곡에서 같은 음만 보라색 · 견줄 곡은 내 곡 높이로 옮겨 그린다. */
+var 음글=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+function 악보손받기(){ if(window.JURAN악보그리기) return Promise.resolve(true); return 글받기('js/juran-sheet.js?v='+encodeURIComponent(window.JURAN판||'602')); }
+function 조각음표(음, 원, 같은, a, b, L, 옮김){
+  var 접힌=new Array(음.length); for(var f=0;f<원.length;f++){ var 끝f=(f+1<원.length?원[f+1]:음.length); for(var i=원[f];i<끝f;i++) 접힌[i]=f; }
+  var 시작=(a-1)*L, 끝=b*L, 지금=시작, 표=[], 보라={}, q=function(x){ return Math.round(x*4)/4; };
+  for(var i2=0;i2<음.length;i2++){ var x=음[i2]; if(x.s<시작-1e-6) continue; if(x.s>=끝-1e-6) break;
+    var 쉼=q(x.s-지금); if(쉼>=0.25){ 표.push({name:null,dur:쉼}); 지금+=쉼; }
+    var 다음=(i2+1<음.length)?음[i2+1].s:x.e, d=q(Math.min(x.e,다음,끝)-x.s); if(d<0.25) d=0.25;
+    if(같은[접힌[i2]]) 보라[표.length]=1;
+    var n=x.n+(옮김||0); 표.push({name:음글[((n%12)+12)%12]+(Math.floor(n/12)-1), dur:d}); 지금+=d; }
+  var 남=q(끝-지금); if(남>=0.25) 표.push({name:null,dur:남});
+  return {표:표, 보라:보라};
+}
+function 악보맞대기그리기(통, R){
+  return 악보손받기().then(function(){
+    if(!window.JURAN악보그리기) throw new Error('악보 손 없음');
+    var 옮김=(R.가높[R.구간[0]]-R.나높[R.구간[2]])||0, 최대=8, 묶=(통.clientWidth||340)>=620? 4 : 2;
+    var 가=R.가마디, 나=R.나마디, 길이=Math.min(최대, Math.max(가[1]-가[0], 나[1]-나[0])+1);
+    var 옮말= !옮김? '' : (옮김%12===0? '견줄 곡은 옥타브만 옮겨 그렸습니다' : '견줄 곡은 내 곡 높이로 '+(옮김>0?'+':'')+옮김+'반음 옮겨 그렸습니다');
+    var 쪽=[{이름:'내 곡', 색:맞색.내, 음:R.가음, 원:R.가원, 같은:R.같은음, 첫:가[0], 끝:가[1], L:R.가마디길이||4, 빠:R.가빠르기, 옮:0},
+            {이름:'견줄 곡', 색:'#16a34a', 음:R.나음, 원:R.나원, 같은:R.같은음나, 첫:나[0], 끝:나[1], L:R.나마디길이||4, 빠:R.나빠르기, 옮:옮김}];
+    통.innerHTML='';
+    if(옮말||(가[1]-가[0]+1)>최대){ var 알=document.createElement('div'); 알.style.cssText='padding:6px 12px 0;font-size:11.5px;color:#6b7280';
+      알.textContent=[(가[1]-가[0]+1)>최대?'닮은 곳의 앞 '+최대+'마디를 보여 드립니다':'', 옮말].filter(Boolean).join(' · '); 통.appendChild(알); }
+    /* 두 곡을 마디 묶음마다 번갈아 — 내 곡 3~4마디 바로 아래 견줄 곡 1~2마디 */
+    for(var k=0;k<길이;k+=묶){
+      var 판=document.createElement('div'); 판.style.cssText='margin:8px 8px 0;border-radius:8px;border:1px solid rgba(147,51,234,.18);overflow:hidden'; 통.appendChild(판);
+      쪽.forEach(function(x, 몇){
+        var a=x.첫+k, b=Math.min(x.첫+k+묶-1, x.첫+길이-1); if(a>x.끝+묶) return;
+        var 칸=document.createElement('div'); if(몇) 칸.style.borderTop='1px dashed rgba(0,0,0,.1)'; 판.appendChild(칸);
+        var 조=조각음표(x.음, x.원, x.같은, a, b, x.L, x.옮);
+        var 제목='<span style="font-size:12.5px;font-weight:800;color:'+x.색+'">● '+x.이름+'</span><span style="color:#111;font-size:12.5px">'+(a===b?a+'마디':a+'~'+b+'마디')+'</span>';
+        if(!window.JURAN악보그리기(칸, 조.표, 'C Major', x.빠, x.L, {맨악보:true, 첫마디:a, 제목:제목, 줄당:묶})) throw new Error('악보를 그리지 못했습니다');
+        [].forEach.call(칸.querySelectorAll('g[data-i]'), function(g){
+          if(!조.보라[+g.getAttribute('data-i')]) return;
+          [].forEach.call(g.querySelectorAll('ellipse'), function(el){ el.setAttribute('stroke','#9333ea'); el.setAttribute('stroke-width','2'); if(el.getAttribute('fill')!=='#fff') el.setAttribute('fill','#9333ea'); });
+          [].forEach.call(g.querySelectorAll('text'), function(t){ t.setAttribute('fill','#9333ea'); });
+        });
+      });
+    }
+  });
 }
 /* 판 601 : 그 구간만 소리로 — 브라우저 소리틀만 쓴다 */
 var 맞소리=null;
@@ -1439,7 +1485,9 @@ function 악보맞대기(){
   판.innerHTML='<div class="hint">맞대는 중…</div>';
   Promise.all([악보줄들(f1), 악보줄들(f2)]).then(function(둘){ return 판례대조(둘[0], 둘[1]); }).then(function(R){
     판.innerHTML=판례결과HTML(R, f1.name, f2.name);
-    맞대기그리기(판.querySelector('canvas'), R, '내 곡', '견줄 곡');
+    var 악=판.querySelector('.jc-맞악보');
+    맞대기그리기(악.querySelector('canvas'), R, '내 곡', '견줄 곡');      /* 먼저 점 그림 — 악보 손이 오면 진짜 악보로 바꾼다 */
+    악보맞대기그리기(악, R).catch(function(){ 악.innerHTML='<canvas style="width:100%;height:210px;display:block;background:#0b1512"></canvas>'; 맞대기그리기(악.querySelector('canvas'), R, '내 곡', '견줄 곡'); });
     [].forEach.call(판.querySelectorAll('[data-듣기]'), function(btn){
       btn.onclick=function(){ var 내=btn.getAttribute('data-듣기')==='내', 원=btn.textContent;
         [].forEach.call(판.querySelectorAll('[data-듣기]'), function(x){ x.disabled=true; });
@@ -1475,10 +1523,10 @@ function 판례결과HTML(R, 이름1, 이름2){
      '<span style="position:absolute;left:'+자리(아님.점)+';top:30px;transform:translateX(-30%);font-size:11px;color:#16a34a;white-space:nowrap;line-height:1.3">표절 아님 판결<br>Shape of You</span>'+
      '<span style="position:absolute;left:'+자리(인정.점)+';top:30px;transform:translateX(-50%);font-size:11px;color:#dc2626;white-space:nowrap;line-height:1.3;text-align:center">표절 인정 판결<br>My Sweet Lord</span></div>'+
      '<div style="font-size:11.5px;color:var(--muted);margin-bottom:4px">◆ 이 두 곡</div>';
-  h+='<div style="margin-top:12px;border-radius:10px;overflow:hidden;background:#0b1512">'+
-     '<div style="padding:8px 12px;font:700 12.5px/1.5 system-ui;color:#e6f4ef">악보 맞대기 — <span style="color:'+맞색.내+'">● 내 곡</span> · <span style="color:'+맞색.남+'">● 견줄 곡</span> · <span style="color:'+맞색.같+'">● 같은 음</span></div>'+
-     '<canvas style="width:100%;height:210px;display:block"></canvas>'+
-     '<div style="padding:4px 12px 10px;color:#9ac7b8;font:500 11.5px/1.5 system-ui">숫자는 마디 번호입니다. 보라색이 두 곡에서 같은 음입니다.</div></div>';
+  h+='<div style="margin-top:12px;border:1px solid rgba(0,0,0,.12);border-radius:10px;overflow:hidden;background:#fff">'+
+     '<div style="padding:10px 12px 0;font:800 14px/1.5 system-ui;color:#111">🎼 악보로 맞대기 <span style="font-weight:600;font-size:12.5px;color:#9333ea">— 보라색 음표가 두 곡에서 같은 음</span></div>'+
+     '<div class="jc-맞악보"><canvas style="width:100%;height:210px;display:block;background:#0b1512"></canvas></div>'+
+     '<div style="padding:4px 12px 10px;color:#6b7280;font:500 11.5px/1.55 system-ui">올린 파일에서 가락(맨 윗소리)만 뽑아 그렸습니다. 음 사이 간격이 같으면 조가 달라도 같은 음으로 셉니다.</div></div>';
   h+='<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">'+
      '<button type="button" data-듣기="내" style="'+단추+'">▶ 내 곡 '+마(R.가마디)+'</button>'+
      '<button type="button" data-듣기="남" style="'+단추+'">▶ 견줄 곡 '+마(R.나마디)+'</button></div>';

@@ -96,7 +96,7 @@
   function 만들(n,a){ var e=document.createElementNS(SVGNS,n);
     for (var k in a) if (Object.prototype.hasOwnProperty.call(a,k)) e.setAttribute(k,a[k]); return e; }
 
-  var 줄높이=138, 선간격=9, 왼여백=62, 바닥칸=4*7+2, 위칸=5*7+3;
+  var 줄높이0=138, 선간격=9, 왼여백=62, 바닥칸=4*7+2, 위칸=5*7+3;
   function 칸y(윗,칸){ return 윗 + 4*선간격 - (칸-바닥칸)*(선간격/2); }
 
   /* 길이 → 모양 (깃 수 = 꼬리 수) */
@@ -111,7 +111,9 @@
   }
   function 점인가(d){ var b=d/1.5; return b>0 && Math.abs(Math.log2(b)-Math.round(Math.log2(b)))<1e-9; }
 
-  function 그리기(통, 음표들, 조성, 빠르기, 박자, 구간표) {
+  function 그리기(통, 음표들, 조성, 빠르기, 박자, 구간표, 설정) {
+    설정=설정||{}; var 맨=!!설정.맨악보, 첫마디=설정.첫마디||1;
+    var 줄높이=맨? 84 : 줄높이0, 윗첫=맨? 30 : 62;   /* 판 602 : 맞대기 악보는 띠·화음 자리가 없어 촘촘히 */
     통.innerHTML='';
     var 폭 = Math.max(300, 통.clientWidth || 340);
 
@@ -149,16 +151,16 @@
       var L=구간시작[b];
       셈여림[b] = /후렴|chorus/i.test(L) ? 'f' : (/브릿지|bridge/i.test(L) ? 'mf' : 'mp');
     });
-    if (!Object.keys(구간시작).length) { 구간시작[0]='절 1'; 셈여림[0]='mp'; }
+    if (!Object.keys(구간시작).length && !맨) { 구간시작[0]='절 1'; 셈여림[0]='mp'; }
 
     var 화음들 = 조성화음(조성);
-    var 마디화음표 = 마디들.map(function(m){ return 마디화음(m, 화음들); });
+    var 마디화음표 = 맨? [] : 마디들.map(function(m){ return 마디화음(m, 화음들); });   /* 판 602 : 맞대기 악보는 짐작한 화음을 안 적는다 */
 
     /* ── 머리말 ── */
     var 머리=document.createElement('div');
     머리.style.cssText='display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;'
       +'padding:12px 14px 4px;font-size:12px;color:#5a6472;font-weight:700';
-    머리.innerHTML='<span style="font-size:14px;color:#111;font-weight:800">🎼 악보</span>'
+    머리.innerHTML= 설정.제목!=null ? 설정.제목 : '<span style="font-size:14px;color:#111;font-weight:800">🎼 악보</span>'
       +'<span>'+(조성||'C Major')+'</span><span>♩ = '+Math.round(빠르기||120)+'</span>'
       +'<span>'+박자+'/4</span><span>마디 '+마디들.length+' · 음표 '+음표들.length+'</span>';
     통.appendChild(머리);
@@ -169,10 +171,10 @@
       빈.textContent='그릴 음표가 없습니다.'; 통.appendChild(빈); return;
     }
 
-    var 줄당 = 폭>=900 ? 4 : (폭>=620 ? 3 : 2);
+    var 줄당 = 설정.줄당 || (폭>=900 ? 4 : (폭>=620 ? 3 : 2));
     var 마디폭 = (폭-왼여백-16)/줄당;
     var 줄수 = Math.ceil(마디들.length/줄당);
-    var 높이 = 줄수*줄높이 + 30;
+    var 높이 = 맨? 윗첫+(줄수-1)*줄높이+4*선간격+30 : 줄수*줄높이 + 30;
     var svg=만들('svg',{width:'100%',height:String(높이),
       viewBox:'0 0 '+폭+' '+높이, preserveAspectRatio:'xMinYMin meet'});
     svg.style.cssText='display:block;background:#fff';
@@ -180,7 +182,7 @@
     var 조표 = 조표수[조성] !== undefined ? 조표수[조성] : 0;
 
     for (var r=0;r<줄수;r++){
-      var 윗 = 62 + r*줄높이;   /* 위에 구간 띠·화음·마디번호 세 줄이 앉는다 */
+      var 윗 = 윗첫 + r*줄높이;   /* 위에 구간 띠·화음·마디번호 세 줄이 앉는다 */
       for (var L=0;L<5;L++)
         svg.appendChild(만들('line',{x1:12,y1:윗+L*선간격,x2:폭-10,y2:윗+L*선간격,
           stroke:'#2b3340','stroke-width':1}));
@@ -202,7 +204,7 @@
         svg.appendChild(만들('line',{x1:x0+마디폭,y1:윗,x2:x0+마디폭,y2:윗+4*선간격,
           stroke:'#2b3340','stroke-width':(mi===마디들.length-1)?2.8:1.2}));
         var 번=만들('text',{x:x0+1,y:윗-6,'font-size':9,fill:'#aab2bb'});
-        번.textContent=String(mi+1); svg.appendChild(번);
+        번.textContent=String(mi+첫마디); svg.appendChild(번);
 
         /* 화음 이름 */
         if (마디화음표[mi]){
@@ -335,19 +337,21 @@
       }
     }
     /* 끝 표시 */
-    var fine=만들('text',{x:폭-44,y:62+(줄수-1)*줄높이-56,'font-size':11,fill:'#5a6472',
+    var fine=만들('text',{x:폭-44,y:윗첫+(줄수-1)*줄높이-56,'font-size':11,fill:'#5a6472',
       'font-style':'italic','font-weight':'700'});
-    fine.textContent='Fine'; svg.appendChild(fine);
+    if(!맨){ fine.textContent='Fine'; svg.appendChild(fine); }
 
     통.appendChild(svg);
+    if(맨) return;
     var 꼬=document.createElement('div');
     꼬.style.cssText='padding:4px 14px 12px;font-size:11px;color:#9aa3ad';
     꼬.textContent='올린 파일에서 가락(맨 윗소리)만 뽑아 그린 악보입니다. 화음 이름은 짐작입니다.';
     통.appendChild(꼬);
   }
 
-  window.JURAN악보그리기 = function (통, 음표들, 조성, 빠르기, 박자) {
-    try { 그리기(통, 음표들, 조성||'C Major', 빠르기||120, (박자>=1&&박자<=16)?박자:4, null); return true; }
+  /* 판 602 : 여섯째 값 설정 {맨악보, 첫마디, 제목} — 악보 맞대기에서 쓴다. 곡 창은 그대로 */
+  window.JURAN악보그리기 = function (통, 음표들, 조성, 빠르기, 박자, 설정) {
+    try { 그리기(통, 음표들, 조성||'C Major', 빠르기||120, (박자>=1&&박자<=16)?박자:4, null, 설정); return true; }
     catch (e) { try{ console.error('[JURAN 곡 창 악보]', e); }catch(_){} return false; }
   };
 })();
