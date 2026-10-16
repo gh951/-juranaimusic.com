@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <!-- 판 564 : 파일 주소 끝에 판 번호를 붙인다. 손님 폰이 옛 파일을 쥐고 안 놓는 일을 막는다.
      ⚠️ js 파일을 새로 올릴 때는 이 숫자와 맨 아래 juran-check.js?v= 숫자를 같이 올린다. -->
-<script>window.JURAN판='605';</script>
+<script>window.JURAN판='606';</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>html{color-scheme:light;word-break:keep-all;overflow-wrap:break-word;line-break:strict;hanging-punctuation:allow-end}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>JURAN</title>
@@ -901,6 +901,9 @@
 
 
     <div class="end">
+      <label id="up-agree" style="display:flex;flex-direction:row;flex:1 1 100%;width:100%;min-width:0;box-sizing:border-box;gap:8px;align-items:flex-start;margin:10px 0 8px;font-size:12.5px;line-height:1.6;color:var(--muted)"><input type="checkbox" id="up-agree-box" style="margin-top:3px;flex:none">
+        <span><b style="color:var(--fg)">[필수] 저작권 대조 지문 동의</b> — 올린 가사 · 악보 · 음원은 저작권 대조를 위해 되돌릴 수 없는 숫자 지문으로 변환되어, 다른 작품과의 유사도 검사와 작품 등록 시점 증명에 쓰일 수 있습니다. 지문으로는 원래 가사나 악보를 되살릴 수 없으며, 언제든 내 작품의 지문 삭제를 요청할 수 있습니다.
+        <br><span style="opacity:.8;font-size:11.5px;line-height:1.5">Lyrics, scores and audio you upload may be converted into irreversible numeric fingerprints and used to check similarity with other works and to prove when your work was registered. The originals cannot be reconstructed from these fingerprints, and you may request deletion at any time.</span></span></label>
       <button id="up-send" disabled>올리기 — 곧 열립니다</button>
       <button class="gh" onclick="JK.저장()">⬇ 자켓 저장 (1024px)</button>
     </div>
@@ -1752,7 +1755,7 @@
       몸.innerHTML='<h3 style="margin:0 0 6px;font-size:17px">🛡 저작권 검사</h3><div class="빈">검사 중… 공개 곡 21,970곡과 대조하고 있습니다<br><span style="font-size:12px">처음 한 번은 자료(약 1.6MB)를 받느라 몇 초 걸립니다</span></div>';
       var 가=null;
       (검사들[k]&&검사들[k].잰중) || (검사들[k]={잰중: 곡가락(s).then(function(g){ 가=g;
-          return JC.곡검사(g?g.미디들:null, s.가사||'', g?g.때표:null); })
+          return JC.곡검사(g?g.미디들:null, s.가사||'', g?g.때표:null, s.id); })
         .then(function(R){ 검사들[k]={R:R, 가락:가}; }, function(e){ 검사들[k]={탈:(e&&e.message)||String(e)}; })});
       검사들[k].잰중.then(function(){
         if(지금k!==k || 지금탭!=='저작권') return;
@@ -1804,6 +1807,14 @@
         h+='<h4 style="margin:16px 0 6px;font-size:15px">가사</h4><dl class="표줄"><dt>금지어</dt><dd>'+(L.금기.length? L.금기.length+'곳 있음':'없음')+'</dd>'+
           '<dt>실존 인물 이름</dt><dd>'+(L.실명.length? L.실명.length+'곳 있음':'없음')+'</dd>'+
           '<dt>같은 줄 되풀이</dt><dd>'+L.되풀이+'% — 후렴이 있으면 자연스러운 값 ('+L.줄수+'줄 · '+L.글자수+'자)</dd></dl>';
+      }
+      /* 판 606 : JURAN 등록곡과 대조 */
+      if(R.주란 && !R.주란.탈 && R.주란.곡수){
+        var 주=R.주란;
+        h+='<h4 style="margin:16px 0 6px;font-size:15px">JURAN 등록곡과 대조 <span style="font-weight:500;color:#7d9893;font-size:12px">'+주.곡수+'곡 · 가락 · 가사 지문</span></h4><dl class="표줄">';
+        if(주.가락봄) h+='<dt>가락</dt><dd>'+(주.가락.length? JC.겹침말(주.가락[0].같은토막).불+' 「'+글(주.가락[0].t)+'」 '+주.가락[0].같은토막+'음 같은 순서' : '겹치는 곡 없음')+'</dd>';
+        if(주.가사봄) h+='<dt>가사</dt><dd>'+(주.가사.length? (주.가사[0].겹침>=40?'🔴':주.가사[0].겹침>=20?'🟡':'🟢')+' 「'+글(주.가사[0].t)+'」 '+주.가사[0].겹침+'% 겹침' : '겹치는 곡 없음')+'</dd>';
+        h+='</dl>';
       }
       h+='<h4 style="margin:16px 0 4px;font-size:15px">작품 고유 번호 <span style="font-weight:500;color:#7d9893;font-size:12px">(작품 지문)</span></h4><div style="font:500 13px ui-monospace,Menlo,monospace;word-break:break-all">'+글(R.지문)+'</div>'+
         '<p style="margin:2px 0 0;font-size:12px;color:#7d9893">이 가사와 가락으로만 나오는 번호입니다. 한 글자, 한 음만 바뀌어도 달라지므로 이 작품이 이날 이 모습이었다는 기록이 됩니다.</p>';
@@ -1859,7 +1870,7 @@
       if(window.JURAN악보그리기) return Promise.resolve();
       if(손받는중) return 손받는중;
       손받는중=new Promise(function(ok,no){
-        var sc=document.createElement('script'); sc.src='js/juran-sheet.js?v='+(window.JURAN판||'605'); sc.async=true;
+        var sc=document.createElement('script'); sc.src='js/juran-sheet.js?v='+(window.JURAN판||'606'); sc.async=true;
         sc.onload=function(){ ok(); }; sc.onerror=function(){ 손받는중=null; no(new Error('악보 그리는 파일(js/juran-sheet.js)을 못 받았습니다')); };
         document.head.appendChild(sc);
       });
@@ -2075,7 +2086,7 @@
       var v=sessionStorage.getItem('lee-t')||'', i=v.indexOf('|');
       if(!(i>0 && +v.slice(0,i)*1000>Date.now()+60000)){ location.href='LEE.html'; return; }
       window.__주란편집=true;
-      var sc=document.createElement('script'); sc.src='js/juran-edit.js?v='+(window.JURAN판||'605'); sc.defer=true;
+      var sc=document.createElement('script'); sc.src='js/juran-edit.js?v='+(window.JURAN판||'606'); sc.defer=true;
       document.head.appendChild(sc);
     }catch(e){}
   })();
@@ -2750,7 +2761,7 @@ window.JK=JK;
 (function(){
   var 소리집 = 'https://www.c-go-fuli.com/';
   var 내집   = 'js/';
-  var 판끝   = '?v='+(window.JURAN판||'605');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
+  var 판끝   = '?v='+(window.JURAN판||'606');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
   var 화면줄 = [{주소:내집+'juran-words.js'+판끝, 꼭:false, 이름:'말 사전'},
                 {주소:내집+'cgo-music.js'+판끝,   꼭:true,  이름:'작곡 엔진'},
                 {주소:내집+'cgo-score.js'+판끝,   꼭:false, 이름:'악보 편집기'}];
@@ -3143,6 +3154,13 @@ window.JK=JK;
 
 <!-- 검사기 — 재는 손. 36KB. 씨앗 통(161KB)은 검사를 누를 때 받는다. -->
 <!-- 판 564 : ⚠️ 이 숫자는 머리(head)의 JURAN판 과 같이 올린다 -->
-<script src="js/juran-check.js?v=605" defer></script>
+<script src="js/juran-check.js?v=606" defer></script>
+<script>/* 판 606 : 약관 동의 없이는 올리지 않는다 */
+(function(){ document.addEventListener('click',function(e){
+  var b=e.target&&e.target.closest&&e.target.closest('#up-send'); if(!b) return;
+  var c=document.getElementById('up-agree-box'); if(c&&!c.checked){ e.preventDefault(); e.stopImmediatePropagation();
+    var l=document.getElementById('up-agree'); if(l){ l.style.outline='2px solid #f87171'; l.style.borderRadius='8px'; l.scrollIntoView({block:'center',behavior:'smooth'}); }
+    alert('저작권 대조 지문 동의에 체크해 주세요.\nPlease agree to the fingerprint terms first.'); }
+},true); })();</script>
 </body>
 </html>

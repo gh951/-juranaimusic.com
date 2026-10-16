@@ -357,6 +357,54 @@ function 밭검사(미디들){
   });
 }
 
+/* ═══ 판 606 : JURAN 등록곡과 대조 (「3번」) ═══════════════════════════════
+   서버(cgo-548)가 LEE 에서 저장할 때마다 JURAN 곡의 가락·가사를 **되돌릴 수 없는 지문**으로 떠서
+   jfield.json 에 쌓는다. 여기서는 같은 셈으로 내 곡 지문을 떠서 견준다.
+   가사 지문 : [구간]·문장부호를 걷고 이어진 세 낱말마다 FNV-1a 32비트 (서버 _jf_가사지문 과 똑같은 셈) */
+var 주란밭=null, 주란밭받는중=null;
+function 주란밭불러오기(){
+  if(주란밭) return Promise.resolve(주란밭);
+  if(!주란밭받는중){
+    var 곳=(window.__공개||'https://music.juranaimusic.com');
+    주란밭받는중=fetch(곳+'/jfield.json?h='+Math.floor(Date.now()/6e5), {cache:'no-store'})
+      .then(function(r){ return r.ok? r.json() : null; }).catch(function(){ return null; })
+      .then(function(j){ 주란밭=(j&&j.곡)? j : null; if(!주란밭) 주란밭받는중=null; return 주란밭; });
+  }
+  return 주란밭받는중;
+}
+function fnv32(t){
+  var b=new TextEncoder().encode(t), h=2166136261;
+  for(var i=0;i<b.length;i++){ h^=b[i]; h=Math.imul(h,16777619)>>>0; }
+  return ('0000000'+h.toString(16)).slice(-8);
+}
+function 가사지문(가사){
+  var t=String(가사||'').replace(/\[[^\]]*\]/g,' ').toLowerCase().replace(/[^\p{L}\p{N}\s]|_/gu,' ');
+  var 낱=t.split(/\s+/).filter(Boolean); if(낱.length<3) return [];
+  var 본={}; for(var i=0;i+2<낱.length;i++) 본[fnv32(낱[i]+' '+낱[i+1]+' '+낱[i+2])]=1;
+  return Object.keys(본).sort();
+}
+function 주란대조(미디들, 가사, 자기id){
+  return 주란밭불러오기().then(function(밭){
+    if(!밭) return {탈:'JURAN 등록곡 자료를 받지 못했습니다'};
+    var 내줄=(미디들&&미디들.length>=5)? 가락줄(이음접기(미디들)) : '', 내지=가사지문(가사), 내표={};
+    내지.forEach(function(h){ 내표[h]=1; });
+    var 가락=[], 가사들=[], 수=0;
+    밭.곡.forEach(function(x){
+      if(자기id && x.id===자기id) return; 수++;
+      if(내줄 && x.줄){ var z=진짜같은토막(내줄, x.줄); if(z.음수>=3) 가락.push({id:x.id, t:x.t, m:x.m, 같은토막:z.음수}); }
+      if(내지.length && x.가사 && x.가사.length){ var 같=0; x.가사.forEach(function(h){ if(내표[h]) 같++; });
+        if(같) 가사들.push({id:x.id, t:x.t, m:x.m, 겹침:Math.round(100*같/내지.length), 같은수:같}); }
+    });
+    가락.sort(function(a,b){ return b.같은토막-a.같은토막; }); 가사들.sort(function(a,b){ return b.겹침-a.겹침; });
+    return {곡수:수, 가락:가락.slice(0,3), 가사:가사들.slice(0,3), 가락봄:!!내줄, 가사봄:내지.length>0};
+  });
+}
+function 가사겹침말(p){
+  if(p>=40) return {단:'빨강', 불:'🔴', 말:'가사가 많이 겹칩니다 — 꼭 확인하세요'};
+  if(p>=20) return {단:'노랑', 불:'🟡', 말:'가사가 눈에 띄게 겹칩니다'};
+  return {단:'초록', 불:'🟢', 말:'몇 마디 겹치는 정도입니다'};
+}
+
 /* ─────────────────────────────────────────────── ⑤ 음원 지문 ── */
 /* 샤잠이 쓰는 「봉우리 짝짓기」. 바깥 꾸러미를 하나도 안 쓴다.
    ⚠️ 한 번에 다 돌리면 화면이 멎는다. 토막을 끊어 돌리고 사이에 숨을 쉰다. */
@@ -674,6 +722,9 @@ function 돌리기속(){
     if(할것.indexOf('악보')>=0) R.악보=악보검사(담은것.미디);
     R.지문=작품지문((담은것.가사||'')+'\u0001'+((담은것.미디||[]).join(',')));
     담은것.결과=R;
+    if((R.악보&&!R.악보.탈)||(R.가사&&R.가사.글자수)){
+      주란대조(R.악보&&!R.악보.탈?담은것.미디:null, R.가사&&R.가사.글자수?담은것.가사:'', null).then(function(x){ R.주란=x; if(담은것.결과===R) 그리기(R); }, function(){});
+    }
     if(R.악보 && !R.악보.탈){
       R.세상={기다림:true};
       밭검사(담은것.미디).then(function(x){ R.세상=x; if(담은것.결과===R) 그리기(R); })
@@ -771,6 +822,17 @@ function 그리기(R){
           g.실명.map(function(x){return (x.줄?x.줄+'번째 줄':'')}).join(' · ')):'🟢 없음')+'</span></div>';
       h+='<div class="row"><b>같은 줄 되풀이</b><span>ⓘ <b style="color:#e6f4ef">'+g.되풀이+'%</b> · '+g.줄수+'줄 · '+g.글자수+'자<br>'+
          '<span style="color:#7fae9f;font-size:11.5px">후렴이 있으면 자연스럽게 올라가는 값입니다.</span></span></div>';
+    }
+  }
+  /* 판 606 : JURAN 등록곡과 대조 */
+  if(R.주란 && !R.주란.탈){   /* 자료를 못 받았으면 조용히 건너뛴다 */
+    var 주=R.주란;
+    h+='<div class="sec">🏠 JURAN 등록곡과 대조'+(주.곡수?' <span style="font-weight:400;opacity:.8">— '+주.곡수+'곡 (가락 · 가사 지문)</span>':'')+'</div>';
+    {
+      if(주.가락봄){ if(!주.가락.length) h+='<div class="row"><b>가락</b><span>🟢 겹치는 JURAN 곡이 없습니다</span></div>';
+        else 주.가락.forEach(function(x,i){ var m=겹침말(x.같은토막); h+='<div class="row"><b>'+(i?'':'가락')+'</b><span>'+m.불+' <b style="color:#e6f4ef">'+x.같은토막+'음</b> 같은 순서 — 「'+그글(x.t)+'」'+(x.m?' · '+그글(x.m):'')+'</span></div>'; }); }
+      if(주.가사봄){ if(!주.가사.length) h+='<div class="row"><b>가사</b><span>🟢 겹치는 JURAN 곡이 없습니다</span></div>';
+        else 주.가사.forEach(function(x,i){ var m=가사겹침말(x.겹침); h+='<div class="row"><b>'+(i?'':'가사')+'</b><span>'+m.불+' <b style="color:#e6f4ef">'+x.겹침+'%</b> 겹침 — 「'+그글(x.t)+'」'+(x.m?' · '+그글(x.m):'')+'</span></div>'; }); }
     }
   }
   h+='<div class="sec">🔒 작품 고유 번호 <span style="font-weight:400;opacity:.8">— 이 가사 · 가락으로만 나오는 번호</span></div>';
@@ -1100,6 +1162,13 @@ function 종합(R){
     var L=R.가사, 단=L.금기.length?'빨강':(L.실명.length?'노랑':'초록'); 단계.push(단);
     줄.push({단:단, 글:'가사 — '+(L.금기.length?'금지어 '+L.금기.length+'곳':'금지어 없음')+' · '+(L.실명.length?'실존 인물 이름 '+L.실명.length+'곳':'실존 인물 이름 없음')});
   }
+  if(R&&R.주란&&!R.주란.탈&&R.주란.곡수){
+    var 주=R.주란, 나쁜=[];
+    if(주.가락.length){ var m2=겹침말(주.가락[0].같은토막); if(m2.단!=='초록'){ 단계.push(m2.단); 나쁜.push({단:m2.단, 글:'JURAN 등록곡 「'+주.가락[0].t+'」 — 가락 '+주.가락[0].같은토막+'음이 같은 순서 · '+m2.말}); } }
+    if(주.가사.length){ var m3=가사겹침말(주.가사[0].겹침); if(m3.단!=='초록'){ 단계.push(m3.단); 나쁜.push({단:m3.단, 글:'JURAN 등록곡 「'+주.가사[0].t+'」 — 가사 '+주.가사[0].겹침+'% 겹침 · '+m3.말}); } }
+    if(나쁜.length) 나쁜.forEach(function(x){ 줄.push(x); });
+    else { 단계.push('초록'); 줄.push({단:'초록', 글:'JURAN 등록곡 '+주.곡수+'곡과 대조 : 겹치는 곡이 없습니다'}); }
+  }
   if(R&&R.지문) 줄.push({단:'초록', 글:'작품 고유 번호 발급 — 이 작품이 이날 이 모습이었다는 기록입니다'});
   var 제일=null; 단계.forEach(function(d){ if(제일==null||순[d]>순[제일]) 제일=d; });
   var 가락봤나=!!(R&&R.세상&&R.세상.목록);
@@ -1390,6 +1459,13 @@ function 검사증그림(g, W, H, R){
     칸('흔히 쓰는 가락', a.흔함+'%  — 누구나 쓰는 짧은 진행의 몫');
     칸('곡 안 되풀이', a.되풀이+'%  — 같은 가락을 다시 쓴 몫 · 음 '+a.음수+'개');
   }
+  /* 판 606 : JURAN 등록곡과 대조 */
+  if(R.주란 && !R.주란.탈 && R.주란.곡수){
+    var 주=R.주란;
+    제목글('JURAN 등록곡과 대조', '— '+주.곡수+'곡 (가락 · 가사 지문)');
+    if(주.가락봄) 칸('가락', 주.가락.length? 겹침말(주.가락[0].같은토막).불+' 「'+주.가락[0].t+'」 '+주.가락[0].같은토막+'음 같은 순서 — '+겹침말(주.가락[0].같은토막).말.split(' — ')[0] : '겹치는 JURAN 곡이 없습니다');
+    if(주.가사봄) 칸('가사', 주.가사.length? 가사겹침말(주.가사[0].겹침).불+' 「'+주.가사[0].t+'」 '+주.가사[0].겹침+'% 겹침 — '+({빨강:'꼭 확인',노랑:'확인 필요',초록:'몇 마디 정도'})[가사겹침말(주.가사[0].겹침).단] : '겹치는 JURAN 곡이 없습니다');
+  }
   if(R.가사 && !R.가사.탈 && R.가사.글자수){
     var L=R.가사;
     제목글('가사');
@@ -1409,6 +1485,7 @@ function 검사증그림(g, W, H, R){
     ['1. 무엇과 대조했나 (Reference Data)', [
       '· 공개 곡 : '+(밭수? 밭수.toLocaleString()+'곡 (Lakh MIDI · Colin Raffel · CC-BY 4.0 · 곡 이름 Million Song Dataset)' : (R.악보&&!R.악보.탈? '이번에는 자료를 받지 못해 대조하지 못했습니다' : '이번 검사는 가사만 했습니다 — 악보(MIDI · MusicXML)를 넣으면 공개 곡과도 대조합니다')),
       '· JURAN 엔진 기본 가락 : '+씨수+'개',
+      ((R.주란&&R.주란.곡수)? '· JURAN 등록곡 : '+R.주란.곡수+'곡 (가락 · 가사를 되돌릴 수 없는 지문으로만 견줌)' : ''),
       '· 가사 : 등록 아티스트 실명 목록 · 금지어 목록']],
     ['2. 대조 범위 (Coverage)', [
       '· 공개 곡 자료는 서양 고전과 팝 명곡이 중심입니다. K-Pop과 2010년 이후 곡은 아직 자료에 많지 않으며, 앞으로 넓혀 갈 범위입니다.']],
@@ -1422,7 +1499,7 @@ function 검사증그림(g, W, H, R){
     마디.forEach(function(m,i){
       if(i) yy+=14;
       gg.fillStyle='#7a5a14'; gg.font='800 19px '+글꼴; gg.fillText(m[0], 102, yy); yy+=32;
-      m[1].forEach(function(t){ yy=감싸기(gg, t, 112, yy, W-250, 27, '400 17px '+글꼴, '#3d3015'); });
+      m[1].forEach(function(t){ if(!t) return; yy=감싸기(gg, t, 112, yy, W-250, 27, '400 17px '+글꼴, '#3d3015'); });
     });
     return yy;
   }
@@ -1672,18 +1749,20 @@ function 곡견주기(){
 /* ── 판 594 : 곡 창(index.html)에서 쓰는 손 — 올린 곡의 가락 · 가사로 **같은 검사**를 돌리고 **같은 검사증**을 그린다 ──
    파트너 — 「21,970곡 검사를 1단계에 포함」. 검사기 팝업과 잣대 · 셈 · 검사증 그림이 하나도 다르지 않다.
    ⚠️ 검사기 팝업의 상태(담은것)는 검사증을 그리는 동안만 잠깐 빌리고 바로 돌려놓는다. */
-function 곡검사(미디들, 가사, 때표){
+function 곡검사(미디들, 가사, 때표, 자기id){
   return 씨앗불러오기().then(function(왔나){
     var R={때:new Date(), 가사:null, 악보:null, 미디:미디들||null, 때표:(때표&&때표.박&&미디들&&때표.박.length===미디들.length)?때표:null};
     if(!왔나){ R.탈='씨앗 통(js/juran-seed.js)을 못 불러왔습니다'; return R; }
     if(가사) R.가사=가사검사(가사);
     if(미디들 && 미디들.length>=5) R.악보=악보검사(미디들);
     R.지문=작품지문((가사||'')+'\u0001'+((미디들||[]).join(',')));
+    /* 판 606 : JURAN 등록곡과도 견준다 (가사만 있어도) */
+    var 주=((R.악보&&!R.악보.탈)||(R.가사&&R.가사.글자수))? 주란대조(미디들, 가사, 자기id).then(function(x){ R.주란=x; }, function(){ R.주란={탈:'JURAN 등록곡과 대조하지 못했습니다'}; }) : Promise.resolve();
     if(R.악보 && !R.악보.탈){
-      return 밭검사(미디들).then(function(x){ R.세상=x; return R; },
-        function(){ R.세상={탈:'이번에는 공개 곡과 대조하지 못했습니다'}; return R; });
+      return Promise.all([밭검사(미디들).then(function(x){ R.세상=x; },
+        function(){ R.세상={탈:'이번에는 공개 곡과 대조하지 못했습니다'}; }), 주]).then(function(){ return R; });
     }
-    return R;
+    return 주.then(function(){ return R; });
   });
 }
 function 곡검사증(R, 제목, 지은이, 겹침){
@@ -1710,6 +1789,7 @@ window.JC = {
   지문뜨기:지문뜨기, 지문맞춰보기:지문맞춰보기, 파일을소리로:파일을소리로,
   작품지문:작품지문, 해시:해시, 씨앗준비:씨앗준비,
   지금때:지금때,   /* 판 605 */
+  주란대조:주란대조, 가사지문:가사지문, 주란밭불러오기:주란밭불러오기,   /* 판 606 */
   밭불러오기:밭불러오기, 밭검사:밭검사, 밭후보:밭후보, 밭곡:밭곡, 밭조각받기:밭조각받기,
   진짜같은토막:진짜같은토막, 이음접기:이음접기, 줄접기:줄접기, 가락줄:가락줄
 };
