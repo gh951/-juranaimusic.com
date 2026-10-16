@@ -292,14 +292,14 @@ function 밭불러오기(){
 }
 function 밭해시(s,i,K){ var h=2166136261; for(var j=0;j<K;j++){ h^=s.charCodeAt(i+j); h=Math.imul(h,16777619); } return (h>>>8)&0xFFFFFF; }
 function 첫자리(H,x){ var lo=0,hi=H.length; while(lo<hi){ var mid=(lo+hi)>>1; if(H[mid]<x) lo=mid+1; else hi=mid; } return lo; }
-function 밭후보(v, 수){
+function 밭후보(v, 수, 최소){
   var K=밭.k, 본=Object.create(null), 셈=Object.create(null);
   for(var i=0;i+K<=v.length;i++){
     var h=밭해시(v,i,K); if(본[h]) continue; 본[h]=1;
     for(var a=첫자리(밭.H,h); a<밭.H.length && 밭.H[a]===h; a++){ var s=밭.S[a]; 셈[s]=(셈[s]||0)+1; }
   }
   return Object.keys(셈).map(function(s){ return [+s, 셈[s]]; })
-    .filter(function(x){ return x[1]>=2; })
+    .filter(function(x){ return x[1]>=(최소||2); })
     .sort(function(x,y){ return y[1]-x[1]; }).slice(0,수);
 }
 function 밭조각받기(c){
@@ -333,11 +333,12 @@ function 진짜같은토막(a,b){
   }
   return 최대? {음수:최대+1, 내시작:ai, 씨시작:bi} : {음수:0};
 }
-function 밭검사(미디들){
+function 밭검사(미디들, 넓게){
   return 밭불러오기().then(function(B){
     if(!B) return {탈:'이번에는 공개 곡 자료를 받지 못했습니다'};
-    /* 그물 판 2(field-3 부터)는 같은 음을 접은 줄로 짰다 — 찾을 때도 접는다 */
-    var v=가락줄(미디들), 후보=밭후보(B.그물판>=2? 줄접기(v) : v, 15);
+    /* 그물 판 2(field-3 부터)는 같은 음을 접은 줄로 짰다 — 찾을 때도 접는다
+       판 607 : 넓게 — 지문 하나만 같아도 후보로 (엔진 판례 잣대용) */
+    var v=가락줄(미디들), 후보=밭후보(B.그물판>=2? 줄접기(v) : v, 넓게?넓게:15, 넓게?1:2);
     var 조각들={}; 후보.forEach(function(x){ 조각들[Math.floor(x[0]/B.정보.조각곡수)]=1; });
     return Promise.all(Object.keys(조각들).map(function(c){ return 밭조각받기(+c); })).then(function(){
       var 내접힌=이음접기(미디들), 내줄=가락줄(내접힌), 본이름={}, 결과=[];
@@ -352,7 +353,7 @@ function 밭검사(미디들){
       });
       결과.sort(function(x,y){ return y.같은토막-x.같은토막; });
       /* 판 565 : 한 곡에 편곡(MIDI)이 여럿 있다. 손님에게는 **곡 수**를 말하고 편곡 수는 곁에 둔다 */
-      return {곡수:B.정보.곡이름수||B.곡수, 편곡수:B.곡수, 판:B.정보.판, 목록:결과.slice(0,5)};
+      return {곡수:B.정보.곡이름수||B.곡수, 편곡수:B.곡수, 판:B.정보.판, 목록:결과.slice(0,5), 전체:결과, 넓게:넓게||0};
     });
   });
 }
@@ -881,6 +882,26 @@ function 무게맞춤(a,b,되짚기){
   while(i2>0&&j2>0){ var d2=길[i2*(m+1)+j2]; if(!d2) break;
     if(d2===1){ 짝.push([i2-1,j2-1,a.charCodeAt(i2-1)===b.charCodeAt(j2-1)]); i2--; j2--; } else if(d2===2) i2--; else j2--; }
   r.짝=짝.reverse(); return r;
+}
+/* 판 607 : 엔진 곡 판례 잣대 — 공개 곡을 넓게(지문 하나만 같아도) 20곡 골라 무게맞춤으로 견준다.
+   후보 가운데 가장 닮은 곡을 고르면 점수가 부푼다(관계없는 곡끼리도). 그래서 선은 판례 표가 아니라
+   **우리 엔진 곡 1,000곡을 똑같은 방법으로 잰 값**에서 정했다 (2026-10-16) :
+   가운데 8.7 · 90% 11.1 · 95% 11.9 · 99% 13.8 — 판결 인정점 12.9.
+   11.9 이상(엔진 곡 20곡 중 1곡꼴)이면 다시 뽑는다. 넓게 20 : 처음 한 번 공개 곡 조각 약 2MB, 그 뒤는 저장된 것을 쓴다. */
+var 엔진잣대선=11.9, 엔진넓게=20;
+function 엔진잣대(R){
+  if(!R) return Promise.resolve(null);
+  var 받기=(R.세상&&R.세상.넓게)? Promise.resolve(R.세상) : ((R.미디&&R.미디.length>=9)? 밭검사(R.미디, 엔진넓게) : Promise.resolve(null));
+  return Promise.all([받기, 드묾불러오기()]).then(function(둘){
+    var 세=둘[0]; if(!드묾||!세||!세.전체||!세.전체.length) return null;
+    var 내=가락줄(세.전체[0].미디||[]), 최고=null; if(내.length<8) return null;
+    세.전체.forEach(function(x){ var 씨=x.씨줄; if(!씨||씨.length<4) return;
+      var 점=Math.max(무게맞춤(내,씨,false).점수, 무게맞춤(씨,내,false).점수);
+      if(!최고||점>최고.점) 최고={점:점, x:x}; });
+    if(!최고) return null;
+    var 점수=Math.round(최고.점*10)/10;
+    return {점수:점수, 넘음:점수>=엔진잣대선, 선:엔진잣대선, 곡명:최고.x.곡명, 가수:최고.x.가수};
+  }, function(){ return null; });
 }
 /* MIDI → 가락 줄 후보들 (성부마다 윗소리 → 가락다운 둘 + 전체 윗소리) */
 function 미디줄들(buf){
@@ -1790,6 +1811,7 @@ window.JC = {
   작품지문:작품지문, 해시:해시, 씨앗준비:씨앗준비,
   지금때:지금때,   /* 판 605 */
   주란대조:주란대조, 가사지문:가사지문, 주란밭불러오기:주란밭불러오기,   /* 판 606 */
+  엔진잣대:엔진잣대, 엔진잣대선:엔진잣대선,   /* 판 607 */
   밭불러오기:밭불러오기, 밭검사:밭검사, 밭후보:밭후보, 밭곡:밭곡, 밭조각받기:밭조각받기,
   진짜같은토막:진짜같은토막, 이음접기:이음접기, 줄접기:줄접기, 가락줄:가락줄
 };

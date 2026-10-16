@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <!-- 판 564 : 파일 주소 끝에 판 번호를 붙인다. 손님 폰이 옛 파일을 쥐고 안 놓는 일을 막는다.
      ⚠️ js 파일을 새로 올릴 때는 이 숫자와 맨 아래 juran-check.js?v= 숫자를 같이 올린다. -->
-<script>window.JURAN판='606';</script>
+<script>window.JURAN판='607';</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>html{color-scheme:light;word-break:keep-all;overflow-wrap:break-word;line-break:strict;hanging-punctuation:allow-end}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>JURAN</title>
@@ -1870,7 +1870,7 @@
       if(window.JURAN악보그리기) return Promise.resolve();
       if(손받는중) return 손받는중;
       손받는중=new Promise(function(ok,no){
-        var sc=document.createElement('script'); sc.src='js/juran-sheet.js?v='+(window.JURAN판||'606'); sc.async=true;
+        var sc=document.createElement('script'); sc.src='js/juran-sheet.js?v='+(window.JURAN판||'607'); sc.async=true;
         sc.onload=function(){ ok(); }; sc.onerror=function(){ 손받는중=null; no(new Error('악보 그리는 파일(js/juran-sheet.js)을 못 받았습니다')); };
         document.head.appendChild(sc);
       });
@@ -2060,20 +2060,29 @@
       var 우리=(window._cgo자체악보525===true);
       재는중=true; 띠('🔍 공개 곡 21,970곡과 대조하는 중…','잼');
       JC.곡검사(미,'', JC.지금때?JC.지금때():null).then(function(R){
+        /* 판 607 : 엔진 곡이면 판례 잣대(무게맞춤)로도 잰다 */
+        return ((우리 && JC.엔진잣대)? JC.엔진잣대(R) : Promise.resolve(null)).then(function(z){ return [R,z]; }, function(){ return [R,null]; });
+      }).then(function(둘){
+        var R=둘[0], z=둘[1];
         재는중=false; if(window._cgoMelodyEvents!==ev) return;
         var 세=R.세상||{}, 첫=세.목록&&세.목록[0], n=첫?첫.같은토막:0, 말=JC.겹침말(n);
         if(!세.목록){ 띠('ⓘ 공개 곡 자료를 못 불러와 이번에는 대조하지 못했습니다','잼'); return; }
-        if(우리 && 말.단!=='초록' && 다시<2 && document.querySelector('#cgo-gen-btn')){
-          다시++; 띠(말.불+' 공개 곡과 '+n+'음이 겹쳐서 가락을 다시 뽑는 중… ('+다시+'/2)', 말.단);
+        var 판넘음=!!(z && z.넘음);
+        if(우리 && (말.단!=='초록' || 판넘음) && 다시<2 && document.querySelector('#cgo-gen-btn')){
+          다시++;
+          if(말.단!=='초록') 띠(말.불+' 공개 곡과 '+n+'음이 겹쳐서 가락을 다시 뽑는 중… ('+다시+'/2)', 말.단);
+          else 띠('🟡 공개 곡 「'+글(z.곡명)+'」 — 흔치 않게 닮은 곳이 있어 가락을 다시 뽑는 중… ('+다시+'/2)', '노랑');
           setTimeout(function(){ var b=document.querySelector('#cgo-gen-btn'); if(b) b.click(); }, 900);
           return;
         }
         var 몇번=다시; 다시=0;
-        if(말.단==='초록') 띠('🟢 <b>21,970곡 대조 통과</b> · '+(n? '가장 닮은 곳 '+n+'음 — 보통(14음)보다 적습니다' : '눈에 띄게 겹치는 공개 곡이 없습니다')+
-          (우리? '<br><span style="font-weight:600;font-size:12px;opacity:.85">JURAN 엔진이 지은 곡 · 만들자마자 검사했습니다'+(몇번?' · 가락을 '+몇번+'번 다시 뽑았습니다':'')+'</span>':''), '초록');
+        if(말.단==='초록' && !판넘음) 띠('🟢 <b>21,970곡 대조 통과</b> · '+(n? '가장 닮은 곳 '+n+'음 — '+(n<14?'보통(14음)보다 적습니다':n===14?'보통(14음) 수준입니다':'흔한 수준입니다 (25음부터 노랑)') : '눈에 띄게 겹치는 공개 곡이 없습니다')+
+          (우리? '<br><span style="font-weight:600;font-size:12px;opacity:.85">JURAN 엔진이 지은 곡 · 만들자마자 검사했습니다'+(z?' · 판례 잣대도 통과':'')+(몇번?' · 가락을 '+몇번+'번 다시 뽑았습니다':'')+'</span>':''), '초록');
+        else if(말.단==='초록') 띠('🟡 공개 곡 「'+글(z.곡명)+'」'+(z.가수?' · '+글(z.가수):'')+' — 판례 잣대로 흔치 않게 닮은 곳이 있습니다'+
+          '<br><span style="font-weight:600;font-size:12px;opacity:.85">「✨ AI로 음악 생성」을 한 번 더 누르면 새 가락이 나옵니다</span>', '노랑');
         else 띠(말.불+' 공개 곡 「'+글(첫.곡명)+'」'+(첫.가수?' · '+글(첫.가수):'')+' — 간격까지 같은 음 '+n+'개 · '+글(말.말)+
           '<br><span style="font-weight:600;font-size:12px;opacity:.85">「무료 저작권 검사」에서 겹쳐 보기 그림을 볼 수 있습니다</span>', 말.단);
-      }, function(){ 재는중=false; });
+      }).catch(function(){ 재는중=false; });
     }, 1200);
   })();
 
@@ -2086,7 +2095,7 @@
       var v=sessionStorage.getItem('lee-t')||'', i=v.indexOf('|');
       if(!(i>0 && +v.slice(0,i)*1000>Date.now()+60000)){ location.href='LEE.html'; return; }
       window.__주란편집=true;
-      var sc=document.createElement('script'); sc.src='js/juran-edit.js?v='+(window.JURAN판||'606'); sc.defer=true;
+      var sc=document.createElement('script'); sc.src='js/juran-edit.js?v='+(window.JURAN판||'607'); sc.defer=true;
       document.head.appendChild(sc);
     }catch(e){}
   })();
@@ -2761,7 +2770,7 @@ window.JK=JK;
 (function(){
   var 소리집 = 'https://www.c-go-fuli.com/';
   var 내집   = 'js/';
-  var 판끝   = '?v='+(window.JURAN판||'606');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
+  var 판끝   = '?v='+(window.JURAN판||'607');   /* 판 564 — 우리 파일만. Tone.js 는 안 바뀌니 안 붙인다 */
   var 화면줄 = [{주소:내집+'juran-words.js'+판끝, 꼭:false, 이름:'말 사전'},
                 {주소:내집+'cgo-music.js'+판끝,   꼭:true,  이름:'작곡 엔진'},
                 {주소:내집+'cgo-score.js'+판끝,   꼭:false, 이름:'악보 편집기'}];
@@ -3154,7 +3163,7 @@ window.JK=JK;
 
 <!-- 검사기 — 재는 손. 36KB. 씨앗 통(161KB)은 검사를 누를 때 받는다. -->
 <!-- 판 564 : ⚠️ 이 숫자는 머리(head)의 JURAN판 과 같이 올린다 -->
-<script src="js/juran-check.js?v=606" defer></script>
+<script src="js/juran-check.js?v=607" defer></script>
 <script>/* 판 606 : 약관 동의 없이는 올리지 않는다 */
 (function(){ document.addEventListener('click',function(e){
   var b=e.target&&e.target.closest&&e.target.closest('#up-send'); if(!b) return;
