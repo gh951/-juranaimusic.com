@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <!-- 판 564 : 파일 주소 끝에 판 번호를 붙인다. 손님 폰이 옛 파일을 쥐고 안 놓는 일을 막는다.
      ⚠️ js 파일을 새로 올릴 때는 이 숫자와 맨 아래 juran-check.js?v= 숫자를 같이 올린다. -->
-<script>window.JURAN판='614';</script>
+<script>window.JURAN판='615';</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>html{color-scheme:light;word-break:keep-all;overflow-wrap:break-word;line-break:strict;hanging-punctuation:allow-end}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>JURAN</title>
@@ -1956,7 +1956,7 @@
         if(앞 && 시<앞.e && x.n<=앞.n) return;   /* 위에서 울리는 동안 아래 소리는 건너뛴다 */
         고른.push({n:x.n, s:시, e:x.e});
       });
-      var 끝마디=다?100000:48, 한계=끝마디*박자, 잘림=0, 결과=[], 지금=0;
+      var 끝마디=다?100000:400, 한계=끝마디*박자, 잘림=0, 결과=[], 지금=0;   /* 판 615 : 48 → 400마디. 파트너 「넣으니까 악보가 짧다」 — 3분 곡은 70~90마디인데 48마디에서 잘렸다. 재 보니 160마디도 폰 속도로 0.1초에 그린다 */
       for(var i=0;i<고른.length;i++){
         var a=고른[i], 다음=고른[i+1];
         if(a.s>=한계){ 잘림=끝마디; break; }
