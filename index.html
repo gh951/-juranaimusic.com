@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <!-- 판 564 : 파일 주소 끝에 판 번호를 붙인다. 손님 폰이 옛 파일을 쥐고 안 놓는 일을 막는다.
      ⚠️ js 파일을 새로 올릴 때는 이 숫자와 맨 아래 juran-check.js?v= 숫자를 같이 올린다. -->
-<script>window.JURAN판='615';</script>
+<script>window.JURAN판='616';</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>html{color-scheme:light;word-break:keep-all;overflow-wrap:break-word;line-break:strict;hanging-punctuation:allow-end}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>JURAN</title>
@@ -3228,7 +3228,7 @@ window.JK=JK;
 
 <!-- 검사기 — 재는 손. 36KB. 씨앗 통(161KB)은 검사를 누를 때 받는다. -->
 <!-- 판 564 : ⚠️ 이 숫자는 머리(head)의 JURAN판 과 같이 올린다 -->
-<script src="js/juran-check.js?v=614" defer></script>
+<script src="js/juran-check.js?v=616" defer></script>
 <script>/* 판 608 : LEE 로 들어온 운영자는 곡 · 가사 생성에 하루 한도를 받지 않는다 (서버 cgo-549).
    이 탭에 LEE 열쇠가 살아 있을 때만 그 열쇠를 붙인다. 손님 탭에는 열쇠가 없어 아무것도 안 붙는다. */
 (function(){
@@ -3237,7 +3237,7 @@ window.JK=JK;
   var 새=function(u,o){
     try{
       var 주소=(typeof u==='string')? u : (u&&u.url)||'';
-      if(/\/(vvip_generate|generate_lyrics)(\?|$)/.test(주소)){
+      if(/\/(vvip_generate|generate_lyrics|extract_melody|melody_from_file)(\?|$)/.test(주소)){   /* 판 616 : 받아 적기(cgo-551 한도)도 */
         var k=열쇠();
         if(k){ o=Object.assign({},o||{}); var h=new Headers((o&&o.headers)||{}); h.set('x-lee-token',k); o.headers=h; }
       }
