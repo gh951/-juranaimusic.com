@@ -1619,14 +1619,29 @@ function 띠붙이기(){
 function 검사기페이지(){
   var box=document.getElementById('v-check-body'); if(!box || box.dataset.ok) return;
   box.dataset.ok='1';
+  /* 판 612 : 검사를 두 갈래로 — 파트너 「일반 사용자는 쉽게, 전문가용은 그 구조로」
+     · 🎵 간편 검사 : 내 곡만 넣고 버튼 하나. 상대 곡 파일이 필요 없다 (21,970곡 밭 · JURAN 등록곡 · 가사를 우리가 뒤진다).
+     · 🔬 전문가 검사 : 두 악보 맞대기(판례 기준) · 두 음원 견주기 — 상대 곡 파일이 있을 때.
+     검사 엔진 · 잣대 · 칸 이름(id)은 하나도 바꾸지 않았다. 배치와 글만 바꿨다. */
   box.innerHTML =
+   '<div class="jc-tabs" role="tablist">'+
+     '<button type="button" class="jc-tab on" data-t="easy" role="tab">🎵 간편 검사<small>누구나 · 내 곡만 넣으면 끝</small></button>'+
+     '<button type="button" class="jc-tab" data-t="pro" role="tab">🔬 전문가 검사<small>작곡가 · 변리사 · 상대 곡 파일이 있을 때</small></button>'+
+   '</div>'+
+   '<div class="jc-pane" data-t="easy">'+
+   '<p class="jc-lead">내 곡만 넣고 <b>버튼 하나</b>만 누르세요. 견줄 곡은 <b>저희가 알아서 찾습니다</b> — 공개 곡 밭 · JURAN 등록곡 · 금지어 · 실존 인물 이름까지. 상대 곡 파일은 필요 없습니다.</p>'+
    '<div class="step"><div class="sh"><span class="no">1</span><b>가사</b></div>'+
      '<textarea id="jc-ly" placeholder="가사를 붙여 넣으세요. 금지어 · 실존 인물 이름 · 되풀이를 검사합니다."></textarea></div>'+
    '<div class="step"><div class="sh"><span class="no">2</span><b>악보</b></div>'+
      '<p class="hint" id="jc-scnote">「나도 작곡가」에서 곡을 만들면 그 악보를 그대로 가져와 봅니다. '+
        '지금은 만들어 둔 곡이 없습니다.</p></div>'+
+   '<div class="end"><button id="jc-run" style="width:100%">🔍 가사·악보 검사하기</button></div>'+
+   '</div>'+
+   '<div class="jc-pane" data-t="pro" hidden>'+
+   '<p class="jc-lead">누가 <b>「그 노래와 닮았다」</b>고 할 때 쓰는 도구입니다. <b>내 곡과 상대 곡 파일을 둘 다</b> 넣으면 어느 마디가 얼마나 닮았는지, 실제 판결과 견주어 알려 드립니다. '+
+     '상대 곡 파일이 없으면 <b>🎵 간편 검사</b>를 쓰세요.</p>'+
    /* 판 600 : 악보 두 개 맞대기 — 판례 기준 */
-   '<div class="step" id="jc-pan"><div class="sh"><span class="no">3</span><b>악보 맞대기 — 판례 기준</b>'+
+   '<div class="step" id="jc-pan"><div class="sh"><span class="no">1</span><b>악보 맞대기 — 판례 기준</b>'+
        '<span class="soon" style="color:var(--mint-deep);background:var(--mint-soft)">새로 생김</span></div>'+
      '<p class="hint">내 곡과 닮았나 걱정되는 곡의 <b>악보 파일(MIDI · MusicXML)</b>을 넣으세요. <b>어느 마디가 얼마나 닮았는지</b>, 실제 표절 판결과 견주면 <b>위험이 어느 정도인지</b> 알려 드립니다. '+
        '악보는 <b>이 폰 안에서만</b> 열립니다.</p>'+
@@ -1637,7 +1652,7 @@ function 검사기페이지(){
      '<button id="jc-pcmp" style="width:100%;margin-top:11px;padding:12px;border:0;border-radius:12px;'+
        'font-weight:800;cursor:pointer;background:linear-gradient(135deg,#f59e0b,#d97706);color:#2a1700">⚖️ 판례 기준으로 맞대기</button>'+
      '<div id="jc-pout" style="margin-top:11px"></div></div>'+
-   '<div class="step"><div class="sh"><span class="no">4</span><b>음원 견주기</b>'+
+   '<div class="step"><div class="sh"><span class="no">2</span><b>음원 견주기</b>'+
        '<span class="soon" style="color:var(--mint-deep);background:var(--mint-soft)">바로 됩니다</span></div>'+
      '<p class="hint">두 곡이 <b>같은 음원인지</b> 봅니다. 음량을 바꾸거나 잘라도 잡습니다. '+
        '곡은 <b>이 폰 안에서만</b> 열립니다 — 어디로도 안 보냅니다.</p>'+
@@ -1656,7 +1671,14 @@ function 검사기페이지(){
        '<canvas id="jc-wave" style="width:100%;height:96px;border-radius:10px;background:#0b1512"></canvas>'+
        '<p class="hint" style="margin-top:6px">ⓘ 이 그림은 <b>소리의 생김새</b>입니다. 저작권 판정에는 쓰지 않습니다.</p></div>'+
    '</div>'+
-   '<div class="end"><button id="jc-run" style="width:100%">🔍 가사·악보 검사하기</button></div>';
+   '</div>';
+  [].forEach.call(box.querySelectorAll('.jc-tab'), function(b){
+    b.onclick=function(){
+      var t=b.getAttribute('data-t');
+      [].forEach.call(box.querySelectorAll('.jc-tab'), function(x){ x.classList.toggle('on', x===b); x.setAttribute('aria-selected', x===b?'true':'false'); });
+      [].forEach.call(box.querySelectorAll('.jc-pane'), function(x){ x.hidden=(x.getAttribute('data-t')!==t); });
+    };
+  });
   document.getElementById('jc-run').onclick=function(){ 열기('고르기', document.getElementById('jc-ly')); };
   document.getElementById('jc-cmp').onclick=곡견주기;
   document.getElementById('jc-pcmp').onclick=악보맞대기;

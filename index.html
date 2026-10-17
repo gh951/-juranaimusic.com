@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <!-- 판 564 : 파일 주소 끝에 판 번호를 붙인다. 손님 폰이 옛 파일을 쥐고 안 놓는 일을 막는다.
      ⚠️ js 파일을 새로 올릴 때는 이 숫자와 맨 아래 juran-check.js?v= 숫자를 같이 올린다. -->
-<script>window.JURAN판='611';</script>
+<script>window.JURAN판='612';</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>html{color-scheme:light;word-break:keep-all;overflow-wrap:break-word;line-break:strict;hanging-punctuation:allow-end}body{margin:0;font-family:system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>JURAN</title>
@@ -385,6 +385,15 @@
 .two .go2{background:transparent;color:var(--mint-deep)}
 .two button:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
 
+/* 판 612 : 저작권 검사 두 갈래 탭 */
+#v-check .jc-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:13px}
+#v-check .jc-tab{display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;padding:13px 14px;border-radius:var(--r);
+  border:1.5px solid var(--line);background:var(--surface);color:var(--muted);font-weight:800;font-size:15px;cursor:pointer}
+#v-check .jc-tab small{font-weight:600;font-size:11.5px;color:var(--faint);line-height:1.35}
+#v-check .jc-tab.on{border-color:var(--mint-deep);background:var(--mint-soft);color:var(--fg)}
+#v-check .jc-tab.on small{color:var(--mint-deep)}
+#v-check .jc-lead{margin:0 0 12px;font-size:13.5px;line-height:1.6;color:var(--muted)}
+#v-check .jc-pane .end{margin-bottom:6px}
 #v-up .step,#v-check .step{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:13px}
 #v-up .sh,#v-check .sh{display:flex;align-items:center;gap:9px;margin-bottom:11px;flex-wrap:wrap}
 #v-up .no,#v-check .no{width:24px;height:24px;border-radius:8px;background:var(--mint-soft);color:var(--mint-deep);display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:12px;flex:none}
@@ -3212,7 +3221,7 @@ window.JK=JK;
 
 <!-- 검사기 — 재는 손. 36KB. 씨앗 통(161KB)은 검사를 누를 때 받는다. -->
 <!-- 판 564 : ⚠️ 이 숫자는 머리(head)의 JURAN판 과 같이 올린다 -->
-<script src="js/juran-check.js?v=609" defer></script>
+<script src="js/juran-check.js?v=612" defer></script>
 <script>/* 판 608 : LEE 로 들어온 운영자는 곡 · 가사 생성에 하루 한도를 받지 않는다 (서버 cgo-549).
    이 탭에 LEE 열쇠가 살아 있을 때만 그 열쇠를 붙인다. 손님 탭에는 열쇠가 없어 아무것도 안 붙는다. */
 (function(){
