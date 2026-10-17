@@ -229,20 +229,10 @@ tr.more>td{background:var(--card2);padding:12px 14px 14px}
    보관소가 붙으면 「내려받기」가 「바로 저장」으로 바뀐다. 이 페이지는 그대로.
    ══════════════════════════════════════════════════════════ */
 
-/* 판 L2 : 열쇠말을 **글자로 두지 않는다.** 이 페이지는 공개 저장소에 있어 누구나 소스를 본다.
-   여기 있는 것은 열쇠말을 21만 번 갈아 만든 값(PBKDF2-SHA256)뿐이라 거꾸로 되돌릴 수 없다.
-   · 띄어쓰기는 세지 않는다 — 「ㅇ ㅏㅂ ㅓ」를 붙여 치든 띄어 치든 같다.
-   · 열쇠말을 바꾸려면 새 값을 만들어 아래 두 줄만 바꾼다(클로드에게 부탁).
-   ⚠️ 이것은 화면을 가리는 문이다. 진짜 자물쇠는 **깃허브** — 여기서 고쳐도 깃허브에 올리는 사람만 사이트를 바꾼다. */
-var 열쇠소금='945e97f75d5f2cd3078689167bdfc97f';
-var 열쇠값='325e55e82b3564cf8e2ef5b5ee037442030dc6c81958ec1116c8ce3c5e9f4117';
-function 십육(b){ return Array.prototype.map.call(new Uint8Array(b),function(x){ return ('0'+x.toString(16)).slice(-2); }).join(''); }
-function 바이트(h){ var a=new Uint8Array(h.length/2); for(var i=0;i<a.length;i++) a[i]=parseInt(h.substr(i*2,2),16); return a; }
-async function 열쇠재기(t){
-  t=String(t||'').replace(/\s+/g,'').normalize('NFKC');   /* 띄어쓰기를 먼저 빼고 맞춘다 — 순서가 바뀌면 「ㅇ ㅏ」와 「ㅇㅏ」가 달라진다 */
-  var k=await crypto.subtle.importKey('raw', new TextEncoder().encode(t), 'PBKDF2', false, ['deriveBits']);
-  return 십육(await crypto.subtle.deriveBits({name:'PBKDF2', salt:바이트(열쇠소금), iterations:210000, hash:'SHA-256'}, k, 256));
-}
+/* 판 L8 (2026-10-17 · 보안) : 이 페이지에는 열쇠말에 관한 값을 **아무것도** 두지 않는다.
+   전에는 열쇠말을 21만 번 갈아 만든 값을 여기 두고, 서버에 못 닿을 때 그것으로 문을 열었다.
+   하지만 이 페이지는 공개라서, 누구나 그 값을 가져가 제 컴퓨터에서 열쇠말을 맞춰 볼 수 있었다(시간 무제한).
+   이제 열쇠말은 **서버만** 확인한다 — 서버는 10분에 8번 틀리면 막는다. 서버에 못 닿으면 기다렸다 다시. */
 var 장르들=["K-팝","발라드","힙합/랩","R&B","EDM/댄스","록/밴드","시티팝","재즈","트로트","로파이","힐링(주파수)"];
 var 자켓장르={"K-팝":4,"발라드":0,"힙합/랩":1,"R&B":6,"EDM/댄스":2,"록/밴드":3,
               "시티팝":13,"재즈":7,"트로트":27,"로파이":15,"힐링(주파수)":20};
@@ -298,11 +288,8 @@ function 열기(){
       throw 0;
     })
     .catch(function(){
-      /* 서버에 못 닿음 — 이 화면 안의 값으로만 확인하고 내려받기 모드로 */
-      열쇠재기(pw).then(function(h){
-        if(h===열쇠값) 들이기(false,'🟡 내려받기 모드 — 서버에 닿지 못함');
-        else $('gmsg').textContent='열쇠말이 다릅니다.';
-      }).catch(function(){ $('gmsg').textContent='이 브라우저에서는 열쇠를 확인할 수 없습니다 (https 주소로 여세요).'; });
+      /* 판 L8 : 서버에 못 닿으면 열지 않는다 (열쇠말 확인은 서버만 한다) */
+      $('gmsg').textContent='서버에 닿지 못했습니다 — 잠시 뒤 다시 눌러 주세요. (서버가 깨는 데 30초쯤 걸릴 때가 있습니다)';
     });
 }
 $('pw').addEventListener('keydown',function(e){ if(e.key==='Enter') 열기(); });

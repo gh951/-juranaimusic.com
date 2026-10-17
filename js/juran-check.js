@@ -369,7 +369,10 @@ function 주란밭불러오기(){
     var 곳=(window.__공개||'https://music.juranaimusic.com');
     주란밭받는중=fetch(곳+'/jfield.json?h='+Math.floor(Date.now()/6e5), {cache:'no-store'})
       .then(function(r){ return r.ok? r.json() : null; }).catch(function(){ return null; })
-      .then(function(j){ 주란밭=(j&&j.곡)? j : null; if(!주란밭) 주란밭받는중=null; return 주란밭; });
+      .then(function(j){
+        /* 판 608 (보안) : 곡 이름 · 지은이에 섞인 꺾쇠 · 따옴표를 비슷한 글자로 — 어디에 그려도 태그가 되지 않게 */
+        if(j&&Array.isArray(j.곡)) j.곡.forEach(function(x){ ['t','m'].forEach(function(k){ x[k]=String(x[k]==null?'':x[k]).replace(/</g,'‹').replace(/>/g,'›').replace(/"/g,'”').replace(/`/g,'ˋ'); }); });
+        주란밭=(j&&j.곡)? j : null; if(!주란밭) 주란밭받는중=null; return 주란밭; });
   }
   return 주란밭받는중;
 }

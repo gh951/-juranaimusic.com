@@ -193,9 +193,10 @@ function 자리글(w){
   if(!w) return '아직 목록에 없습니다 (확인을 눌렀나요?)';
   var 줄=[];
   if(w.카드.length) 줄.push('👑 '+w.카드.map(function(x){ return x+' 카드'; }).join(' · '));
-  줄.push('🇰🇷 국내 급상승 '+(w.국급? w.국급+'위'+(w.국급>w.급수?' (첫 화면엔 '+w.급수+'위까지)':'') : '— (나라가 '+(w.나라||'없음')+')'));
-  줄.push('🌍 글로벌 급상승 '+w.글급+'위'+(w.글급>w.급수?' (첫 화면엔 '+w.급수+'위까지)':''));
-  줄.push('🎧 차트 「'+w.칸+'」 칸 — 국내 '+(w.국차?w.국차+'위':'—')+' · 글로벌 '+w.글차+'위'+((w.국차>50||w.글차>50)?' (차트는 50위까지)':''));
+  줄.push('📌 올린 차트: '+((w.자리||[]).map(곳이름).join(' · ')||'없음'));
+  줄.push('🇰🇷 국내 급상승 '+(w.국급? w.국급+'위'+(w.국급>w.급수?' (첫 화면엔 '+w.급수+'위까지)':'') : '— '+((w.자리||[]).indexOf('국내')<0?'(국내 차트에 안 올림)':'(나라가 '+(w.나라||'없음')+')')));
+  줄.push('🌍 글로벌 급상승 '+(w.글급? w.글급+'위'+(w.글급>w.급수?' (첫 화면엔 '+w.급수+'위까지)':'') : '— (글로벌 차트에 안 올림)'));
+  줄.push('🎧 차트 「'+w.칸+'」 칸 — 국내 '+(w.국차?w.국차+'위':'—')+' · 글로벌 '+(w.글차?w.글차+'위':'—')+((w.국차>50||w.글차>50)?' (차트는 50위까지)':''));
   if(w.장르 && w.장르!==w.칸) 줄.push('ⓘ 장르 「'+w.장르+'」 는 차트 칸 목록에 없어서 「'+w.칸+'」 칸에 있습니다');
   return 줄.join('<br>');
 }
@@ -449,11 +450,21 @@ document.addEventListener('click', function(ev){
   if(표칸){ var 임자=표칸.closest('.champion,.rise[data-k],.item[data-k]'); var c0=임자&&곡찾기(임자.dataset.k);
     if(c0){ ev.preventDefault(); ev.stopPropagation(); 표창(c0); } return; }
   var 카드=t.closest('.champion');
-  if(카드){ var c=곡찾기(카드.dataset.k); if(c){ ev.preventDefault(); 곡창(c); } return; }
+  if(카드){ var c=곡찾기(카드.dataset.k); if(c){ ev.preventDefault(); 곡창(c, false, 카드.classList.contains('glob')?'글로벌':'국내'); } return; }
   var 줄=t.closest('.rise[data-k],.item[data-k]');
-  if(줄 && 줄.dataset.k){ var c2=곡찾기(줄.dataset.k); if(c2){ ev.preventDefault(); 곡창(c2); } return; }
+  if(줄 && 줄.dataset.k){ var c2=곡찾기(줄.dataset.k); if(c2){ ev.preventDefault(); 곡창(c2, false, 어느목록(줄)); } return; }
   if(t.closest('.hero h1,.hero .lede')){ ev.preventDefault(); 문구창(); }
 }, true);
+
+/* 판 609 : 누른 줄이 국내 목록인가 글로벌 목록인가 */
+function 어느목록(el){
+  if(el.closest('#rise-glob')) return '글로벌';
+  if(el.closest('#rise-home')) return '국내';
+  var 보={급:'home',차:'home'}; try{ 보=JN.보기들(); }catch(e){}
+  if(el.closest('#rise')) return 보.급==='home'?'국내':'글로벌';
+  if(el.closest('.item')) return 보.차==='home'?'국내':'글로벌';
+  return '';
+}
 
 /* ── 파일 ── */
 function 파일고르기(accept, 손, 여럿){
@@ -586,7 +597,13 @@ function 창열기(html){
 function 닫기(){ var m=document.getElementById('주편-막'); if(m) m.remove(); 띠그리기(); }
 document.addEventListener('keydown', function(e){ if(e.key==='Escape') 닫기(); });
 
-function 곡창(c, 새로){
+/* 판 609 : 곡이 어느 차트에 오르나 — 국내 · 글로벌을 따로 고른다 */
+function 자리들(c){
+  if(Array.isArray(c.자리)) return c.자리.filter(function(x){ return x==='국내'||x==='글로벌'; });
+  return String(c.나라||'').trim()? ['국내'] : ['글로벌'];
+}
+function 곳이름(곳){ return 곳==='국내'?'🇰🇷 국내 차트':'🌍 글로벌 차트'; }
+function 곡창(c, 새로, 곳){
   var 장=장르들.map(function(x){ return '<option'+(x===c.g?' selected':'')+'>'+x+'</option>'; }).join('');
   var ks=Object.keys(나라들).sort(function(a,b){ return 나라들[a].localeCompare(나라들[b],'ko'); });
   var 나=ks.map(function(k){ return '<option value="'+k+'"'+(k===(c.나라||'')?' selected':'')+'>'+깃발(k)+' '+나라들[k]+'</option>'; }).join('');
@@ -596,6 +613,11 @@ function 곡창(c, 새로){
     '<label>지은이</label><input type="text" id="e-by" value="'+글(c.by)+'" placeholder="@이름">'+
     '<div class="두칸"><div><label>장르 (써도 되고 골라도 됩니다)</label><input type="text" id="e-g" list="e-g-l" value="'+글(c.g||'')+'"><datalist id="e-g-l">'+장르들.map(function(x){ return '<option value="'+x+'">'; }).join('')+'</datalist></div>'+
       '<div><label>나라</label><select id="e-n"><option value="">🌍 없음</option>'+나+'</select></div></div>'+
+    '<label>올릴 차트 — 원하는 곳만 고르세요</label>'+
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:2px">'+
+      '<label style="display:flex;gap:6px;align-items:center;font-weight:700;margin:0;padding:9px 12px;border:1px solid #cfe2dd;border-radius:10px;cursor:pointer"><input type="checkbox" id="e-p-home"'+(자리들(c).indexOf('국내')>=0||(새로&&!c.자리)?' checked':'')+'> 🇰🇷 국내 차트</label>'+
+      '<label style="display:flex;gap:6px;align-items:center;font-weight:700;margin:0;padding:9px 12px;border:1px solid #cfe2dd;border-radius:10px;cursor:pointer"><input type="checkbox" id="e-p-glob"'+(!새로&&자리들(c).indexOf('글로벌')>=0?' checked':'')+'> 🌍 글로벌 차트</label>'+
+    '</div><p class="풀이">국내 차트는 <b>위에 고른 나라</b>의 손님에게 보입니다. 둘 다 고르면 두 차트에 함께 오릅니다.</p>'+
     '<div class="두칸"><div><label>표</label><input type="number" id="e-v" value="'+(+c.표||0)+'"></div>'+
       '<div><label>9-AI 점수</label><input type="number" id="e-s" step="0.1" value="'+(c.점수!=null?c.점수:90)+'"></div></div>'+
     '<label>🎵 음악</label><div class="짐" id="e-mus"><b>눌러서 고르기</b> 또는 여기에 끌어다 놓기 · mp3 · wav · m4a</div>'+
@@ -605,7 +627,8 @@ function 곡창(c, 새로){
     '<label>✍️ 가사</label><textarea id="e-gas" placeholder="[Verse 1]&#10;…">'+글(c.가사)+'</textarea>'+
     '<label>🎼 악보 — 여러 개 넣을 수 있습니다</label><div class="짐" id="e-mid"><b>눌러서 고르기</b> 또는 여러 개를 한꺼번에 끌어다 놓기<br>MIDI · PDF · MusicXML · 악보 사진</div>'+
       '<div class="st" id="e-mid-st"></div><div id="e-mid-l"></div>'+
-    '<div class="단추들">'+(새로?'':'<button type="button" class="지우기" id="e-del">🗑 지우기</button>')+
+    '<div class="단추들">'+(새로?'':'<button type="button" class="지우기" id="e-del">🗑 곡 지우기</button>')+
+      ((!새로 && 곳 && 자리들(c).indexOf(곳)>=0 && 자리들(c).length>1)? '<button type="button" class="지우기" id="e-out">'+곳이름(곳)+'에서만 빼기</button>' : '')+
       '<button type="button" id="e-no">닫기</button><button type="button" class="확인" id="e-ok">확인</button></div>'+
     '<p class="풀이">「확인」은 화면에만 바꿉니다. 다 고치신 뒤 아래 <b>💾 저장</b>을 눌러야 사이트에 나옵니다.</p>');
   function 그리기(){
@@ -657,6 +680,10 @@ function 곡창(c, 새로){
     if(!t){ alert('제목을 넣어 주세요.'); return; }
     c.t=t; c.by=w.querySelector('#e-by').value.trim(); c.g=w.querySelector('#e-g').value.trim()||장르들[0];
     c.나라=(w.querySelector('#e-n').value||'').toUpperCase();
+    var 새자리=[]; if(w.querySelector('#e-p-home').checked) 새자리.push('국내'); if(w.querySelector('#e-p-glob').checked) 새자리.push('글로벌');
+    if(!새자리.length){ alert('국내 차트나 글로벌 차트 가운데 하나는 골라 주세요.\n(곡을 아예 내리려면 「🗑 곡 지우기」를 누르세요)'); return; }
+    if(새자리.indexOf('국내')>=0 && !c.나라){ alert('국내 차트에 올리려면 나라를 골라 주세요.'); return; }
+    c.자리=새자리;
     c.표=Math.max(0,parseInt(w.querySelector('#e-v').value,10)||0); c.전표=Math.min(+c.전표||0,c.표);
     c.점수=parseFloat(w.querySelector('#e-s').value)||0;
     var gas=w.querySelector('#e-gas').value.replace(/\r/g,'').trim(); if(gas) c.가사=gas; else delete c.가사;
@@ -667,10 +694,16 @@ function 곡창(c, 새로){
   };
   var d=w.querySelector('#e-del');
   if(d) d.onclick=function(){
-    if(!confirm('「'+(c.t||c.id)+'」 을(를) 목록에서 지울까요? (💾 저장을 눌러야 사이트에서도 지워집니다)')) return;
+    if(!confirm('「'+(c.t||c.id)+'」 을(를) 곡째로 지울까요?\n국내 · 글로벌 차트 모두에서 사라집니다.\n(한 차트에서만 내리려면 닫고, 체크를 빼고 확인을 누르세요)\n\n💾 저장을 눌러야 사이트에서도 지워집니다.')) return;
     원본.곡=원본.곡.filter(function(x){ return x!==c; });
     ['.mp3','.jpg','.mid'].forEach(function(x){ delete 새파일[c.id+x]; });
     바꿨다(); 다시(); 닫기();
+  };
+  var o=w.querySelector('#e-out');
+  if(o) o.onclick=function(){
+    c.자리=자리들(c).filter(function(x){ return x!==곳; });
+    바꿨다(); 다시(); 닫기();
+    띠그리기('「'+(c.t||c.id)+'」 — '+곳이름(곳)+'에서 뺐습니다 (곡은 '+c.자리.map(곳이름).join(' · ')+'에 그대로) · 💾 저장을 눌러 주세요');
   };
   setTimeout(function(){ var i=w.querySelector('#e-t'); if(i&&새로) i.focus(); },50);
 }
