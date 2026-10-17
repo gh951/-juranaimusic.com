@@ -166,6 +166,9 @@ function 가락줄(미디들){
     o+=String.fromCharCode(48+v+12);
   } return o;
 }
+/* 판 613 : 간편 검사에 「내 곡 악보 파일」 — 작곡실 밖에서 만든 곡도 파일 하나로 검사.
+   전문가 검사(악보 맞대기)와 **같은 손(악보줄들)** 으로 읽고, 가장 가락다운 줄 하나를 쓴다. */
+var 올린악보=null;
 function 지금가락(){
   var ev=window._cgoMelodyEvents;
   if(ev && ev.length){
@@ -680,7 +683,9 @@ function 열기(어디, 가사칸){
   만들기팝();
   var 올리기에서 = !!(가사칸 && 가사칸.id && 가사칸.id.indexOf('up-')===0);
   담은것.가사 = 가사모으기(어디, 가사칸);
-  담은것.미디 = 지금가락();
+  var 검사장 = !!(가사칸 && 가사칸.id==='jc-ly');
+  담은것.미디 = (검사장 && 올린악보)? 올린악보.높이.slice() : 지금가락();   /* 판 613 */
+  담은것.올린때 = (검사장 && 올린악보)? 올린악보.때 : null;
   담은것.올리기에서 = 올리기에서;
   담은것.제목 = 올리기에서 ? ((document.getElementById('up-t')||{}).value || 'JURAN 작품') : 'JURAN 작품';
   담은것.지은이 = 올리기에서 ? ((document.getElementById('up-by')||{}).value || '') : '';
@@ -689,7 +694,7 @@ function 열기(어디, 가사칸){
   /* 없는 것을 켜 두면 「잴 수 없음」만 뜬다. 없으면 꺼 두고, 단추에 까닭을 적는다. */
   var 가b=팝.querySelector('.jc-sw[data-k="가사"]'), 악b=팝.querySelector('.jc-sw[data-k="악보"]');
   if(!담은것.미디){ if(어디!=='악보') 켜기('악보',false); 악b.innerHTML='🎼 악보 <span style="font-weight:400;opacity:.75">· 아직 없음</span>'; }
-  else 악b.innerHTML='🎼 악보 <span style="font-weight:400;opacity:.75">· '+(올리기에서?'작곡실 곡 · ':'')+'음 '+담은것.미디.length+'개</span>';
+  else 악b.innerHTML='🎼 악보 <span style="font-weight:400;opacity:.75">· '+(담은것.올린때?'올린 파일 · ':(올리기에서?'작곡실 곡 · ':''))+'음 '+담은것.미디.length+'개</span>';
   if(!담은것.가사){ if(어디!=='가사') 켜기('가사',false); 가b.innerHTML='✍️ 가사 <span style="font-weight:400;opacity:.75">· 아직 없음</span>'; }
   else 가b.innerHTML='✍️ 가사 <span style="font-weight:400;opacity:.75">· '+담은것.가사.replace(/\s/g,'').length+'자</span>';
   팝.querySelector('#jc-out').innerHTML='';
@@ -721,7 +726,7 @@ function 돌리기속(){
     var out=팝.querySelector('#jc-out');
     var 할것=[]; if(켜졌나('가사')) 할것.push('가사'); if(켜졌나('악보')) 할것.push('악보');
     var R={때:new Date(), 가사:null, 악보:null, 미디:담은것.미디||null};
-    try{ var 때605=지금때(); if(때605 && 담은것.미디 && 때605.박.length===담은것.미디.length) R.때표=때605; }catch(e){}
+    try{ var 때605=담은것.올린때||지금때(); if(때605 && 담은것.미디 && 때605.박.length===담은것.미디.length) R.때표=때605; }catch(e){}
     if(할것.indexOf('가사')>=0) R.가사=가사검사(담은것.가사);
     if(할것.indexOf('악보')>=0) R.악보=악보검사(담은것.미디);
     R.지문=작품지문((담은것.가사||'')+'\u0001'+((담은것.미디||[]).join(',')));
@@ -778,7 +783,7 @@ function 그리기(R){
   }
   if(R.악보){
     var a=R.악보;
-    h+='<div class="sec">🎼 곡 <span style="font-weight:400;opacity:.8">— 「나도 작곡가」에서 만든 악보</span></div>';
+    h+='<div class="sec">🎼 곡 <span style="font-weight:400;opacity:.8">— '+((담은것.올린때&&올린악보)? '올린 악보 파일 「'+그글(올린악보.이름)+'」' : '「나도 작곡가」에서 만든 악보')+'</span></div>';   /* 판 613 */
     if(a.탈){ h+='<div class="row"><b>잴 수 없음</b><span>'+a.탈+'</span></div>'; }
     else{
       /* ── 🌍 공개 곡 (판 563) — 불은 여기서 켠다 ── */
@@ -1634,7 +1639,10 @@ function 검사기페이지(){
      '<textarea id="jc-ly" placeholder="가사를 붙여 넣으세요. 금지어 · 실존 인물 이름 · 되풀이를 검사합니다."></textarea></div>'+
    '<div class="step"><div class="sh"><span class="no">2</span><b>악보</b></div>'+
      '<p class="hint" id="jc-scnote">「나도 작곡가」에서 곡을 만들면 그 악보를 그대로 가져와 봅니다. '+
-       '지금은 만들어 둔 곡이 없습니다.</p></div>'+
+       '지금은 만들어 둔 곡이 없습니다.</p>'+
+     '<label class="jc-mine">🎼 내 곡 악보 파일 넣기 <small>MIDI · MusicXML — 다른 곳에서 만든 곡도 됩니다 · 이 폰 안에서만 열립니다</small>'+
+       '<input type="file" id="jc-mine" accept=".mid,.midi,.xml,.musicxml,audio/midi"></label>'+
+     '<p class="hint" id="jc-minenote" style="margin-top:6px"></p></div>'+
    '<div class="end"><button id="jc-run" style="width:100%">🔍 가사·악보 검사하기</button></div>'+
    '</div>'+
    '<div class="jc-pane" data-t="pro" hidden>'+
@@ -1681,6 +1689,19 @@ function 검사기페이지(){
   });
   document.getElementById('jc-run').onclick=function(){ 열기('고르기', document.getElementById('jc-ly')); };
   document.getElementById('jc-cmp').onclick=곡견주기;
+  /* 판 613 : 간편 검사 — 내 곡 악보 파일 */
+  document.getElementById('jc-mine').onchange=function(){
+    var f=this.files&&this.files[0], 말=document.getElementById('jc-minenote');
+    올린악보=null; 말.innerHTML=''; if(!f) return;
+    if(/^audio\//.test(f.type||'') && !/midi/.test(f.type||'')){ 말.innerHTML='<span style="color:#b45309">음원(mp3 같은 소리 파일)에서는 아직 악보를 뽑지 못합니다. MIDI · MusicXML 악보 파일을 넣어 주세요. 음원끼리 같은지는 <b>🔬 전문가 검사 → 음원 견주기</b>에서 봅니다.</span>'; return; }
+    말.textContent='악보를 읽는 중…';
+    악보줄들(f).then(function(줄들){
+      var 줄=줄들[0];
+      올린악보={높이:줄.높이.slice(), 때:{박:줄.때.slice(), 마디:줄.마디길이||4}, 이름:f.name};
+      말.innerHTML='✅ 「'+그글(f.name)+'」에서 가락을 읽었습니다 — 음 <b>'+줄.높이.length+'개</b>'+(줄들.length>1?' (여러 줄 가운데 가장 가락다운 줄)':'')+'. '+
+        (지금가락()?'작곡실 곡 대신 <b>이 파일</b>을 검사합니다. ':'')+'아래 버튼을 누르세요.';
+    }).catch(function(e){ 말.innerHTML='<span style="color:#b45309">'+그글(e&&e.message||'악보를 읽지 못했습니다')+'</span>'; });
+  };
   document.getElementById('jc-pcmp').onclick=악보맞대기;
   /* 판 563 : 페이지 아래 「세상 곡과는 안 견준다」 글을 밭이 있으면 고쳐 쓴다 */
   (window['JURAN밭정보']? Promise.resolve(true) : 글받기(정보주소())).then(function(){
