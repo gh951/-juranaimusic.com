@@ -324,7 +324,8 @@
   color:var(--muted);font-variant-numeric:tabular-nums;min-width:92px}
 .rise .vt small{font-weight:600;font-size:10.5px;color:var(--faint);margin-left:3px}
 .rise .d{min-width:78px;text-align:right}
-@media(max-width:560px){ .rise .vt{display:none} .rise .d{min-width:62px} }
+.rise .vt .몫, .rise .d .몫{display:block;font-size:10.5px;font-weight:600;color:var(--faint);margin-top:1px}
+@media(max-width:560px){ .rise .vt{min-width:70px} .rise .d{display:none} }
 
 /* 저작권 1차 예측 — 두 막대. 짧을수록 좋다 */
 #rise-home>.rise, #rise-glob>.rise{padding:9px 0;align-items:center}
@@ -687,14 +688,14 @@
       <div class="charts">
 
         <div class="side">
-          <div class="h"><b id="rh-home">국내</b><span class="live"><i></i><span data-글="라이브-국" data-크기="라이브-국">LIVE</span></span><span class="hcap" data-글="급상승-국" data-크기="급상승-국">급상승</span></div>
+          <div class="h"><b id="rh-home">국내</b><span class="live"><i></i><span data-글="라이브-국" data-크기="라이브-국">LIVE</span></span><span class="hcap" data-글="급상승-국" data-크기="급상승-국">표 많은 순</span></div>
           <div id="rise-home"></div>
           <button class="more" onclick="showView('chart');JN.차트('home')"><span data-글="더보기-국" data-크기="더보기-국">국내 차트 50위까지 →</span></button>
           <div class="foot2"><span id="say-home">저작권 1차 예측 — 낮을수록 덜 닮았다는 뜻입니다.</span><button onclick="JN.알림(true)">ⓘ 기준</button></div>
         </div>
 
         <div class="side">
-          <div class="h"><b data-글="급상승제목-글" data-크기="급상승제목-글">🌍 글로벌</b><span class="live"><i></i><span data-글="라이브-글" data-크기="라이브-글">LIVE</span></span><span class="hcap" data-글="급상승-글" data-크기="급상승-글">급상승</span></div>
+          <div class="h"><b data-글="급상승제목-글" data-크기="급상승제목-글">🌍 글로벌</b><span class="live"><i></i><span data-글="라이브-글" data-크기="라이브-글">LIVE</span></span><span class="hcap" data-글="급상승-글" data-크기="급상승-글">표 많은 순</span></div>
           <div id="rise-glob"></div>
           <button class="more" onclick="showView('chart');JN.차트('global')"><span data-글="더보기-글" data-크기="더보기-글">글로벌 차트 50위까지 →</span></button>
           <div class="foot2"><span id="say-glob">저작권 1차 예측 — 낮을수록 덜 닮았다는 뜻입니다.</span><button onclick="JN.알림(true)">ⓘ 기준</button></div>
@@ -1046,15 +1047,26 @@
   _내나라=나라찾기();
 
   /* ── 곡 한 줄 그리기 ── */
-  function _줄(s,순){
-    var 오름=Math.max(0,(s.votes||0)-(s.전표||0));
+  /* 판 610 : 표 계산을 한 곳에서, 기준을 분명히 — 파트너 「가짜라도 계산은 정확해야」
+     · 순서   = 표 많은 순 (같으면 오른 표 많은 순)
+     · 득표율 = 이 곡 표 ÷ 같은 목록(국내 또는 글로벌 · 차트는 그 장르) 모든 곡 표의 합 × 100
+     · 상승률 = (지금 표 − 전표) ÷ 전표 × 100   (전표가 0 이면 NEW)
+     · 진짜 곡(음악이 있는 곡)이 한 곡이라도 있는 목록에는 보기용 곡을 섞지 않는다 —
+       표 백만짜리 보기용 곡과 섞으면 순서도 % 도 틀어진다. 진짜 곡이 없는 목록만 보기용으로 채운다. */
+  function _순위풀(arr){ var 진=(arr||[]).filter(_진짜); return 진.length? 진 : (arr||[]).slice(); }
+  function _오름(s){ return Math.max(0,(s.votes||0)-(s.전표||0)); }
+  function _상승률(s){ var p=+s.전표||0, o=(s.votes||0)-p; if(p<=0) return (s.votes>0?'NEW':''); return (o>=0?'+':'−')+(Math.abs(o)/p*100).toFixed(1)+'%'; }
+  function _합(풀){ var t=0; (풀||[]).forEach(function(x){ t+=(+x.votes||0); }); return t; }
+  function _득표율(s,합){ return (합>0? (+s.votes||0)/합*100 : 0).toFixed(1); }
+  function _줄(s,순,합){
+    var 오름=_오름(s), 률=_상승률(s);
     return '<div class="rise'+(window.__고친곡&&window.__고친곡[s.id]?' 고침':'')+(s.음악?' 있음':'')+(_펼친k&&s.id===_펼친k?' 펼침':'')+'" data-k="'+(s.id||'')+'">'+
       '<span class="rk'+(순<=3?' top':'')+'">'+순+'</span>'+
       '<span class="cv'+(s.음악?' 틀수':'')+'" data-play="'+(s.id||'')+'" style="background:'+_표지(s)+'"></span>'+
       '<div class="mid"><div class="t">'+s.t+'</div><div class="s">'+s.m+' · '+s.g+'</div>'+
         '<div class="sim">'+_막대('곡',s.곡닮음)+_막대('가사',s.가사닮음)+'</div></div>'+
-      '<div class="vt">'+fmt(s.votes||0)+'<small>표</small></div>'+
-      '<div class="d">▲ '+fmt(오름)+'</div>'+
+      '<div class="vt">'+fmt(s.votes||0)+'<small>표</small>'+(합?'<span class="몫">득표율 '+_득표율(s,합)+'%</span>':'')+'</div>'+
+      '<div class="d">▲ '+fmt(오름)+(률?'<span class="몫">'+률+'</span>':'')+'</div>'+
       '<button type="button" class="점" data-menu="'+(s.id||'')+'" aria-label="더보기">⋮</button>'+
       (_펼친k&&s.id===_펼친k? _펼침줄(s) : '')+
       '</div>';
@@ -1070,8 +1082,8 @@
   }
   function _풀(){ var a=[]; Object.keys(data).forEach(function(k){ a=a.concat(data[k]); }); return a; }
   function _급순(arr){
-    return arr.slice().sort(function(a,b){
-      return _멈춤비교('급',a,b) || (_진짜(b)-_진짜(a)) || (((b.votes||0)-(b.전표||0)) - ((a.votes||0)-(a.전표||0))) || ((b.votes||0)-(a.votes||0)); });   /* 판 610 : 오름이 같으면 표 많은 곡이 위 */
+    return _순위풀(arr).sort(function(a,b){   /* 판 610 : 표 많은 순 (같으면 오른 표) · 보기용 곡은 진짜 곡과 섞지 않음 */
+      return _멈춤비교('급',a,b) || ((b.votes||0)-(a.votes||0)) || (_오름(b)-_오름(a)); });
   }
   /* 판 588 : ⏸ 순위 멈춤 — 편집할 때 순서를 그 자리에 묶는다. 표를 고쳐도 줄이 다른 데로 도망가지 않게.
      멈춘 뒤에 새로 넣은 곡은 **맨 위에** (찾기 쉽게). 파트너 — 「실시간을 멈춰야 검사를 하죠」 */
@@ -1094,7 +1106,7 @@
   }
   function _펼침줄(s){
     var 오름=Math.max(0,(s.votes||0)-(s.전표||0));
-    return '<div class="펼침줄"><span class="정보">'+fmt(s.votes||0)+'표<i>▲ '+fmt(오름)+'</i></span>'+_할일들(s).map(function(x){ return '<button type="button" data-act="'+x[0]+'" data-k="'+s.id+'">'+x[1]+'</button>'; }).join('')+'</div>';
+    return '<div class="펼침줄"><span class="정보">'+fmt(s.votes||0)+'표<i>▲ '+fmt(오름)+(_상승률(s)?' ('+_상승률(s)+')':'')+'</i></span>'+_할일들(s).map(function(x){ return '<button type="button" data-act="'+x[0]+'" data-k="'+s.id+'">'+x[1]+'</button>'; }).join('')+'</div>';
   }
   /* 판 591 : 곡 사진이 있으면 목록의 네모(표지)에도 — 급상승 · 차트 · 장르 챔피언. 없으면 예전 색 */
   function _표지(s){
@@ -1114,11 +1126,12 @@
     var pool=_풀();
     var 국=_내나라? pool.filter(_국내곡) : [];
     var 글곡=pool.filter(_글로벌곡);
-    var 국HTML=국.length? _급순(국).slice(0,_급수).map(function(x,i){return _줄(x,i+1);}).join('')
+    var 국합=_합(_순위풀(국)), 글합=_합(_순위풀(글곡));
+    var 국HTML=국.length? _급순(국).slice(0,_급수).map(function(x,i){return _줄(x,i+1,국합);}).join('')
       : '<div class="rise" style="opacity:.7"><div class="mid"><div class="s">'+
         (_내나라? nf(나라깃발(_내나라)+' '+나라글(_내나라)+' 곡이 아직 없습니다. 첫 곡을 올려 보세요.')
                 : '나라를 아직 모릅니다. 위쪽 단추에서 골라 주세요.')+'</div></div></div>';
-    var 글HTML=글곡.length? _급순(글곡).slice(0,_급수).map(function(x,i){return _줄(x,i+1);}).join('')
+    var 글HTML=글곡.length? _급순(글곡).slice(0,_급수).map(function(x,i){return _줄(x,i+1,글합);}).join('')
       : '<div class="rise" style="opacity:.7"><div class="mid"><div class="s">🌍 글로벌 차트에 올린 곡이 아직 없습니다.</div></div></div>';
     var 이름=(_내나라? 나라깃발(_내나라)+' '+나라글(_내나라) : '국내');
     var th=document.getElementById('rt-home'); if(th) th.textContent=이름;
@@ -1302,6 +1315,11 @@
   }
 
   window.JN={
+    표셈:function(k){   /* 판 610 : 곡 창의 득표율 · 상승률 — 목록과 같은 셈 */
+      var s=null; _풀().forEach(function(x){ if(x.id===k) s=x; }); if(!s) return null;
+      var 국=_국내곡(s), 풀=_순위풀(_풀().filter(국?_국내곡:_글로벌곡));
+      return { 곳:(국?'국내':'글로벌'), 득표율:(풀.indexOf(s)>=0?_득표율(s,_합(풀)):null), 상승률:_상승률(s), 오름:_오름(s) };
+    },
     /* 판 577 : 편집 모드(js/juran-edit.js)가 쓰는 손잡이 */
     원본:function(){ return _원본; },
     다시그리기:function(j){ if(_자료넣기(j)){ paintRise(); render(true); } },
@@ -1332,7 +1350,7 @@
       var 전=data[칸]||[];
       var 카드=[]; [].forEach.call(document.querySelectorAll('.champion'), function(c){ if(c.dataset.k===k) 카드.push(c.classList.contains('glob')?'오른쪽':'왼쪽'); });
       return { 칸:칸, 국급:(국.indexOf(s)>=0? 순(_급순(국)) : 0), 글급:(글.indexOf(s)>=0? 순(_급순(글)) : 0),
-               국차:_국내곡(s)? 순(전.filter(_국내곡)) : 0, 글차:_글로벌곡(s)? 순(전.filter(_글로벌곡)) : 0, 자리:(s.자리||[]).slice(),
+               국차:_국내곡(s)? 순(_순위풀(전.filter(_국내곡))) : 0, 글차:_글로벌곡(s)? 순(_순위풀(전.filter(_글로벌곡))) : 0, 자리:(s.자리||[]).slice(),
                카드:카드, 급수:_급수, 나라:s.나라||'', 내나라:_내나라||'', 장르:s.g };
     },
     가기:function(k, 곳){
@@ -1735,7 +1753,7 @@
           '<dt>지은이</dt><dd>'+글(s.m||'—')+'</dd>'+
           '<dt>장르</dt><dd>'+글(s.g||'—')+'</dd>'+
           '<dt>나라</dt><dd>'+글(국)+'</dd>'+
-          '<dt>표</dt><dd>'+fmt(s.votes||0)+'표 <span style="color:#12a36a">▲ '+fmt(Math.max(0,(s.votes||0)-(s.전표||0)))+'</span></dd>'+
+          '<dt>표</dt><dd>'+fmt(s.votes||0)+'표 <span style="color:#12a36a">▲ '+fmt(Math.max(0,(s.votes||0)-(s.전표||0)))+(function(){ var z=window.JN&&JN.표셈&&JN.표셈(s.id); return (z&&z.상승률? ' ('+z.상승률+')':'')+'</span>'+(z&&z.득표율!=null? ' · '+z.곳+' 득표율 '+z.득표율+'%':''); })()+'</dd>'+
           '<dt>9-AI 심사</dt><dd>'+글(s.score)+'점</dd>'+
           (s.길이?'<dt>길이</dt><dd>'+분초(s.길이)+'</dd>':'')+
           '<dt>들어 있는 것</dt><dd>'+[s.음악?'🎵 음악':'',s.가사?'📜 가사':'',(s.악보들&&s.악보들.length)?'🎼 악보 '+s.악보들.length+'개':'',s.사진?'🖼 사진':''].filter(Boolean).join(' · ')+'</dd>'+
@@ -2127,9 +2145,9 @@
   var chips=document.getElementById('chips'),listEl=document.getElementById('list'),current=genres[0].n;
   chips.innerHTML=genres.map(function(g){return '<button class="chip" role="tab" data-g="'+g.n+'" aria-selected="'+(g.n===current)+'">'+g.e+' '+g.n+'</button>';}).join('');
   chips.addEventListener('click',function(e){var b=e.target.closest('.chip');if(!b)return;current=b.dataset.g;[].forEach.call(chips.children,function(c){c.setAttribute('aria-selected',c.dataset.g===current);});var g=genres.find(function(x){return x.n===current;});document.getElementById('g-emoji').textContent=g.e;document.getElementById('g-name').textContent=g.n;render(true);});
-  function render(reset){var _전=data[current]||[];var _골=(_차보기==='home'&&_내나라)?_전.filter(_국내곡):_전.filter(_글로벌곡);var arr=_골.slice(0,50);if(!arr.length){listEl.innerHTML='<li class="item" style="opacity:.7"><span class="info"><span class="s">'+((_차보기==='home'&&_내나라)?'이 나라에는 아직 이 장르 곡이 없습니다. 🌍 글로벌을 눌러 보세요.':'🌍 글로벌 차트에 올린 이 장르 곡이 아직 없습니다.')+'</span></span></li>';return;}var max=Math.max.apply(null,arr.filter(function(x){return !_진짜(x);}).map(function(x){return x.votes||0;}).concat([1])),max진=Math.max.apply(null,arr.filter(_진짜).map(function(x){return x.votes||0;}).concat([1]))/* 판 610 : 진짜 곡 막대는 진짜 곡끼리 — 보기용 곡(표 백만)에 견주면 0% 로 보였다 */,olds={};[].forEach.call(listEl.children,function(li){olds[li.dataset.id]=li.getBoundingClientRect().top;});
+  function render(reset){var _전=data[current]||[];var _골=_순위풀((_차보기==='home'&&_내나라)?_전.filter(_국내곡):_전.filter(_글로벌곡)),_차합=_합(_골);var arr=_골.slice(0,50);if(!arr.length){listEl.innerHTML='<li class="item" style="opacity:.7"><span class="info"><span class="s">'+((_차보기==='home'&&_내나라)?'이 나라에는 아직 이 장르 곡이 없습니다. 🌍 글로벌을 눌러 보세요.':'🌍 글로벌 차트에 올린 이 장르 곡이 아직 없습니다.')+'</span></span></li>';return;}var max=Math.max.apply(null,arr.map(function(x){return x.votes||0;}).concat([1]))/* 판 610 : 막대 = 1위 표에 견준 길이 (목록에 보기용을 안 섞으니 진짜 곡끼리 견준다) */,olds={};[].forEach.call(listEl.children,function(li){olds[li.dataset.id]=li.getBoundingClientRect().top;});
     listEl.innerHTML=arr.map(function(s,ix){var mv=s.prev-ix,cls=mv>0?'up':(mv<0?'down':'same'),ar=mv>0?('▲'+mv):(mv<0?('▼'+(-mv)):'–');
-      return '<li class="item'+(window.__고친곡&&window.__고친곡[s.id]?' 고침':'')+(s.음악?' 있음':'')+(_펼친k&&s.id===_펼친k?' 펼침':'')+'" data-id="'+s.t+'" data-k="'+(s.id||'')+'"><span class="rank'+(ix<3?' top':'')+'">'+(ix+1)+'</span><span class="mv '+cls+'">'+ar+'</span><span class="cv2'+(s.음악?' 틀수':'')+'" data-play="'+(s.id||'')+'" style="background:'+_표지(s)+'"></span><span class="info"><span class="t">'+s.t+'</span><span class="s">'+s.m+' · 9-AI '+s.score+'점</span></span><span class="bars"><i style="width:'+Math.round(s.votes/(_진짜(s)?max진:max)*100)+'%"></i></span><span class="votes"><b class="num">'+fmt(s.votes)+'</b><small>표</small></span><button type="button" class="점" data-menu="'+(s.id||'')+'" aria-label="더보기">⋮</button>'+(_펼친k&&s.id===_펼친k?_펼침줄(s):'')+'</li>';}).join('');
+      return '<li class="item'+(window.__고친곡&&window.__고친곡[s.id]?' 고침':'')+(s.음악?' 있음':'')+(_펼친k&&s.id===_펼친k?' 펼침':'')+'" data-id="'+s.t+'" data-k="'+(s.id||'')+'"><span class="rank'+(ix<3?' top':'')+'">'+(ix+1)+'</span><span class="mv '+cls+'">'+ar+'</span><span class="cv2'+(s.음악?' 틀수':'')+'" data-play="'+(s.id||'')+'" style="background:'+_표지(s)+'"></span><span class="info"><span class="t">'+s.t+'</span><span class="s">'+s.m+' · 9-AI '+s.score+'점</span></span><span class="bars"><i style="width:'+Math.round(s.votes/max*100)+'%"></i></span><span class="votes"><b class="num">'+fmt(s.votes)+'</b><small>표 · 득표율 '+_득표율(s,_차합)+'%</small></span><button type="button" class="점" data-menu="'+(s.id||'')+'" aria-label="더보기">⋮</button>'+(_펼친k&&s.id===_펼친k?_펼침줄(s):'')+'</li>';}).join('');
     if(!reset&&!reduce){[].forEach.call(listEl.children,function(li){var o=olds[li.dataset.id];if(o==null)return;var d=o-li.getBoundingClientRect().top;if(Math.abs(d)>1){li.style.transform='translateY('+d+'px)';li.style.transition='none';requestAnimationFrame(function(){li.style.transition='transform .6s cubic-bezier(.22,1,.36,1)';li.style.transform='';});li.classList.add('flash');}});}
     arr.forEach(function(s,ix){s.prev=ix;});}
   render(true);
