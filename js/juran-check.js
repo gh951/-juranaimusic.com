@@ -166,6 +166,77 @@ function 가락줄(미디들){
     o+=String.fromCharCode(48+v+12);
   } return o;
 }
+/* ═══ 판 614 : 흥얼거려서 넣기 ═══════════════════════════════════════════
+   마이크 소리 → 30ms 마다 소리 높이(YIN) → 반음으로 반올림 → 같은 높이가 이어진 토막 = 음 하나.
+   검사는 음과 음 사이 **간격**으로 보므로 어느 높이로 불러도 된다. 소리는 폰 안에서만 쓰고 버린다. */
+function 소리높이(buf, sr){
+  var N=buf.length, 합=0; for(var i=0;i<N;i++) 합+=buf[i]*buf[i];
+  if(Math.sqrt(합/N)<0.012) return null;                     /* 너무 작으면 쉼 */
+  var 최소=Math.floor(sr/1000), 최대=Math.min(Math.floor(sr/75), (N>>1)-2), W=N-최대;
+  var d=new Float32Array(최대+2), 누=0, 찾=-1;
+  for(var tau=1;tau<=최대+1;tau++){
+    var s=0; for(var j=0;j<W;j++){ var x=buf[j]-buf[j+tau]; s+=x*x; }
+    누+=s; d[tau]= 누? s*tau/누 : 1;
+    if(찾<0 && tau>=최소+1 && tau<=최대 && d[tau-1]<0.15 && d[tau]>d[tau-1]){ 찾=tau-1; break; }
+  }
+  if(찾<0) return null;
+  var a=d[찾-1], b=d[찾], c=d[찾+1], 밀=(a-c)/(2*(a-2*b+c)||1);   /* 꼭짓점 다듬기 */
+  var f=sr/(찾+(isFinite(밀)?Math.max(-1,Math.min(1,밀)):0));
+  return (f>=70&&f<=1000)? 69+12*Math.log(f/440)/Math.LN2 : null;
+}
+function 흥얼가락(높이들){       /* [반음 실수 또는 null, …] (30ms 마다) → 음 높이 줄 */
+  var m=[], i;
+  for(i=0;i<높이들.length;i++){              /* 다섯 칸 가운데값 — 튀는 값 걷어내기 */
+    if(높이들[i]==null){ m.push(null); continue; }
+    var w=[]; for(var k=i-2;k<=i+2;k++) if(k>=0&&k<높이들.length&&높이들[k]!=null) w.push(높이들[k]);
+    w.sort(function(x,y){return x-y;}); m.push(w.length>=3? w[w.length>>1] : null);
+  }
+  var 토막=[], 지금=null, 길=0, 빈=0;
+  function 닫기(){ if(지금!=null && 길>=3) 토막.push(지금); 지금=null; 길=0; }
+  for(i=0;i<m.length;i++){
+    if(m[i]==null){ 빈++; if(빈>2) 닫기(); continue; }
+    var q=Math.round(m[i]);
+    if(토막.length && 지금==null){ var 앞=토막[토막.length-1]; while(q-앞>9) q-=12; while(앞-q>9) q+=12; }   /* 옥타브 튐 */
+    if(q===지금){ 길++; 빈=0; continue; }
+    if(지금!=null && 빈<=2 && Math.abs(q-지금)===1 && 길<3){ 지금=q; 길++; 빈=0; continue; }
+    닫기(); 지금=q; 길=1; 빈=0;
+  }
+  닫기();
+  return 토막;
+}
+var 흥얼중=null;
+function 흥얼시작(){
+  var 단=document.getElementById('jc-hum'), 말=document.getElementById('jc-minenote');
+  if(흥얼중){ 흥얼중.끝(); return; }
+  if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){ 말.innerHTML='<span style="color:#b45309">이 브라우저는 마이크를 쓸 수 없습니다.</span>'; return; }
+  말.textContent='마이크를 여는 중… (허락을 눌러 주세요)';
+  navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:false, autoGainControl:true}}).then(function(st){
+    var AC=window.AudioContext||window.webkitAudioContext, ac=new AC(), src=ac.createMediaStreamSource(st), an=ac.createAnalyser();
+    an.fftSize=2048; src.connect(an);
+    var buf=new Float32Array(1024), 높이들=[], t0=Date.now(), 끝남=false;
+    var 시계=setInterval(function(){
+      an.getFloatTimeDomainData(buf.length===an.fftSize? buf : (buf=new Float32Array(an.fftSize)));
+      var h=소리높이(buf, ac.sampleRate); 높이들.push(h);
+      var 초=(Date.now()-t0)/1000;
+      단.textContent='⏹ 멈추기 · '+초.toFixed(0)+'초';
+      if(초>=30) 흥얼중.끝();
+    }, 30);
+    단.classList.add('on'); 말.innerHTML='🎤 듣는 중… 「라라라」로 멜로디를 불러 주세요. 다 부르면 <b>⏹ 멈추기</b>.';
+    흥얼중={끝:function(){
+      if(끝남) return; 끝남=true; clearInterval(시계);
+      try{ st.getTracks().forEach(function(t){ t.stop(); }); }catch(e){} try{ ac.close(); }catch(e){}
+      흥얼중=null; 단.classList.remove('on'); 단.textContent='🎤 다시 흥얼거리기';
+      var 음=흥얼가락(높이들);
+      if(음.length<8){ 올린악보=null; 말.innerHTML='<span style="color:#b45309">음이 '+음.length+'개만 잡혔습니다. 조용한 곳에서 조금 더 길게, 또렷하게 「라라라」로 불러 주세요.</span>'; return; }
+      var 이름=['도','도#','레','레#','미','파','파#','솔','솔#','라','라#','시'];
+      올린악보={높이:음, 때:null, 이름:'흥얼거림', 흥얼:true};
+      var fi=document.getElementById('jc-mine'); if(fi) fi.value='';
+      말.innerHTML='✅ 흥얼거린 가락에서 음 <b>'+음.length+'개</b>를 들었습니다: '+음.slice(0,16).map(function(n){ return 이름[((n%12)+12)%12]; }).join(' ')+(음.length>16?' …':'')+
+        '<br><span style="color:var(--muted)">마이크로 들은 음이라 <b>추정값</b>입니다. 아래 버튼을 누르세요.</span>';
+    }};
+  }).catch(function(){ 말.innerHTML='<span style="color:#b45309">마이크를 열지 못했습니다. 브라우저 주소창의 🔒 에서 마이크를 허락해 주세요.</span>'; });
+}
+
 /* 판 613 : 간편 검사에 「내 곡 악보 파일」 — 작곡실 밖에서 만든 곡도 파일 하나로 검사.
    전문가 검사(악보 맞대기)와 **같은 손(악보줄들)** 으로 읽고, 가장 가락다운 줄 하나를 쓴다. */
 var 올린악보=null;
@@ -685,7 +756,8 @@ function 열기(어디, 가사칸){
   담은것.가사 = 가사모으기(어디, 가사칸);
   var 검사장 = !!(가사칸 && 가사칸.id==='jc-ly');
   담은것.미디 = (검사장 && 올린악보)? 올린악보.높이.slice() : 지금가락();   /* 판 613 */
-  담은것.올린때 = (검사장 && 올린악보)? 올린악보.때 : null;
+  담은것.올린 = (검사장 && 올린악보)? 올린악보 : null;                     /* 판 614 */
+  담은것.올린때 = (담은것.올린 && 올린악보.때)? 올린악보.때 : null;
   담은것.올리기에서 = 올리기에서;
   담은것.제목 = 올리기에서 ? ((document.getElementById('up-t')||{}).value || 'JURAN 작품') : 'JURAN 작품';
   담은것.지은이 = 올리기에서 ? ((document.getElementById('up-by')||{}).value || '') : '';
@@ -694,7 +766,7 @@ function 열기(어디, 가사칸){
   /* 없는 것을 켜 두면 「잴 수 없음」만 뜬다. 없으면 꺼 두고, 단추에 까닭을 적는다. */
   var 가b=팝.querySelector('.jc-sw[data-k="가사"]'), 악b=팝.querySelector('.jc-sw[data-k="악보"]');
   if(!담은것.미디){ if(어디!=='악보') 켜기('악보',false); 악b.innerHTML='🎼 악보 <span style="font-weight:400;opacity:.75">· 아직 없음</span>'; }
-  else 악b.innerHTML='🎼 악보 <span style="font-weight:400;opacity:.75">· '+(담은것.올린때?'올린 파일 · ':(올리기에서?'작곡실 곡 · ':''))+'음 '+담은것.미디.length+'개</span>';
+  else 악b.innerHTML='🎼 악보 <span style="font-weight:400;opacity:.75">· '+(담은것.올린?(올린악보.흥얼?'흥얼거림 · ':'올린 파일 · '):(올리기에서?'작곡실 곡 · ':''))+'음 '+담은것.미디.length+'개</span>';
   if(!담은것.가사){ if(어디!=='가사') 켜기('가사',false); 가b.innerHTML='✍️ 가사 <span style="font-weight:400;opacity:.75">· 아직 없음</span>'; }
   else 가b.innerHTML='✍️ 가사 <span style="font-weight:400;opacity:.75">· '+담은것.가사.replace(/\s/g,'').length+'자</span>';
   팝.querySelector('#jc-out').innerHTML='';
@@ -783,7 +855,7 @@ function 그리기(R){
   }
   if(R.악보){
     var a=R.악보;
-    h+='<div class="sec">🎼 곡 <span style="font-weight:400;opacity:.8">— '+((담은것.올린때&&올린악보)? '올린 악보 파일 「'+그글(올린악보.이름)+'」' : '「나도 작곡가」에서 만든 악보')+'</span></div>';   /* 판 613 */
+    h+='<div class="sec">🎼 곡 <span style="font-weight:400;opacity:.8">— '+(담은것.올린? (올린악보.흥얼? '🎤 흥얼거린 가락 (마이크로 들은 음 · 추정값)' : '올린 악보 파일 「'+그글(올린악보.이름)+'」') : '「나도 작곡가」에서 만든 악보')+'</span></div>';   /* 판 613 */
     if(a.탈){ h+='<div class="row"><b>잴 수 없음</b><span>'+a.탈+'</span></div>'; }
     else{
       /* ── 🌍 공개 곡 (판 563) — 불은 여기서 켠다 ── */
@@ -991,10 +1063,33 @@ function 엑셀줄들(글자){
   if(!줄들.length) throw new Error('악보에서 음을 찾지 못했습니다');
   return 줄들.slice(0,3);
 }
+/* 판 614 : JURAN 작곡실이 만든 악보 PDF — 안에 「%JURAN-NOTES {…}」 한 줄로 음표가 들어 있다 (cgo-score.js 가 넣는다).
+   그림을 읽는 것이 아니라 적힌 음표를 그대로 읽으므로 정확하다. 다른 PDF(그림뿐인 악보)는 아직 못 읽는다. */
+function PDF줄들(u){
+  var 글=new TextDecoder('iso-8859-1').decode(u.subarray(0, Math.min(u.length, 600000)));
+  var i=글.indexOf('%JURAN-NOTES ');
+  if(i<0) throw new Error('이 PDF 에는 음표 정보가 없습니다 — JURAN 작곡실에서 받은 악보 PDF 만 읽을 수 있습니다 (다른 PDF · 악보 사진 읽기는 준비 중). MIDI · MusicXML 파일을 넣어 주세요.');
+  var j=글.indexOf('\n', i), d;
+  try{ d=JSON.parse(글.slice(i+13, j<0?undefined:j)); }catch(e){ throw new Error('PDF 안의 음표 정보가 깨져 있습니다'); }
+  var 높=(Array.isArray(d&&d.n)?d.n:[]).slice(0,5000).map(function(x){ return Math.round(+x); });
+  if(높.length<5 || 높.some(function(x){ return !(x>=0&&x<=127); })) throw new Error('PDF 안의 음표가 너무 적거나 이상합니다');
+  var 박=(Array.isArray(d.b)&&d.b.length===높.length&&d.b.every(function(x){ return isFinite(+x); }))? d.b.map(Number) : 높.map(function(_,k){ return k; });
+  var 음=높.map(function(n,k){ return {n:n, s:박[k], e:(k+1<박.length?박[k+1]:박[k]+1)}; });
+  return [{이름:'JURAN 작곡실 악보', 높이:높, 때:박, 음:음, 점:0, 마디길이:(+d.m>0&&+d.m<=16? +d.m : 4), 빠르기:(+d.t>20&&+d.t<400? Math.round(+d.t) : 110), PDF:true}];
+}
+/* 지금 작곡실 곡을 PDF 에 넣을 꼴로 — 글자는 영문 열쇠만 (PDF 짜는 손이 한 글자를 한 바이트로 쓰기 때문) */
+function 가락표(){
+  var 높=지금가락(); if(!높) return null;
+  var t=지금때(), 박=(t&&t.박&&t.박.length===높.length)? t.박.map(function(x){ return Math.round(x*1000)/1000; }) : null;
+  var o={v:1, n:높}; if(박) o.b=박; if(t&&t.마디) o.m=t.마디;
+  var bpm=+(window._cgoBpm||window.bpm||0); if(bpm>20&&bpm<400) o.t=Math.round(bpm);
+  return o;
+}
 function 악보줄들(파일){
   return 파일.arrayBuffer().then(function(buf){
     var u=new Uint8Array(buf);
     if(u[0]===0x4d&&u[1]===0x54&&u[2]===0x68&&u[3]===0x64) return 미디줄들(buf);
+    if(u[0]===0x25&&u[1]===0x50&&u[2]===0x44&&u[3]===0x46) return PDF줄들(u);   /* %PDF — 판 614 */
     if(u[0]===0x50&&u[1]===0x4b) throw new Error('압축된 MusicXML(.mxl)은 아직 못 읽습니다 — .musicxml 로 저장해 주세요');
     return 엑셀줄들(new TextDecoder('utf-8').decode(buf));
   });
@@ -1640,8 +1735,10 @@ function 검사기페이지(){
    '<div class="step"><div class="sh"><span class="no">2</span><b>악보</b></div>'+
      '<p class="hint" id="jc-scnote">「나도 작곡가」에서 곡을 만들면 그 악보를 그대로 가져와 봅니다. '+
        '지금은 만들어 둔 곡이 없습니다.</p>'+
-     '<label class="jc-mine">🎼 내 곡 악보 파일 넣기 <small>MIDI · MusicXML — 다른 곳에서 만든 곡도 됩니다 · 이 폰 안에서만 열립니다</small>'+
-       '<input type="file" id="jc-mine" accept=".mid,.midi,.xml,.musicxml,audio/midi"></label>'+
+     '<label class="jc-mine">🎼 내 곡 악보 파일 넣기 <small>MIDI · MusicXML · JURAN 작곡실 악보 PDF — 다른 곳에서 만든 곡도 됩니다 · 이 폰 안에서만 열립니다</small>'+
+       '<input type="file" id="jc-mine" accept=".mid,.midi,.xml,.musicxml,.pdf,audio/midi,application/pdf"></label>'+
+     '<div class="jc-hum"><button type="button" id="jc-hum">🎤 흥얼거려서 넣기</button>'+
+       '<span>파일이 없으면 마이크에 「라라라」로 멜로디를 불러 주세요 (5~30초). 높이는 상관없습니다 — 음과 음 사이 간격으로 봅니다. 소리는 이 폰 안에서만 듣고 어디로도 보내지 않습니다.</span></div>'+
      '<p class="hint" id="jc-minenote" style="margin-top:6px"></p></div>'+
    '<div class="end"><button id="jc-run" style="width:100%">🔍 가사·악보 검사하기</button></div>'+
    '</div>'+
@@ -1654,8 +1751,8 @@ function 검사기페이지(){
      '<p class="hint">내 곡과 닮았나 걱정되는 곡의 <b>악보 파일(MIDI · MusicXML)</b>을 넣으세요. <b>어느 마디가 얼마나 닮았는지</b>, 실제 표절 판결과 견주면 <b>위험이 어느 정도인지</b> 알려 드립니다. '+
        '악보는 <b>이 폰 안에서만</b> 열립니다.</p>'+
      '<div class="r" style="margin-top:10px">'+
-       '<label style="flex:1;min-width:150px">내 곡 악보<input type="file" id="jc-p1" accept=".mid,.midi,.xml,.musicxml,audio/midi"></label>'+
-       '<label style="flex:1;min-width:150px">견줄 곡 악보<input type="file" id="jc-p2" accept=".mid,.midi,.xml,.musicxml,audio/midi"></label>'+
+       '<label style="flex:1;min-width:150px">내 곡 악보<input type="file" id="jc-p1" accept=".mid,.midi,.xml,.musicxml,.pdf,audio/midi,application/pdf"></label>'+
+       '<label style="flex:1;min-width:150px">견줄 곡 악보<input type="file" id="jc-p2" accept=".mid,.midi,.xml,.musicxml,.pdf,audio/midi,application/pdf"></label>'+
      '</div>'+
      '<button id="jc-pcmp" style="width:100%;margin-top:11px;padding:12px;border:0;border-radius:12px;'+
        'font-weight:800;cursor:pointer;background:linear-gradient(135deg,#f59e0b,#d97706);color:#2a1700">⚖️ 판례 기준으로 맞대기</button>'+
@@ -1689,6 +1786,7 @@ function 검사기페이지(){
   });
   document.getElementById('jc-run').onclick=function(){ 열기('고르기', document.getElementById('jc-ly')); };
   document.getElementById('jc-cmp').onclick=곡견주기;
+  document.getElementById('jc-hum').onclick=흥얼시작;   /* 판 614 */
   /* 판 613 : 간편 검사 — 내 곡 악보 파일 */
   document.getElementById('jc-mine').onchange=function(){
     var f=this.files&&this.files[0], 말=document.getElementById('jc-minenote');
@@ -1698,7 +1796,7 @@ function 검사기페이지(){
     악보줄들(f).then(function(줄들){
       var 줄=줄들[0];
       올린악보={높이:줄.높이.slice(), 때:{박:줄.때.slice(), 마디:줄.마디길이||4}, 이름:f.name};
-      말.innerHTML='✅ 「'+그글(f.name)+'」에서 가락을 읽었습니다 — 음 <b>'+줄.높이.length+'개</b>'+(줄들.length>1?' (여러 줄 가운데 가장 가락다운 줄)':'')+'. '+
+      말.innerHTML='✅ 「'+그글(f.name)+'」에서 '+(줄.PDF?'<b>JURAN 악보 PDF 의 음표를 그대로</b> 읽었습니다 (정확)':'가락을 읽었습니다')+' — 음 <b>'+줄.높이.length+'개</b>'+(줄들.length>1?' (여러 줄 가운데 가장 가락다운 줄)':'')+'. '+
         (지금가락()?'작곡실 곡 대신 <b>이 파일</b>을 검사합니다. ':'')+'아래 버튼을 누르세요.';
     }).catch(function(e){ 말.innerHTML='<span style="color:#b45309">'+그글(e&&e.message||'악보를 읽지 못했습니다')+'</span>'; });
   };
@@ -1859,7 +1957,8 @@ window.JC = {
   주란대조:주란대조, 가사지문:가사지문, 주란밭불러오기:주란밭불러오기,   /* 판 606 */
   엔진잣대:엔진잣대, 엔진잣대선:엔진잣대선,   /* 판 607 */
   밭불러오기:밭불러오기, 밭검사:밭검사, 밭후보:밭후보, 밭곡:밭곡, 밭조각받기:밭조각받기,
-  진짜같은토막:진짜같은토막, 이음접기:이음접기, 줄접기:줄접기, 가락줄:가락줄
+  진짜같은토막:진짜같은토막, 이음접기:이음접기, 줄접기:줄접기, 가락줄:가락줄,
+  가락표:가락표, PDF줄들:PDF줄들, 소리높이:소리높이, 흥얼가락:흥얼가락   /* 판 614 */
 };
 /* 화면이 바뀔 때마다 띠가 붙을 자리가 생긴다. 고리를 돌지 않고 **그때 한 번** 본다. */
 document.addEventListener('DOMContentLoaded', 띠붙이기);

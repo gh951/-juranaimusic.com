@@ -2976,6 +2976,9 @@ function _악보PDF522(){
       function 밀기(x){ var b=(typeof x==='string')?_바이트(x):x; 쪽.push(b); 길이+=b.length; }
       var 객체수 = 2 + 조각.length*3;               /* 목록 + 쪽묶음 + (쪽·내용·그림)×장수 */
       밀기('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+      /* JURAN 판 614 : 악보 PDF 안에 음표를 한 줄로 같이 넣는다 (PDF 의 '%' 줄은 주석이라 보는 프로그램은 건너뛴다).
+         그래서 이 PDF 를 저작권 검사에 넣으면 그림을 읽지 않고 **음표를 그대로** 읽는다 — 100% 정확. */
+      try{ var _가락614=window.JC&&window.JC.가락표&&window.JC.가락표(); if(_가락614) 밀기('%JURAN-NOTES '+JSON.stringify(_가락614)+'\n'); }catch(_e614){}
 
       function 객체시작(n){ 오프셋[n]=길이; 밀기(n+' 0 obj\n'); }
       객체시작(1); 밀기('<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
